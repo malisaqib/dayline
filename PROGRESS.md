@@ -2,7 +2,7 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
-## Phase 1: persisted newspaper flow. PASSES LOCALLY; production blocked on Vercel config
+## Phase 1: persisted newspaper flow. VERIFIED locally and on production
 
 ### Local verification (2026-10-17, against live Supabase and OpenRouter)
 | Check | Result |
@@ -22,19 +22,31 @@ Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: htt
 - `1e9a3a8`: decode `&#039;` and double-encoded entities in feed text.
 - `5f523dc`: switched from Anthropic to OpenRouter (Gemini). Grounded prompt, strict schema, takeaways stored in snapshots.
 - `4e15c5b`: PDF lays out stories in rows of two, so reading order holds when stories spill onto page 2.
-- `1e1e11e`: `/api/health` reports which config groups are valid (true/false only, never values).
+- `1e1e11e`, `26f2344`, `3d9a0a1`: `/api/health` (config valid/missing, deployed commit, `?sources=1`).
+- `cedfe9d`, `8853360`: Geo News added, APP disabled (HTTP 403 from Vercel).
 
-### Production (https://dayline-swart.vercel.app/): BLOCKED
-- `/api/health` reports `supabasePublic` invalid: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are missing or wrong on Vercel. `supabaseSecret` and `openRouter` are valid.
-- Effect: `/` and `/onboarding` render the error page, and the edition PDF route returns 500. The sample PDF `/api/pdf/sample` returns 200.
-- Fix (user): in Vercel → Settings → Environment Variables (Production), add both names exactly as in `.env.example`, then **Redeploy**. `NEXT_PUBLIC_` values are baked in at build time, so a redeploy is required.
-- Then: `curl https://dayline-swart.vercel.app/api/health` should return `"ok":true`. Then run `BASE_URL=https://dayline-swart.vercel.app npm run check:journey` and `python -I scripts/inspect_pdf.py tmp/journey/dayline-swart.vercel.app`.
+### Production (https://dayline-swart.vercel.app/): verified at deployment 8853360
+- `GET /api/health` returns `"ok":true`. All three config groups are valid, and the response includes the deployed commit.
+- `BASE_URL=https://dayline-swart.vercel.app npm run check:journey` reports JOURNEY PASSED:
+  - anonymous onboarding, then generation (NASA items carry OpenRouter AI summaries);
+  - reload keeps the session and the edition;
+  - home "Open today's paper" returns the same id;
+  - the archive lists it, and reopening it works;
+  - the PDF downloads from the deployed route;
+  - 4 source links return HTTP 200;
+  - a second reader gets their own edition, "Paper not found" for the first reader's page, and 404 for the first reader's PDF.
+- `inspect_pdf.py` on the deployed PDF: 4 of 4 headlines in web order, links identical, no clipping on 2 pages. 2 stories labelled "AI summary of the full article text", 2 "Publisher's excerpt", no `&#`, no sample banner.
+- Fixed on the way:
+  - Vercel's earlier build lacked the `NEXT_PUBLIC_` values; a fresh build from a push fixed it.
+  - Dawn and APP return HTTP 403 to Vercel. Added Geo News (reachable, 20 items) for Pakistan coverage and disabled APP. Dawn stays enabled because it works locally; when it fails, generation continues without it.
+- Diagnostics: `/api/health?sources=1` lists per-source item counts or the error, as seen from the host.
 
 ### Known risks
 - Gemini sometimes returns invalid JSON even with a strict schema. There is one retry, then a fallback to the publisher excerpt.
 - AI summaries only cover NASA (the only source with a known reuse basis). Other sources show the publisher's excerpt. Reuse terms for the other sources are unverified (`catalog.ts`).
 - NASA APOD feed text contains site navigation; the AI summary handles it, but the raw excerpt would look messy.
 - The edition page for an invalid id shows "Paper not found" but returns HTTP 200, because streaming starts before notFound runs.
+- Dawn is blocked from Vercel, so production Pakistan coverage depends on Geo News alone.
 - PDFs are rendered on request from the saved snapshot and not stored.
 
 ## Next milestone (after production passes)
