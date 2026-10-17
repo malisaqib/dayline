@@ -71,7 +71,8 @@ export const SOURCES: FeedSource[] = [
     name: "Associated Press of Pakistan",
     url: "https://www.app.com.pk/feed/",
     topics: ["pakistan"],
-    enabled: true,
+    // Disabled: returns HTTP 403 to Vercel's servers (verified via /api/health?sources=1).
+    enabled: false,
     usage: EXCERPT_UNVERIFIED,
     reuseNote: "State news agency; reuse terms not reviewed. Excerpt plus link only.",
   },
