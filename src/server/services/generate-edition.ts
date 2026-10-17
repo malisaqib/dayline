@@ -102,7 +102,7 @@ export async function getOrCreateDailyEdition(readerDb: SupabaseClient, reader: 
     throw new GenerationError("no_articles", "No news sources could be reached. Try again in a few minutes.");
   }
 
-  const ranked = rankArticles(pool.articles, profile.topics, now, MAX_EDITION_STORIES);
+  const ranked = rankArticles(pool.articles, profile.weights, now, MAX_EDITION_STORIES);
   if (ranked.length === 0) {
     throw new GenerationError("no_matches", "No recent stories match your topics yet. Try adding another topic.");
   }
@@ -123,7 +123,7 @@ export async function getOrCreateDailyEdition(readerDb: SupabaseClient, reader: 
     localDate,
     timezone: EDITION_TIMEZONE,
     sourcesFetchedAt: pool.fetchedAt,
-    profile: { topics: profile.topics },
+    profile: { topics: profile.topics, weights: profile.weights },
     stories: buildEditionStories(ranked, bodies),
   });
 

@@ -6,6 +6,7 @@ import { ensureReader, getVerifiedReader } from "@/server/auth/session";
 import { createReaderSupabase } from "@/server/db/supabase-server";
 import { saveProfile } from "@/server/repositories/profiles";
 import { supportedTopicIds } from "@/server/sources/catalog";
+import { weightsForTopics } from "@/server/services/feedback";
 import { GenerationError, getOrCreateDailyEdition } from "@/server/services/generate-edition";
 
 export type ActionState = { error: string | null };
@@ -42,7 +43,7 @@ export async function completeOnboarding(_prev: ActionState, form: FormData): Pr
   const db = await createReaderSupabase();
   try {
     const reader = await ensureReader(db);
-    await saveProfile(db, reader.id, parsed.data);
+    await saveProfile(db, reader.id, parsed.data, await weightsForTopics(db, reader, parsed.data));
   } catch (error) {
     console.error("[onboarding] failed", error);
     return { error: "We couldn't save your topics. Please try again." };

@@ -6,6 +6,9 @@ import { presentEdition } from "@/domain/editions/presentation";
 import { MAX_STORIES_PER_SOURCE, rankArticles, type RankableArticle } from "@/domain/personalization/rank";
 import type { SourceUsage } from "@/domain/sources/usage";
 import type { TopicId } from "@/domain/topics";
+import { deriveTopicWeights } from "@/domain/personalization/weights";
+
+const w = (topics: TopicId[]) => deriveTopicWeights(topics, []);
 import { toPrintEdition } from "@/server/pdf/edition-to-print";
 
 const NOW = new Date("2026-10-17T06:00:00Z");
@@ -37,21 +40,21 @@ const POOL = [
 
 describe("rankArticles", () => {
   it("is deterministic and only returns topic matches", () => {
-    const a = rankArticles(POOL, ["space"], NOW, 6);
-    const b = rankArticles([...POOL].reverse(), ["space"], NOW, 6);
+    const a = rankArticles(POOL, w(["space"]), NOW, 6);
+    const b = rankArticles([...POOL].reverse(), w(["space"]), NOW, 6);
     assert.deepEqual(a.map((r) => r.article.contentHash), b.map((r) => r.article.contentHash));
     assert.ok(a.every((r) => r.matchedTopics.includes("space")));
   });
 
   it("caps stories per source and drops stale articles", () => {
-    const ranked = rankArticles(POOL, ["space", "science"], NOW, 6);
+    const ranked = rankArticles(POOL, w(["space", "science"]), NOW, 6);
     assert.ok(ranked.filter((r) => r.article.sourceId === "nasa").length <= MAX_STORIES_PER_SOURCE);
     assert.ok(!ranked.some((r) => r.article.sourceId === "sd"));
   });
 
   it("gives different profiles different front pages from the same pool", () => {
-    const space = rankArticles(POOL, ["space"], NOW, 6);
-    const pakistan = rankArticles(POOL, ["pakistan"], NOW, 6);
+    const space = rankArticles(POOL, w(["space"]), NOW, 6);
+    const pakistan = rankArticles(POOL, w(["pakistan"]), NOW, 6);
     assert.notEqual(space[0].article.contentHash, pakistan[0].article.contentHash);
   });
 });
@@ -71,7 +74,7 @@ describe("chooseStoryBody", () => {
 
 describe("presentEdition", () => {
   it("gives web and PDF the same stories in the same order", () => {
-    const ranked = rankArticles(POOL, ["space", "technology", "pakistan"], NOW, 6);
+    const ranked = rankArticles(POOL, w(["space", "technology", "pakistan"]), NOW, 6);
     const bodies = new Map<string, StoryBody>(
       ranked.map((r) => [r.article.contentHash, { kind: "publisher_excerpt", text: r.article.text, takeaways: [], model: null, promptVersion: null }]),
     );

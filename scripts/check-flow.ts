@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { deriveTopicWeights } from "@/domain/personalization/weights";
 import type { TopicId } from "@/domain/topics";
 import { ensureReader, type Reader } from "@/server/auth/session";
 import { getSupabaseAdmin } from "@/server/db/supabase-admin";
@@ -23,7 +24,7 @@ function check(ok: boolean, label: string): void {
 async function makeReader(topics: TopicId[]): Promise<{ db: SupabaseClient; reader: Reader }> {
   const db = anonClient();
   const reader = await ensureReader(db);
-  await saveProfile(db, reader.id, topics);
+  await saveProfile(db, reader.id, topics, deriveTopicWeights(topics, []));
   return { db, reader };
 }
 
