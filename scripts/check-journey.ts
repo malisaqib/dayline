@@ -35,9 +35,10 @@ async function onboard(page: Page, topics: string[]): Promise<string> {
   for (const topic of topics) {
     await page.locator(`input[name="topics"][value="${topic}"]`).check();
   }
-  await page.getByRole("button", { name: "Make my paper" }).click();
-  await page.waitForURL(/\/edition\/[0-9a-f-]{36}$/, { timeout: GENERATION_TIMEOUT_MS });
-  return page.url().split("/edition/")[1];
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Create my first paper" }).click();
+  await page.waitForURL(/\/edition\/[0-9a-f-]{36}(\?.*)?$/, { timeout: GENERATION_TIMEOUT_MS });
+  return new URL(page.url()).pathname.split("/edition/")[1];
 }
 
 async function readerJourney(browser: Browser): Promise<{ editionId: string; stories: Story[] }> {
@@ -56,7 +57,7 @@ async function readerJourney(browser: Browser): Promise<{ editionId: string; sto
   await page.goto(BASE_URL);
   await page.getByRole("button", { name: "Open today's paper" }).click();
   await page.waitForURL(/\/edition\//, { timeout: GENERATION_TIMEOUT_MS });
-  check(page.url().endsWith(editionId), "home 'Open today's paper' returns the same daily edition");
+  check(new URL(page.url()).pathname.endsWith(editionId), "home 'Open today's paper' returns the same daily edition");
 
   await page.goto(`${BASE_URL}/archive`);
   const archiveLinks = await page.locator(`a[href="/edition/${editionId}"]`).count();

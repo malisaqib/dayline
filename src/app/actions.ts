@@ -7,19 +7,34 @@ import { createReaderSupabase } from "@/server/db/supabase-server";
 import { saveProfile } from "@/server/repositories/profiles";
 import { supportedTopicIds } from "@/server/sources/catalog";
 import { FeedbackError, feedbackInputSchema, recordFeedback, weightsForTopics } from "@/server/services/feedback";
-import { GenerationError, getOrCreateDailyEdition } from "@/server/services/generate-edition";
+import { GenerationError, getOrCreateDailyEdition, type GenerationResult } from "@/server/services/generate-edition";
 
 export type ActionState = { error: string | null };
 
-async function generateAndOpen(): Promise<ActionState> {
+function editionPath(result: GenerationResult, fromOnboarding: boolean): string {
+  const params = new URLSearchParams();
+  if (fromOnboarding && !result.stats.reused) {
+    params.set("welcome", "1");
+  }
+  if (!result.stats.reused && result.stats.failedSources.length > 0) {
+    params.set("sources", "partial");
+  }
+  const query = params.toString();
+  if (query) {
+    return `/edition/${result.edition.id}?${query}`;
+  }
+  return `/edition/${result.edition.id}`;
+}
+
+async function generateAndOpen(fromOnboarding = false): Promise<ActionState> {
   const db = await createReaderSupabase();
   const reader = await getVerifiedReader(db);
   if (!reader) {
     return { error: "Your session expired. Please choose your topics again." };
   }
-  let editionId: string;
+  let path: string;
   try {
-    editionId = (await getOrCreateDailyEdition(db, reader)).edition.id;
+    path = editionPath(await getOrCreateDailyEdition(db, reader), fromOnboarding);
   } catch (error) {
     if (error instanceof GenerationError) {
       return { error: error.message };
@@ -27,7 +42,7 @@ async function generateAndOpen(): Promise<ActionState> {
     console.error("[generate] failed", error);
     return { error: "Something went wrong while making your paper. Please try again." };
   }
-  redirect(`/edition/${editionId}`);
+  redirect(path);
 }
 
 export async function completeOnboarding(_prev: ActionState, form: FormData): Promise<ActionState> {
@@ -48,7 +63,7 @@ export async function completeOnboarding(_prev: ActionState, form: FormData): Pr
     console.error("[onboarding] failed", error);
     return { error: "We couldn't save your topics. Please try again." };
   }
-  return generateAndOpen();
+  return generateAndOpen(true);
 }
 
 export async function openTodaysEdition(): Promise<ActionState> {
