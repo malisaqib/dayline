@@ -1,7 +1,23 @@
+import path from "node:path";
 import { Document, Font, Link, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { PresentedHighlight } from "@/domain/editions/presentation";
 
-// Never split words with hyphens: broken headlines read badly and the PDF text must match the web text.
+const FONT_DIR = path.join(process.cwd(), "src", "server", "pdf", "fonts");
+
+Font.register({
+  family: "Playfair",
+  fonts: [
+    { src: path.join(FONT_DIR, "PlayfairDisplay-700.ttf"), fontWeight: 700 },
+    { src: path.join(FONT_DIR, "PlayfairDisplay-900.ttf"), fontWeight: 900 },
+  ],
+});
+Font.register({
+  family: "Geist",
+  fonts: [
+    { src: path.join(FONT_DIR, "Geist-400.ttf"), fontWeight: 400 },
+    { src: path.join(FONT_DIR, "Geist-600.ttf"), fontWeight: 600 },
+  ],
+});
 Font.registerHyphenationCallback((word) => [word]);
 
 export type PrintStory = {
@@ -9,99 +25,153 @@ export type PrintStory = {
   kicker: string;
   body: string;
   takeaways: string[];
-  /** Provenance line, e.g. "Publisher's excerpt · 17 Oct 2026". */
   meta: string;
   sourceName: string;
   sourceUrl: string;
+  topicLabels: string[];
+  reasons: string[];
 };
 
 export type PrintEdition = {
   dateLabel: string;
   timezone: string;
   editionLabel: string;
-  /** Shown as a banner when the content is not a real generated edition. */
   fixtureNotice: string | null;
   highlights: PresentedHighlight[];
   lead: PrintStory;
   stories: PrintStory[];
 };
 
-const INK = "#1c1a17";
-const PAPER = "#f7f3ea";
-const ACCENT = "#9a2b1f";
-const RULE = "#bdb5a6";
-const MUTED = "#6b655b";
+const PAPER = "#f8f4ec";
+const CARD = "#fffdf8";
+const INK = "#1d2433";
+const MUTED = "#4d5769";
+const ACCENT = "#d9573b";
+const ACCENT_STRONG = "#a8331a";
+const ACCENT_SOFT = "#fbe9e3";
+const RULE = "#e2d8c7";
 
-// Built-in PDF fonts (Times, Helvetica) avoid runtime font downloads on the host.
 const styles = StyleSheet.create({
-  page: { backgroundColor: PAPER, color: INK, paddingTop: 30, paddingBottom: 40, paddingHorizontal: 36, fontFamily: "Times-Roman" },
-  fixtureBanner: {
-    backgroundColor: ACCENT,
-    color: "#ffffff",
-    fontFamily: "Helvetica-Bold",
-    fontSize: 8,
-    letterSpacing: 1,
-    textAlign: "center",
-    paddingVertical: 4,
-    marginBottom: 10,
-  },
-  masthead: { fontFamily: "Times-Bold", fontSize: 46, textAlign: "center", letterSpacing: 3 },
-  tagline: { fontFamily: "Times-Italic", fontSize: 10, textAlign: "center", marginTop: 2 },
-  dateline: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderTopWidth: 1.5,
-    borderBottomWidth: 0.5,
-    borderColor: INK,
-    paddingVertical: 4,
-    marginTop: 8,
-    marginBottom: 14,
-    fontFamily: "Helvetica",
-    fontSize: 8,
-  },
-  leadHeadline: { fontFamily: "Times-Bold", fontSize: 24, lineHeight: 1.15, marginBottom: 6 },
-  leadBody: { fontSize: 11, lineHeight: 1.45, textAlign: "justify" },
-  sectionRule: { borderBottomWidth: 0.5, borderColor: RULE, marginVertical: 12 },
-  columns: { flexDirection: "row", gap: 18 },
+  page: { backgroundColor: PAPER, color: INK, paddingTop: 28, paddingBottom: 44, paddingHorizontal: 34, fontFamily: "Geist", fontSize: 10 },
+  fixtureBanner: { backgroundColor: ACCENT, color: INK, fontWeight: 600, fontSize: 8, letterSpacing: 1, textAlign: "center", paddingVertical: 4, marginBottom: 10, borderRadius: 4 },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  brand: { flexDirection: "row", alignItems: "center", gap: 8 },
+  mark: { width: 30, height: 30, borderRadius: 6, backgroundColor: INK, color: PAPER, fontFamily: "Playfair", fontWeight: 900, fontSize: 19, textAlign: "center", paddingTop: 3 },
+  masthead: { fontFamily: "Playfair", fontWeight: 900, fontSize: 34, letterSpacing: 0.5 },
+  headerMeta: { alignItems: "flex-end" },
+  headerDate: { fontWeight: 600, fontSize: 10 },
+  headerSub: { fontSize: 8, color: MUTED, marginTop: 2 },
+  tagline: { fontSize: 9, color: MUTED, marginTop: 6 },
+  accentRule: { height: 3, backgroundColor: ACCENT, borderRadius: 2, marginTop: 8, marginBottom: 14 },
+  eyebrow: { fontWeight: 600, fontSize: 7.5, letterSpacing: 1.2, color: ACCENT_STRONG },
+  brief: { backgroundColor: CARD, borderRadius: 8, borderLeftWidth: 3, borderLeftColor: ACCENT, borderWidth: 0.5, borderColor: RULE, padding: 10, marginBottom: 14 },
+  briefItem: { flexDirection: "row", marginTop: 5 },
+  briefNumber: { fontFamily: "Playfair", fontWeight: 900, fontSize: 13, width: 16, color: ACCENT },
+  briefText: { flex: 1, fontSize: 10, lineHeight: 1.4 },
+  briefSource: { fontSize: 7.5, color: MUTED },
+  briefNote: { fontSize: 7, color: MUTED, marginTop: 6 },
+  lead: { backgroundColor: CARD, borderRadius: 10, borderTopWidth: 3, borderTopColor: ACCENT, borderWidth: 0.5, borderColor: RULE, padding: 14, marginBottom: 14 },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 4, alignItems: "center", marginBottom: 6 },
+  badge: { backgroundColor: ACCENT, color: INK, fontWeight: 600, fontSize: 7, letterSpacing: 1, paddingVertical: 2, paddingHorizontal: 6, borderRadius: 3 },
+  chip: { borderWidth: 0.5, borderColor: RULE, borderRadius: 8, paddingVertical: 1.5, paddingHorizontal: 6, fontSize: 7, color: INK },
+  number: { fontFamily: "Playfair", fontWeight: 900, fontSize: 13, color: ACCENT },
+  kicker: { fontWeight: 600, fontSize: 7, letterSpacing: 0.6, color: ACCENT_STRONG, marginBottom: 3 },
+  leadHeadline: { fontFamily: "Playfair", fontWeight: 900, fontSize: 24, lineHeight: 1.15, marginBottom: 6 },
+  leadBody: { fontSize: 11, lineHeight: 1.5 },
+  takeawayBox: { marginTop: 7, borderLeftWidth: 2, borderLeftColor: ACCENT_SOFT, paddingLeft: 8 },
+  takeawayTitle: { fontWeight: 600, fontSize: 7, letterSpacing: 1, color: MUTED, marginBottom: 2 },
+  takeaway: { fontSize: 9.5, lineHeight: 1.4, marginTop: 1.5 },
+  columns: { flexDirection: "row", gap: 12, marginBottom: 12 },
   column: { flex: 1 },
-  story: { marginBottom: 12 },
-  headline: { fontFamily: "Times-Bold", fontSize: 14, lineHeight: 1.2, marginBottom: 4 },
-  body: { fontSize: 10, lineHeight: 1.45, textAlign: "justify" },
-  source: { fontFamily: "Helvetica", fontSize: 7.5, marginTop: 4, color: ACCENT },
-  meta: { fontFamily: "Helvetica", fontSize: 7, marginTop: 3, color: MUTED },
-  kicker: { fontFamily: "Helvetica-Bold", fontSize: 7, letterSpacing: 0.5, color: ACCENT, marginBottom: 2 },
-  takeaway: { fontSize: 9.5, lineHeight: 1.35, marginTop: 2, paddingLeft: 8 },
-  brief: { borderWidth: 0.75, borderColor: INK, padding: 8, marginBottom: 12 },
-  briefTitle: { fontFamily: "Helvetica-Bold", fontSize: 8, letterSpacing: 1, color: ACCENT, marginBottom: 4 },
-  briefItem: { flexDirection: "row", marginTop: 3 },
-  briefNumber: { fontFamily: "Times-Bold", fontSize: 11, width: 14, color: ACCENT },
-  briefText: { flex: 1, fontSize: 10, lineHeight: 1.35 },
-  briefSource: { fontFamily: "Helvetica", fontSize: 7, color: MUTED },
-  briefNote: { fontFamily: "Helvetica", fontSize: 6.5, color: MUTED, marginTop: 5 },
-  footer: { position: "absolute", bottom: 16, left: 36, right: 36, fontFamily: "Helvetica", fontSize: 7, textAlign: "center", color: MUTED },
+  story: { backgroundColor: CARD, borderRadius: 8, borderWidth: 0.5, borderColor: RULE, padding: 10 },
+  headline: { fontFamily: "Playfair", fontWeight: 700, fontSize: 13.5, lineHeight: 1.2, marginBottom: 4 },
+  body: { fontSize: 9.5, lineHeight: 1.45 },
+  footerRow: { marginTop: 7, borderTopWidth: 0.5, borderTopColor: RULE, paddingTop: 5 },
+  why: { fontSize: 7.5, color: INK, marginBottom: 2 },
+  meta: { fontSize: 7, color: MUTED },
+  source: { fontSize: 7.5, color: ACCENT_STRONG, marginTop: 2 },
+  footer: { position: "absolute", bottom: 18, left: 34, right: 34, flexDirection: "row", justifyContent: "space-between", fontSize: 7, color: MUTED },
 });
 
-function SourceLine({ story }: { story: PrintStory }) {
+function whyLine(story: PrintStory): string | null {
+  const reason = story.reasons.find((r) => r.startsWith("Matches your"));
+  if (!reason) {
+    return null;
+  }
+  return reason.replace(/ \((boosted|reduced) by your feedback\)/g, "");
+}
+
+function renderWhy(story: PrintStory) {
+  const why = whyLine(story);
+  if (!why) {
+    return null;
+  }
+  return <Text style={styles.why}>Why: {why}</Text>;
+}
+
+function renderKicker(story: PrintStory) {
+  if (!story.kicker) {
+    return null;
+  }
+  return <Text style={styles.kicker}>{story.kicker.toUpperCase()}</Text>;
+}
+
+function renderBody(story: PrintStory, style: (typeof styles)["body"]) {
+  if (!story.body) {
+    return <Text style={[style, { color: MUTED }]}>The publisher shares only the headline. Open the original to read it.</Text>;
+  }
+  return <Text style={style}>{story.body}</Text>;
+}
+
+function Chips({ story, badge }: { story: PrintStory; badge: string | null }) {
   return (
-    <>
-      <Text style={styles.meta}>{story.meta}</Text>
-      <Text style={styles.source}>
-      Source: {story.sourceName} {"— "}
-        <Link src={story.sourceUrl}>Read the original</Link>
-      </Text>
-    </>
+    <View style={styles.chipRow}>
+      {renderBadge(badge)}
+      {story.topicLabels.map((label) => (
+        <Text key={label} style={styles.chip}>
+          {label}
+        </Text>
+      ))}
+    </View>
   );
 }
 
+function renderBadge(badge: string | null) {
+  if (!badge) {
+    return null;
+  }
+  if (badge === "TOP STORY") {
+    return <Text style={styles.badge}>{badge}</Text>;
+  }
+  return <Text style={styles.number}>{badge}</Text>;
+}
+
 function Takeaways({ items }: { items: string[] }) {
-  return items.length === 0 ? null : (
-    <View style={{ marginTop: 4 }}>
+  if (items.length === 0) {
+    return null;
+  }
+  return (
+    <View style={styles.takeawayBox}>
+      <Text style={styles.takeawayTitle}>WHAT HAPPENED</Text>
       {items.map((item) => (
         <Text key={item} style={styles.takeaway}>
           {"• "}
           {item}
         </Text>
       ))}
+    </View>
+  );
+}
+
+function StoryFooter({ story }: { story: PrintStory }) {
+  return (
+    <View style={styles.footerRow}>
+      {renderWhy(story)}
+      <Text style={styles.meta}>{story.meta}</Text>
+      <Text style={styles.source}>
+        {story.sourceName} {"· "}
+        <Link src={story.sourceUrl}>Read the original</Link>
+      </Text>
     </View>
   );
 }
@@ -119,7 +189,7 @@ function TodayInThree({ items }: { items: PresentedHighlight[] }) {
   }
   return (
     <View style={styles.brief} wrap={false}>
-      <Text style={styles.briefTitle}>TODAY IN THREE</Text>
+      <Text style={styles.eyebrow}>TODAY IN THREE</Text>
       {items.map((item, index) => (
         <View key={`${item.position}-${index}`} style={styles.briefItem}>
           <Text style={styles.briefNumber}>{index + 1}</Text>
@@ -136,19 +206,32 @@ function TodayInThree({ items }: { items: PresentedHighlight[] }) {
   );
 }
 
-function StoryBlock({ story }: { story: PrintStory }) {
+function LeadStory({ story }: { story: PrintStory }) {
   return (
-    <View style={styles.story} wrap={false}>
-      {story.kicker && <Text style={styles.kicker}>{story.kicker.toUpperCase()}</Text>}
-      <Text style={styles.headline}>{story.headline}</Text>
-      {story.body && <Text style={styles.body}>{story.body}</Text>}
+    <View style={styles.lead}>
+      <Chips story={story} badge="TOP STORY" />
+      {renderKicker(story)}
+      <Text style={styles.leadHeadline}>{story.headline}</Text>
+      {renderBody(story, styles.leadBody)}
       <Takeaways items={story.takeaways} />
-      <SourceLine story={story} />
+      <StoryFooter story={story} />
     </View>
   );
 }
 
-// Rows of two keep reading order (left, right, next row) even when a row breaks onto the next page.
+function StoryBlock({ story, position }: { story: PrintStory; position: number }) {
+  return (
+    <View style={styles.story} wrap={false}>
+      <Chips story={story} badge={String(position).padStart(2, "0")} />
+      {renderKicker(story)}
+      <Text style={styles.headline}>{story.headline}</Text>
+      {renderBody(story, styles.body)}
+      <Takeaways items={story.takeaways} />
+      <StoryFooter story={story} />
+    </View>
+  );
+}
+
 function pairIntoRows<T>(items: T[]): T[][] {
   const rows: T[][] = [];
   for (let i = 0; i < items.length; i += 2) {
@@ -157,43 +240,60 @@ function pairIntoRows<T>(items: T[]): T[][] {
   return rows;
 }
 
+function renderFixture(notice: string | null) {
+  if (!notice) {
+    return null;
+  }
+  return <Text style={styles.fixtureBanner}>{notice}</Text>;
+}
+
+function renderFiller(row: PrintStory[]) {
+  if (row.length > 1) {
+    return null;
+  }
+  return <View style={styles.column} />;
+}
+
 export function EditionDocument({ edition }: { edition: PrintEdition }) {
-  const rows = pairIntoRows(edition.stories);
+  const rows = pairIntoRows(edition.stories.map((story, index) => ({ story, position: index + 2 })));
 
   return (
-    <Document title={`Dayline — ${edition.dateLabel}`} author="Dayline">
+    <Document title={`Dayline · ${edition.dateLabel}`} author="Dayline">
       <Page size="A4" style={styles.page}>
-        {edition.fixtureNotice && <Text style={styles.fixtureBanner}>{edition.fixtureNotice}</Text>}
-        <Text style={styles.masthead}>DAYLINE</Text>
-        <Text style={styles.tagline}>Your interests. One morning paper. Five minutes well spent.</Text>
-        <View style={styles.dateline}>
-          <Text>{edition.dateLabel}</Text>
-          <Text>{edition.editionLabel}</Text>
-          <Text>{edition.timezone}</Text>
+        {renderFixture(edition.fixtureNotice)}
+        <View style={styles.header}>
+          <View style={styles.brand}>
+            <Text style={styles.mark}>D</Text>
+            <Text style={styles.masthead}>Dayline</Text>
+          </View>
+          <View style={styles.headerMeta}>
+            <Text style={styles.headerDate}>{edition.dateLabel}</Text>
+            <Text style={styles.headerSub}>
+              {edition.editionLabel} · {edition.timezone}
+            </Text>
+          </View>
         </View>
+        <Text style={styles.tagline}>Your interests. One morning paper. Five minutes well spent.</Text>
+        <View style={styles.accentRule} />
 
         <TodayInThree items={edition.highlights} />
-
-        {edition.lead.kicker && <Text style={styles.kicker}>{edition.lead.kicker.toUpperCase()}</Text>}
-        <Text style={styles.leadHeadline}>{edition.lead.headline}</Text>
-        {edition.lead.body && <Text style={styles.leadBody}>{edition.lead.body}</Text>}
-        <Takeaways items={edition.lead.takeaways} />
-        <SourceLine story={edition.lead} />
-
-        <View style={styles.sectionRule} />
+        <LeadStory story={edition.lead} />
 
         {rows.map((row) => (
-          <View key={row[0].sourceUrl} style={styles.columns} wrap={false}>
-            {row.map((story) => (
+          <View key={row[0].story.sourceUrl} style={styles.columns} wrap={false}>
+            {row.map(({ story, position }) => (
               <View key={story.sourceUrl + story.headline} style={styles.column}>
-                <StoryBlock story={story} />
+                <StoryBlock story={story} position={position} />
               </View>
             ))}
-            {row.length === 1 && <View style={styles.column} />}
+            {renderFiller(row.map((item) => item.story))}
           </View>
         ))}
 
-        <Text style={styles.footer} render={({ pageNumber, totalPages }) => `Dayline · page ${pageNumber} of ${totalPages}`} fixed />
+        <View style={styles.footer} fixed>
+          <Text>Dayline · every story links to its original publisher</Text>
+          <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
+        </View>
       </Page>
     </Document>
   );
