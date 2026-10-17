@@ -2,6 +2,23 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
+## Phase 3: automatic daily generation. Endpoint and cron VERIFIED; authorized production run PENDING one manual step
+- **Endpoint:** `POST /api/internal/daily-editions` checks `Bearer CRON_SECRET` in constant time. A missing or wrong token, or an unset server secret, gets 401. The response is counts only: `{localDate, examined, created, reused, failed, durationMs}`.
+- **Job** (`src/server/services/daily-job.ts`):
+  - Profiles in keyset pages of 100, 3 readers at a time, each through the existing `getOrCreateDailyEdition`, so ranking, weights, caching, source isolation and snapshots are unchanged.
+  - The article pool is fetched once per run, and only if someone needs a new edition.
+  - A failing reader is counted and logged with an id prefix only; the others continue.
+  - Readers who sign up after the run still get their paper on demand.
+- **Schedule:** Supabase Cron job `dayline-daily-editions` runs `0 1 * * *`, which is **01:00 UTC = 06:00 Asia/Karachi**. It is **active**. `internal.trigger_daily_editions()` (migration 0006) reads the URL and token from Vault. Setup and operation are in `docs/daily-schedule.md`; `npm run cron:setup` is idempotent.
+- **Verified locally:**
+  - `npm test`: 38 of 38 (auth 401/200, counts-only response, reuse, failure isolation, paging, one pool fetch, no id leakage).
+  - `check:daily`: 6 of 6. The scheduled edition used the reader's saved weights. The second run gave created 0 / reused 33. The edition rejected an update even with the secret key.
+  - `check:scheduled` against the local server: PASSED. Covers the 401s, run 1 creating the missing edition (created 1, reused 31), run 2 creating nothing (reused 32), and the reader opening that scheduled edition via "Open today's paper", the archive and the PDF (200).
+- **Verified on production (deployment bf19931):** no token and wrong token get 401; GET gets 405. `/api/health` reports `cron.missingFields: ["CRON_SECRET"]` without ever showing a value, so health returns `ok:false` until the secret is set.
+- **PENDING (user):** add `CRON_SECRET` to Vercel Production, using the same value as `.env.local`, and redeploy. Then run `npm run cron:setup -- --trigger` and `BASE_URL=https://dayline-swart.vercel.app npm run check:scheduled`.
+- **Commits:** `c434290` (job and endpoint), `bf19931` (cron schedule and docs).
+- **Limits:** a single run must fit in 300 s (about 5 s for 33 readers now). There is no automatic retry; on-demand generation covers gaps.
+
 ## Internet Pulse sources. VERIFIED locally and on production (deployment c8a6765)
 - **CISA KEV** (`src/server/sources/cisa-kev.ts`): official JSON. Keeps entries added within the 96 h age limit (at most 8), validated with Zod; malformed entries are counted as rejected. Uses official fields only (name, CVE, vendor/product, description, first sentence of the required action, due date). Links to the CISA catalog search for the CVE. Topics: Cybersecurity and Technology.
 - **Hacker News** (`hacker-news.ts`): top 20 ids, item details fetched 5 at a time (6 s timeout per item). Drops job, dead, deleted, text-only and stale items, and keeps 8 by points adjusted for age. Shown as headline and original link only, labelled with points and comments; linked pages are not fetched. Topic: Technology.
@@ -97,7 +114,7 @@ Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: htt
 - PDFs are rendered on request from the saved snapshot and not stored.
 
 ## Next milestone
-Scheduled daily generation (Supabase Cron calling an authenticated endpoint), then the submission package (architecture diagram, README, Loom).
+After the authorized production run: the submission package (architecture diagram, README, Loom).
 
 ## Deferred
 Scheduling, "Since your last read", elaborate styling.
