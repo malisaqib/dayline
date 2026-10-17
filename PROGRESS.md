@@ -2,8 +2,23 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
-## Final phases 3 to 7 (2026-10-17). Committed locally; NOT yet pushed or verified on production
-Production still runs commit `c164967`. Everything below passes `typecheck`, `lint`, `npm test` (87 of 87) and `build`, but browser checks on production wait for a push.
+## Final phases 3 to 7 (2026-10-17). Pushed; verified on production (commit `97e6375`)
+- **Production checks:**
+  - `check:auth` passes:
+    - sign-up with confirm password and show password
+    - wrong password refused
+    - sign-in, refresh, sign-out and a second browser
+    - forgot password → recovery link → set a new password → sign in with it
+    - expired reset page
+    - signed-out `/onboarding` and `/archive` → sign-in
+    - two-reader isolation (page and PDF)
+  - `check:journey` passes on onboarding → paper → archive → PDF, feedback, preview, skip/undo and isolation. One failure was an outdated skip-copy assertion, now fixed.
+  - The downloaded PDF shows the saved Today in three box with story numbers and source links (inspected page 1).
+- **Since the list below:**
+  - Password reset, confirm password and show/hide on every password field. Password fields keep their value after an error.
+  - Larger base type (17px root, 1.6 line height) with no fixed 11 to 13px text, and brighter muted text.
+  - A light/dark theme toggle that remembers the choice per browser. All pages (overview, sign-in, app) use the same tokens; the product screenshots stay dark by nature.
+  - The paper section uses a top navbar, with full-width, two-column story cards.
 
 - **Accounts (change requested by the user):**
   - Email and password only. Google, email codes and guest ("try without an account") use were removed.
