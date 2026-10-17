@@ -44,25 +44,25 @@ export function PaperFilterProvider({ children }: { children: ReactNode }) {
   return <FilterContext.Provider value={{ topic, setTopic }}>{children}</FilterContext.Provider>;
 }
 
-const CHIP = "flex min-h-11 w-full items-center justify-between rounded-lg px-3 text-left text-sm transition-colors duration-[185ms]";
+const CHIP = "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm transition-colors duration-[185ms]";
 
 function chipClass(active: boolean): string {
   if (active) {
-    return `${CHIP} bg-accent/15 font-semibold text-accent-strong`;
+    return `${CHIP} border-accent bg-accent font-semibold text-night`;
   }
-  return `${CHIP} text-ink/80 hover:bg-ink/5`;
+  return `${CHIP} border-rule text-ink/80 hover:border-ink/40`;
 }
 
 export function FilterNav({ counts, total }: { counts: TopicCount[]; total: number }) {
   const { topic, setTopic } = useContext(FilterContext);
   return (
-    <div role="group" aria-label="Show stories by topic" className="space-y-1">
+    <div role="group" aria-label="Show stories by topic" className="flex gap-2 overflow-x-auto pb-1">
       <button type="button" aria-pressed={topic === null} className={chipClass(topic === null)} onClick={() => setTopic(null)}>
-        All stories <span className="text-muted">{total}</span>
+        All stories <span className="opacity-70">{total}</span>
       </button>
       {counts.map((item) => (
         <button key={item.topic} type="button" aria-pressed={topic === item.topic} className={chipClass(topic === item.topic)} onClick={() => setTopic(item.topic)}>
-          {item.label} <span className="text-muted">{item.count}</span>
+          {item.label} <span className="opacity-70">{item.count}</span>
         </button>
       ))}
     </div>

@@ -153,38 +153,41 @@ export function StoryCard({ story, position, footer }: StoryCardProps) {
   const accentBorder = isLead ? "border-t-4 border-t-accent" : "";
   return (
     <article id={`story-${position}`} className={`${ui.card} ${padding} ${accentBorder} scroll-mt-24`}>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        {renderLabel(isLead, position)}
-        {story.topicLabels.map((label) => (
-          <span key={label} className={ui.chip}>
-            {label}
-          </span>
-        ))}
-        <span className={ui.meta}>
-          {story.sourceName} · {story.publishedLabel}
-        </span>
-      </div>
-      {renderKicker(story)}
-      {renderInterestBadges(story)}
-      <h2 className={`mt-3 font-serif font-bold leading-snug ${headlineSize}`}>
-        <TrackedLink href={story.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-accent-strong hover:underline">
-          {story.headline}
-        </TrackedLink>
-      </h2>
-      {renderBody(story, isLead)}
-      {renderTakeaways(story)}
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <div className={`${ui.meta} flex flex-wrap items-center gap-3`}>
-          <span className={badgeClass(story)}>{story.bodyLabel}</span>
-          {renderReadingTime(story.readingMinutes)}
+      <div className="grid gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            {renderLabel(isLead, position)}
+            {story.topicLabels.map((label) => (
+              <span key={label} className={ui.chip}>
+                {label}
+              </span>
+            ))}
+          </div>
+          {renderKicker(story)}
+          {renderInterestBadges(story)}
+          <h2 className={`mt-3 font-serif font-bold leading-snug ${headlineSize}`}>
+            <TrackedLink href={story.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-accent-strong hover:underline">
+              {story.headline}
+            </TrackedLink>
+          </h2>
+          {renderBody(story, isLead)}
+          {renderTakeaways(story)}
+          {renderWhy(story)}
         </div>
-        <TrackedLink href={story.sourceUrl} target="_blank" rel="noopener noreferrer" className={ui.secondaryButton}>
-          Read original article
-          <ExternalIcon />
-          <span className="sr-only">(opens {story.sourceName} in a new tab)</span>
-        </TrackedLink>
+        <div className="flex flex-col gap-3 border-t border-rule pt-4 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+          <p className="text-sm font-semibold">{story.sourceName}</p>
+          <p className={ui.meta}>{story.publishedLabel}</p>
+          <div className={`${ui.meta} flex flex-wrap items-center gap-3`}>
+            <span className={badgeClass(story)}>{story.bodyLabel}</span>
+            {renderReadingTime(story.readingMinutes)}
+          </div>
+          <TrackedLink href={story.sourceUrl} target="_blank" rel="noopener noreferrer" className={`${ui.secondaryButton} lg:mt-auto`}>
+            Read original article
+            <ExternalIcon />
+            <span className="sr-only">(opens {story.sourceName} in a new tab)</span>
+          </TrackedLink>
+        </div>
       </div>
-      {renderWhy(story)}
       {footer}
     </article>
   );

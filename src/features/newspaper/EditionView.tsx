@@ -40,29 +40,28 @@ function topicCounts(stories: PresentedStory[]): TopicCount[] {
   return [...counts.entries()].map(([topic, count]) => ({ topic, label: topicLabel(topic as PresentedStory["topics"][number]), count }));
 }
 
-function renderIndex(stories: PresentedStory[], counts: TopicCount[]) {
+function renderPaperBar(stories: PresentedStory[], counts: TopicCount[]) {
   return (
-    <nav aria-label="In this paper" className={`${ui.card} p-5`}>
-      <h2 className="font-serif text-lg font-bold">In this paper</h2>
-      <div className="mt-3">
+    <nav aria-label="In this paper" className={`${ui.card} flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between`}>
+      <div className="min-w-0">
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-accent">In this paper</h2>
         <FilterNav counts={counts} total={stories.length} />
       </div>
-      <div className="mt-4 border-t border-rule pt-4">
+      <div className="lg:w-64 lg:shrink-0">
         <ReadingProgress total={stories.length} />
       </div>
-      <ol className="mt-3 hidden lg:block">
-        {stories.map((story, index) => (
-          <li key={story.id} className="flex gap-3 text-sm">
-            <span className="w-5 shrink-0 font-serif font-bold text-accent" aria-hidden="true">
-              {index + 1}
-            </span>
-            <a href={`#story-${index + 1}`} className="line-clamp-2 py-2 hover:text-accent-strong hover:underline">
-              {story.headline}
-            </a>
-          </li>
-        ))}
-      </ol>
     </nav>
+  );
+}
+
+function renderRail(rail: ReactNode) {
+  if (!rail) {
+    return null;
+  }
+  return (
+    <aside className="grid gap-4 border-t border-rule pt-8 md:grid-cols-2" aria-label="Paper tools">
+      {rail}
+    </aside>
   );
 }
 
@@ -70,34 +69,30 @@ export function EditionView({ edition, eyebrow, actions, notices, brief, storyFo
   const counts = topicCounts(edition.stories);
   return (
     <PaperFilterProvider>
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] xl:gap-8">
-        <div className="min-w-0 space-y-4">
-          <header className="flex flex-col gap-4 border-b border-rule pb-5 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className={ui.eyebrow}>{eyebrow}</p>
-              <h1 className="mt-2 font-serif text-3xl font-bold leading-tight">{edition.dateLabel}</h1>
-              <p className={`${ui.meta} mt-1`}>
-                {storyCountLabel(edition.stories.length)} · about {estimatedReadingMinutes(edition.stories)} min (estimate) · {edition.editionLabel}
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">{actions}</div>
-          </header>
-          {notices}
-          <FilterNotice counts={counts} />
-          {brief}
-          <RevealList className="space-y-4" label="Stories">
-            {edition.stories.map((story, index) => (
-              <RevealItem key={story.id}>
-                <FilteredStory topics={story.topics}>{storyWrapper(story, <StoryCard story={story} position={index + 1} footer={storyFooter(story)} />)}</FilteredStory>
-              </RevealItem>
-            ))}
-          </RevealList>
-          <p className="border-t border-rule pt-6 text-center font-serif text-lg text-muted">You&apos;ve reached the end of today&apos;s paper.</p>
-        </div>
-        <aside className="space-y-4 xl:sticky xl:top-6 xl:self-start" aria-label="Paper tools">
-          {renderIndex(edition.stories, counts)}
-          {rail}
-        </aside>
+      <div className="space-y-5">
+        <header className="flex flex-col gap-4 border-b border-rule pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className={ui.eyebrow}>{eyebrow}</p>
+            <h1 className="mt-2 font-serif text-3xl font-bold leading-tight sm:text-4xl">{edition.dateLabel}</h1>
+            <p className={`${ui.meta} mt-1`}>
+              {storyCountLabel(edition.stories.length)} · about {estimatedReadingMinutes(edition.stories)} min (estimate) · {edition.editionLabel}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">{actions}</div>
+        </header>
+        {notices}
+        {brief}
+        {renderPaperBar(edition.stories, counts)}
+        <FilterNotice counts={counts} />
+        <RevealList className="space-y-5" label="Stories">
+          {edition.stories.map((story, index) => (
+            <RevealItem key={story.id}>
+              <FilteredStory topics={story.topics}>{storyWrapper(story, <StoryCard story={story} position={index + 1} footer={storyFooter(story)} />)}</FilteredStory>
+            </RevealItem>
+          ))}
+        </RevealList>
+        <p className="border-t border-rule pt-6 text-center font-serif text-lg text-muted">You&apos;ve reached the end of today&apos;s paper.</p>
+        {renderRail(rail)}
       </div>
     </PaperFilterProvider>
   );

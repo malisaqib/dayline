@@ -8,18 +8,17 @@ export async function AccountBlock() {
   const reader = await getVerifiedReader(await createReaderSupabase());
   if (!reader || reader.isAnonymous) {
     return (
-      <Link href="/signin" className={`${ui.primaryButton} w-full`}>
+      <Link href="/signin" className={ui.primaryButton}>
         Sign in
       </Link>
     );
   }
   return (
-    <div>
-      <p className="text-xs text-muted">Signed in as</p>
-      <p className="truncate text-sm font-semibold" title={reader.email ?? undefined}>
+    <div className="flex items-center gap-2">
+      <span className="hidden max-w-48 truncate text-[13px] text-muted xl:inline" title={reader.email ?? undefined}>
         {reader.email}
-      </p>
-      <SignOutButton className={`${ui.secondaryButton} mt-3 w-full`} />
+      </span>
+      <SignOutButton className={ui.secondaryButton} />
     </div>
   );
 }
