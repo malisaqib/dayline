@@ -8,8 +8,8 @@ import { InView, Reveal, RevealCell, RevealGroup } from "@/features/shared/Revea
 
 export const dynamic = "force-dynamic";
 
-const pill = "inline-flex min-h-12 items-center justify-center rounded-full bg-glow px-7 text-base font-semibold text-night transition-colors duration-[185ms] hover:bg-white";
-const ghostPill = "inline-flex min-h-12 items-center justify-center rounded-full border border-white/20 px-6 text-base font-semibold text-white transition-colors duration-[185ms] hover:border-white/60";
+const pill = "inline-flex min-h-12 items-center justify-center rounded-full bg-glow px-7 text-base font-semibold text-on-accent transition-colors duration-[185ms] hover:brightness-110";
+const ghostPill = "inline-flex min-h-12 items-center justify-center rounded-full border border-ink/20 px-6 text-base font-semibold text-ink transition-colors duration-[185ms] hover:border-ink/60";
 
 const ROTATING = ["your topics", "Pakistan", "cybersecurity", "space", "the world"];
 
@@ -62,14 +62,14 @@ function renderHero() {
     <section className="relative overflow-hidden px-4 pb-20 pt-16 sm:px-6 sm:pt-24">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_80%_100%,rgb(193_59_31/0.45),transparent_60%),radial-gradient(ellipse_70%_60%_at_15%_20%,rgb(76_52_140/0.35),transparent_60%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_80%_100%,var(--glow-warm),transparent_60%),radial-gradient(ellipse_70%_60%_at_15%_20%,var(--glow-cool),transparent_60%)]"
       />
       <Reveal className="relative mx-auto max-w-4xl text-center">
-        <h1 className="font-serif text-4xl font-bold leading-[1.1] text-white sm:text-6xl">
+        <h1 className="font-serif text-4xl font-bold leading-[1.1] text-ink sm:text-6xl">
           <span className="block">Your morning paper for</span>
           <RotatingWord words={ROTATING} className="text-glow" />
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-night-muted sm:text-xl">
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-muted sm:text-xl">
           Dayline reads trusted newsrooms and official alerts overnight, then hands you one short, source-linked paper at 06:00 Pakistan time. Read
           it on the web or as a PDF.
         </p>
@@ -81,9 +81,9 @@ function renderHero() {
             See a sample
           </a>
         </div>
-        <p className="mt-5 text-sm text-night-muted">
+        <p className="mt-5 text-sm text-muted">
           Free. Already reading Dayline?{" "}
-          <Link href="/signin" className="font-semibold text-white underline decoration-glow/60 underline-offset-4 hover:decoration-glow">
+          <Link href="/signin" className="font-semibold text-ink underline decoration-glow/60 underline-offset-4 hover:decoration-glow">
             Sign in
           </Link>
         </p>
@@ -92,7 +92,7 @@ function renderHero() {
         <div id="sample" className="scroll-mt-24">
           <ProductShot />
         </div>
-        <p className="mt-14 text-center text-xs text-night-muted">
+        <p className="mt-14 text-center text-xs text-muted">
           A real Dayline paper, generated on 17 October 2026 for a test reader following Technology, Space and Cybersecurity.{" "}
           <a href="/api/pdf/sample" className="font-semibold text-glow underline-offset-4 hover:underline">
             Download a sample PDF layout
@@ -107,21 +107,21 @@ function renderSources() {
   return (
     <section id="sources" aria-labelledby="sources-heading" className="scroll-mt-20 px-4 py-20 sm:px-6">
       <InView className="mx-auto max-w-3xl text-center">
-        <h2 id="sources-heading" className="font-serif text-3xl font-bold text-white sm:text-5xl">
+        <h2 id="sources-heading" className="font-serif text-3xl font-bold text-ink sm:text-5xl">
           All your morning reading in one place.
         </h2>
-        <p className="mt-4 text-lg text-night-muted">No more checking a dozen sites. Choose what you follow and Dayline gathers it into one paper.</p>
+        <p className="mt-4 text-lg text-muted">No more checking a dozen sites. Choose what you follow and Dayline gathers it into one paper.</p>
       </InView>
       <RevealGroup className="mx-auto mt-12 grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {SOURCES.map((source) => (
-          <RevealCell key={source.topic} className="rounded-2xl border border-white/5 bg-night-card p-6 transition-colors duration-[185ms] hover:border-white/20">
+          <RevealCell key={source.topic} className="rounded-2xl border border-ink/5 bg-card p-6 transition-colors duration-[185ms] hover:border-ink/20">
             <TopicIcon topic={source.topic} className="size-7 text-glow" />
-            <h3 className="mt-4 text-xl font-semibold text-white">{source.title}</h3>
-            <p className="mt-2 text-base leading-relaxed text-night-muted">{source.text}</p>
+            <h3 className="mt-4 text-xl font-semibold text-ink">{source.title}</h3>
+            <p className="mt-2 text-base leading-relaxed text-muted">{source.text}</p>
           </RevealCell>
         ))}
-        <RevealCell className="flex flex-col justify-between rounded-2xl border border-dashed border-white/15 p-6">
-          <p className="text-xl font-semibold text-white">Eleven sources, seven topics.</p>
+        <RevealCell className="flex flex-col justify-between rounded-2xl border border-dashed border-ink/15 p-6">
+          <p className="text-xl font-semibold text-ink">Eleven sources, seven topics.</p>
           <a href="#how" className="mt-4 inline-flex min-h-11 items-center gap-2 font-semibold text-glow">
             How Dayline picks stories <span aria-hidden="true">→</span>
           </a>
@@ -152,8 +152,8 @@ function renderSections() {
         <section key={section.title} className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16">
           <InView className={textOrder(index)} from={slideFrom(index, false)}>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-glow">{section.eyebrow}</p>
-            <h2 className="mt-3 font-serif text-3xl font-bold leading-tight text-white sm:text-4xl">{section.title}</h2>
-            <p className="mt-4 text-lg leading-relaxed text-night-muted">{section.text}</p>
+            <h2 className="mt-3 font-serif text-3xl font-bold leading-tight text-ink sm:text-4xl">{section.title}</h2>
+            <p className="mt-4 text-lg leading-relaxed text-muted">{section.text}</p>
           </InView>
           <InView from={slideFrom(index, true)}>{section.visual}</InView>
         </section>
@@ -165,25 +165,25 @@ function renderSections() {
 function renderSteps() {
   return (
     <section id="how" aria-labelledby="how-heading" className="scroll-mt-20 px-4 py-20 sm:px-6">
-      <div className="mx-auto max-w-6xl rounded-3xl border border-white/5 bg-night-card px-6 py-12 sm:px-12">
+      <div className="mx-auto max-w-6xl rounded-3xl border border-ink/5 bg-card px-6 py-12 sm:px-12">
         <InView className="text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-glow">How it works</p>
-          <h2 id="how-heading" className="mt-3 font-serif text-3xl font-bold text-white sm:text-4xl">
+          <h2 id="how-heading" className="mt-3 font-serif text-3xl font-bold text-ink sm:text-4xl">
             From your topics to tomorrow&apos;s paper
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-night-muted">
+          <p className="mx-auto mt-4 max-w-2xl text-muted">
             Stories are ranked by how well they match your topics, how fresh they are and how widely they are covered, with no more than about two
             from any one source.
           </p>
         </InView>
         <RevealGroup className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((step, index) => (
-            <RevealCell key={step.title} className="rounded-2xl bg-night p-6">
+            <RevealCell key={step.title} className="rounded-2xl bg-paper p-6">
               <span className="font-serif text-3xl font-bold text-glow" aria-hidden="true">
                 {index + 1}
               </span>
-              <h3 className="mt-3 font-semibold text-white">{step.title}</h3>
-              <p className="mt-1 text-sm text-night-muted">{step.text}</p>
+              <h3 className="mt-3 font-semibold text-ink">{step.title}</h3>
+              <p className="mt-1 text-sm text-muted">{step.text}</p>
             </RevealCell>
           ))}
         </RevealGroup>
@@ -197,10 +197,10 @@ function renderClosing() {
     <section className="relative overflow-hidden px-4 py-24 text-center sm:px-6">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_50%_120%,rgb(193_59_31/0.4),transparent_70%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_50%_120%,var(--glow-warm),transparent_70%)]"
       />
       <InView className="relative">
-        <h2 className="font-serif text-3xl font-bold text-white sm:text-5xl">
+        <h2 className="font-serif text-3xl font-bold text-ink sm:text-5xl">
           Five minutes. Every morning.
           <br />
           Only what you follow.
@@ -208,7 +208,7 @@ function renderClosing() {
         <Link href="/signin?mode=create" className={`${pill} mt-9`}>
           Create my paper
         </Link>
-        <p className="mt-4 text-sm text-night-muted">On the web and as a PDF. Ready at 06:00 Pakistan time.</p>
+        <p className="mt-4 text-sm text-muted">On the web and as a PDF. Ready at 06:00 Pakistan time.</p>
       </InView>
     </section>
   );
@@ -216,7 +216,7 @@ function renderClosing() {
 
 export default function OverviewPage() {
   return (
-    <main id="content" className="flex-1 overflow-x-clip bg-night">
+    <main id="content" className="flex-1 overflow-x-clip bg-paper">
       {renderHero()}
       {renderSources()}
       {renderSections()}

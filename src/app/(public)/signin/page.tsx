@@ -65,7 +65,7 @@ function renderNotice(notice: string | null) {
 function renderJourney() {
   return (
     <InView from="right" className="relative hidden lg:block">
-      <div className="overflow-hidden rounded-2xl border border-white/10 shadow-[0_40px_120px_-40px_rgb(240_138_114/0.45)]">
+      <div className="overflow-hidden rounded-2xl border border-ink/10 shadow-[0_40px_120px_-40px_rgb(240_138_114/0.45)]">
         <Image src="/overview/edition.webp" alt="A real Dayline paper with its Signal Brief and stories" width={1140} height={820} className="h-auto w-full" />
       </div>
       <ol className="mt-8 space-y-5">

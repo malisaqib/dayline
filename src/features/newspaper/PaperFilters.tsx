@@ -48,7 +48,7 @@ const CHIP = "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full bord
 
 function chipClass(active: boolean): string {
   if (active) {
-    return `${CHIP} border-accent bg-accent font-semibold text-night`;
+    return `${CHIP} border-accent bg-accent font-semibold text-on-accent`;
   }
   return `${CHIP} border-rule text-ink/80 hover:border-ink/40`;
 }

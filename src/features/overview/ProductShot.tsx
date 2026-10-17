@@ -14,12 +14,12 @@ export function ProductShot() {
 
   return (
     <div ref={ref} className="relative [perspective:1600px]">
-      <motion.div style={{ rotateX, scale }} className="origin-bottom overflow-hidden rounded-2xl border border-white/10 bg-night-card shadow-[0_40px_120px_-40px_rgb(240_138_114/0.45)]">
-        <div className="flex items-center gap-1.5 border-b border-white/10 px-4 py-3" aria-hidden="true">
-          <span className="size-2.5 rounded-full bg-white/15" />
-          <span className="size-2.5 rounded-full bg-white/15" />
-          <span className="size-2.5 rounded-full bg-white/15" />
-          <span className="ml-3 hidden rounded-md bg-white/5 px-3 py-1 text-xs text-night-muted sm:block">dayline-swart.vercel.app / edition</span>
+      <motion.div style={{ rotateX, scale }} className="origin-bottom overflow-hidden rounded-2xl border border-ink/10 bg-card shadow-[0_40px_120px_-40px_rgb(240_138_114/0.45)]">
+        <div className="flex items-center gap-1.5 border-b border-ink/10 px-4 py-3" aria-hidden="true">
+          <span className="size-2.5 rounded-full bg-ink/15" />
+          <span className="size-2.5 rounded-full bg-ink/15" />
+          <span className="size-2.5 rounded-full bg-ink/15" />
+          <span className="ml-3 hidden rounded-md bg-ink/5 px-3 py-1 text-xs text-muted sm:block">dayline-swart.vercel.app / edition</span>
         </div>
         <Image
           src="/overview/edition.webp"
@@ -32,7 +32,7 @@ export function ProductShot() {
       </motion.div>
       <motion.div
         style={{ y: phoneY }}
-        className="absolute -bottom-10 -right-2 hidden w-44 overflow-hidden rounded-[2rem] border-[6px] border-[#1f2633] bg-night shadow-[0_30px_80px_-20px_rgb(0_0_0/0.9)] md:block lg:-right-10 lg:w-52"
+        className="absolute -bottom-10 -right-2 hidden w-44 overflow-hidden rounded-[2rem] border-[6px] border-[#1f2633] bg-paper shadow-[0_30px_80px_-20px_rgb(0_0_0/0.9)] md:block lg:-right-10 lg:w-52"
       >
         <Image src="/overview/edition-mobile.webp" alt="The same paper on a phone" width={390} height={844} className="h-auto w-full" />
       </motion.div>

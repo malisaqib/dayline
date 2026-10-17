@@ -11,7 +11,7 @@ const LINKS = [
 
 const BASE =
   "relative inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm font-medium transition-colors duration-[185ms]";
-const ACTIVE = `${BASE} bg-accent text-night`;
+const ACTIVE = `${BASE} bg-accent text-on-accent`;
 const IDLE = `${BASE} text-ink/80 hover:bg-ink/5 hover:text-ink`;
 
 function linkClass(active: boolean): string {

@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { readReaderEntry } from "@/server/services/reader-entry";
 import { ScrollHeader } from "./ScrollHeader";
+import { ThemeToggle } from "./ThemeToggle";
 
 const pill =
-  "group inline-flex min-h-11 items-center gap-1.5 rounded-full bg-glow px-5 text-sm font-semibold text-night transition-[background-color,transform] duration-[185ms] hover:bg-white active:scale-[0.97]";
-const quiet = "inline-flex min-h-11 items-center rounded-full border border-white/20 px-4 text-sm font-semibold text-white/80 transition-colors duration-[185ms] hover:text-white";
+  "group inline-flex min-h-11 items-center gap-1.5 rounded-full bg-glow px-5 text-sm font-semibold text-on-accent transition-[background-color,transform] duration-[185ms] hover:brightness-110 active:scale-[0.97]";
+const quiet = "inline-flex min-h-11 items-center rounded-full border border-ink/20 px-4 text-sm font-semibold text-ink/80 transition-colors duration-[185ms] hover:text-ink";
 const navLink =
-  "relative inline-flex min-h-11 items-center px-3 text-sm font-medium text-white/70 transition-colors duration-[185ms] hover:text-white after:absolute after:inset-x-3 after:bottom-2 after:h-px after:origin-left after:scale-x-0 after:bg-glow after:transition-transform after:duration-[300ms] hover:after:scale-x-100";
+  "relative inline-flex min-h-11 items-center px-3 text-sm font-medium text-ink/70 transition-colors duration-[185ms] hover:text-ink after:absolute after:inset-x-3 after:bottom-2 after:h-px after:origin-left after:scale-x-0 after:bg-glow after:transition-transform after:duration-[300ms] hover:after:scale-x-100";
 
 const SECTIONS = [
   { href: "/#sample", label: "Sample paper" },
@@ -49,7 +50,7 @@ export async function PublicHeader() {
     <ScrollHeader>
       <Link href="/" className="group flex min-h-11 items-center gap-2" aria-label="Dayline overview">
         <span
-          className="grid size-8 place-items-center rounded-md bg-white font-serif text-lg font-bold text-night transition-transform duration-[300ms] group-hover:-rotate-6 group-hover:scale-105"
+          className="grid size-8 place-items-center rounded-md bg-ink font-serif text-lg font-bold text-paper transition-transform duration-[300ms] group-hover:-rotate-6 group-hover:scale-105"
           aria-hidden="true"
         >
           D
@@ -64,6 +65,7 @@ export async function PublicHeader() {
         ))}
       </nav>
       <nav aria-label="Account" className="flex items-center gap-1">
+        <ThemeToggle className="hidden min-h-11 items-center px-3 text-sm font-medium text-ink/70 hover:text-ink sm:inline-flex" />
         {await renderActions()}
       </nav>
     </ScrollHeader>

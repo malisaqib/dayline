@@ -14,6 +14,7 @@
   --night-rule: #273042;
   --night-muted: #a3acbd;
   --glow: #f08a72;
+  --on-accent: #0b0f17;
   --elevation-card: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 8px 24px -12px rgb(0 0 0 / 0.6);
   --elevation-raised: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 24px 60px -24px rgb(240 138 114 / 0.25);
   --glow-warm: rgb(193 59 31 / 0.18);
@@ -30,6 +31,7 @@
   --accent-strong: #a8331a;
   --accent-soft: #fbe9e3;
   --rule: #e2d8c7;
+  --glow: #d9573b;
   --elevation-card: 0 1px 2px rgb(29 36 51 / 0.05), 0 4px 16px -8px rgb(29 36 51 / 0.12);
   --elevation-raised: 0 2px 4px rgb(29 36 51 / 0.06), 0 12px 32px -12px rgb(29 36 51 / 0.2);
   --glow-warm: rgb(226 105 79 / 0.1);
@@ -51,6 +53,7 @@
   --color-night-rule: var(--night-rule);
   --color-night-muted: var(--night-muted);
   --color-glow: var(--glow);
+  --color-on-accent: var(--on-accent);
   --shadow-card: var(--elevation-card);
   --shadow-raised: var(--elevation-raised);
   --radius-card: 1rem;

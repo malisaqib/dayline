@@ -37,7 +37,7 @@ const STEP_NAMES = ["What you follow", "Review and create"];
 
 function stepClass(index: number, step: number): string {
   if (index + 1 === step) {
-    return "border-accent bg-accent text-night";
+    return "border-accent bg-accent text-on-accent";
   }
   if (index + 1 < step) {
     return "border-accent text-accent";

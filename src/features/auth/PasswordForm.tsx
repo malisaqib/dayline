@@ -21,7 +21,7 @@ const COPY: Record<Intent, { submit: string; autocomplete: string; hint: string 
 
 function tabClass(active: boolean): string {
   if (active) {
-    return `${TAB} text-night`;
+    return `${TAB} text-on-accent`;
   }
   return `${TAB} text-muted hover:text-ink`;
 }
