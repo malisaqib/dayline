@@ -15,7 +15,11 @@ Next.js 15 App Router, TypeScript (strict), Tailwind v4, Supabase (Postgres/auth
 - Article snapshots are immutable: keep `fetchedAt`, `publishedAt` and `contentHash`. Editions store frozen story snapshots and never re-read URLs.
 - Web and PDF must render the same saved edition snapshot (same stories, same order, same text).
 - One daily edition per user and local date (Asia/Karachi), enforced in the DB.
-- Secrets are server-only; never use NEXT_PUBLIC_ for keys. Never commit .env files.
+- Keys: the Supabase URL and publishable key are public (`NEXT_PUBLIC_`, protected by RLS). The Supabase secret/service-role key, DB URL and Anthropic key are secret: server-only, never `NEXT_PUBLIC_`. Never commit .env files.
+- Reader reads and writes use the reader's cookie session (`createReaderSupabase`) and RLS. The secret client (`getSupabaseAdmin`) is only for shared tables (articles, summaries) and for inserting an edition for a reader verified with `auth.getUser()`.
+- Fetchable does not mean permitted. `SourceUsage` in the catalog decides what is displayed or sent to the model. Only sources with `aiProcessing: true` get AI summaries; the others show the publisher's excerpt or the headline only.
+- Web and PDF both render `presentEdition(edition)`; don't fork the content path.
+- Summaries are cached by (content_hash, model, prompt_version). Bump `SUMMARY_PROMPT_VERSION` when the prompt changes. Never switch models silently.
 - Feed and article text is untrusted. Strip it to plain text and tell the model to ignore instructions inside it.
 - Label fixtures visibly. Never present sample data as live.
 - Never imply full-text reading when coverage is `excerpt`.
@@ -24,4 +28,4 @@ Next.js 15 App Router, TypeScript (strict), Tailwind v4, Supabase (Postgres/auth
 No chat, audio, vector DB, crawling, agent framework, or second backend. "Since your last read" is deferred until the core works.
 
 ## Verify
-`npm run typecheck && npm run lint && npm run build`, then `npm run check:feeds`, `npm run check:db`, `npm run check:ai`. PDF: GET `/api/pdf/sample`. Migrations: `npm run db:migrate`.
+`npm run typecheck && npm run lint && npm test && npm run build`, then `npm run check:feeds`, `npm run check:db`, `npm run check:ai`, `npm run check:flow` (two live anonymous readers: duplicate generation, distinct profiles, RLS isolation; it deletes them afterwards). Migrations: `npm run db:migrate`. Sample PDF: `/api/pdf/sample`; edition PDF: `/api/editions/[id]/pdf`.

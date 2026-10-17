@@ -1,14 +1,14 @@
-import { CANDIDATE_SOURCES } from "@/server/sources/catalog";
+import { SOURCES } from "@/server/sources/catalog";
 import { fetchFeed } from "@/server/sources/rss";
 
 const USABLE_TEXT_CHARS = 80;
 
 async function main() {
-  const results = await Promise.allSettled(CANDIDATE_SOURCES.map(fetchFeed));
+  const results = await Promise.allSettled(SOURCES.map(fetchFeed));
   let passing = 0;
 
   results.forEach((result, index) => {
-    const source = CANDIDATE_SOURCES[index];
+    const source = SOURCES[index];
     if (result.status === "rejected") {
       console.log(`FAIL ${source.id}: ${(result.reason as Error).message}`);
       return;
@@ -32,7 +32,7 @@ async function main() {
     }
   });
 
-  console.log(`\n${passing}/${CANDIDATE_SOURCES.length} feeds returned valid titles, URLs, dates and usable text.`);
+  console.log(`\n${passing}/${SOURCES.length} feeds returned valid titles, URLs, dates and usable text.`);
   process.exit(passing >= 2 ? 0 : 1);
 }
 

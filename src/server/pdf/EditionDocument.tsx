@@ -3,6 +3,8 @@ import { Document, Link, Page, StyleSheet, Text, View } from "@react-pdf/rendere
 export type PrintStory = {
   headline: string;
   body: string;
+  /** Provenance line, e.g. "Publisher's excerpt · 17 Oct 2026". */
+  meta: string;
   sourceName: string;
   sourceUrl: string;
 };
@@ -59,15 +61,19 @@ const styles = StyleSheet.create({
   headline: { fontFamily: "Times-Bold", fontSize: 14, lineHeight: 1.2, marginBottom: 4 },
   body: { fontSize: 10, lineHeight: 1.45, textAlign: "justify" },
   source: { fontFamily: "Helvetica", fontSize: 7.5, marginTop: 4, color: ACCENT },
+  meta: { fontFamily: "Helvetica", fontSize: 7, marginTop: 3, color: MUTED },
   footer: { position: "absolute", bottom: 16, left: 36, right: 36, fontFamily: "Helvetica", fontSize: 7, textAlign: "center", color: MUTED },
 });
 
 function SourceLine({ story }: { story: PrintStory }) {
   return (
-    <Text style={styles.source}>
+    <>
+      <Text style={styles.meta}>{story.meta}</Text>
+      <Text style={styles.source}>
       Source: {story.sourceName} {"— "}
-      <Link src={story.sourceUrl}>Read the original</Link>
-    </Text>
+        <Link src={story.sourceUrl}>Read the original</Link>
+      </Text>
+    </>
   );
 }
 
@@ -75,7 +81,7 @@ function StoryBlock({ story }: { story: PrintStory }) {
   return (
     <View style={styles.story} wrap={false}>
       <Text style={styles.headline}>{story.headline}</Text>
-      <Text style={styles.body}>{story.body}</Text>
+      {story.body && <Text style={styles.body}>{story.body}</Text>}
       <SourceLine story={story} />
     </View>
   );
@@ -102,7 +108,7 @@ export function EditionDocument({ edition }: { edition: PrintEdition }) {
         </View>
 
         <Text style={styles.leadHeadline}>{edition.lead.headline}</Text>
-        <Text style={styles.leadBody}>{edition.lead.body}</Text>
+        {edition.lead.body && <Text style={styles.leadBody}>{edition.lead.body}</Text>}
         <SourceLine story={edition.lead} />
 
         <View style={styles.sectionRule} />
