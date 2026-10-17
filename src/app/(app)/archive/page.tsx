@@ -26,10 +26,10 @@ function renderCard(edition: EditionSummary) {
     <RevealItem key={edition.id} className={`${ui.card} flex flex-col p-5 sm:only:col-span-2`}>
       <div className="flex items-start justify-between gap-3">
         <h2 className="font-serif text-xl font-bold leading-snug">{formatEditionDate(edition.localDate)}</h2>
-        <span className="shrink-0 rounded-full bg-ink px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-paper">Saved</span>
+        <span className="shrink-0 rounded-full bg-ink px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-paper">Saved</span>
       </div>
       <p className={`${ui.meta} mt-1`}>{edition.storyCount} stories</p>
-      <p className="mt-3 line-clamp-2 text-[15px]">
+      <p className="mt-3 line-clamp-2 text-base">
         <span className="font-semibold">Top story: </span>
         {edition.leadTitle}
       </p>

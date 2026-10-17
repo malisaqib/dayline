@@ -4,7 +4,7 @@
   --paper: #0b0f17;
   --card: #151b27;
   --ink: #eceff5;
-  --muted: #a3acbd;
+  --muted: #b8c0cf;
   --accent: #f08a72;
   --accent-strong: #ffb4a1;
   --accent-soft: #2a1d1d;
@@ -16,6 +16,25 @@
   --glow: #f08a72;
   --elevation-card: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 8px 24px -12px rgb(0 0 0 / 0.6);
   --elevation-raised: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 24px 60px -24px rgb(240 138 114 / 0.25);
+  --glow-warm: rgb(193 59 31 / 0.18);
+  --glow-cool: rgb(76 52 140 / 0.2);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --paper: #f8f4ec;
+  --card: #fffdf8;
+  --ink: #1d2433;
+  --muted: #4d5769;
+  --accent: #e2694f;
+  --accent-strong: #a8331a;
+  --accent-soft: #fbe9e3;
+  --rule: #e2d8c7;
+  --elevation-card: 0 1px 2px rgb(29 36 51 / 0.05), 0 4px 16px -8px rgb(29 36 51 / 0.12);
+  --elevation-raised: 0 2px 4px rgb(29 36 51 / 0.06), 0 12px 32px -12px rgb(29 36 51 / 0.2);
+  --glow-warm: rgb(226 105 79 / 0.1);
+  --glow-cool: rgb(120 110 200 / 0.08);
+  color-scheme: light;
 }
 
 @theme inline {
@@ -39,8 +58,13 @@
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
 }
 
+html {
+  font-size: 106.25%;
+}
+
 body {
-  background: radial-gradient(ellipse 70% 40% at 85% -5%, rgb(193 59 31 / 0.18), transparent 60%), radial-gradient(ellipse 60% 40% at 0% 0%, rgb(76 52 140 / 0.2), transparent 60%), var(--paper);
+  line-height: 1.6;
+  background: radial-gradient(ellipse 70% 40% at 85% -5%, var(--glow-warm), transparent 60%), radial-gradient(ellipse 60% 40% at 0% 0%, var(--glow-cool), transparent 60%), var(--paper);
   background-attachment: fixed;
   color: var(--ink);
   font-family: var(--font-sans);

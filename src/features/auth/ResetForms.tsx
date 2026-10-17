@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { chooseNewPassword, requestPasswordReset, type ResetState } from "@/app/auth-actions";
 import { PendingButton } from "@/features/shared/PendingButton";
 import { ui } from "@/features/shared/ui";
+import { PasswordField } from "./PasswordField";
 
 const INPUT = "mt-1 block min-h-11 w-full rounded-xl border border-ink/20 bg-paper px-4 text-base focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30";
 const INITIAL: ResetState = { error: null, notice: null };
@@ -44,14 +45,8 @@ export function NewPasswordForm() {
   const [state, action] = useActionState(chooseNewPassword, INITIAL);
   return (
     <form action={action} className="mt-6" noValidate>
-      <label htmlFor="new-password" className="block text-sm font-semibold">
-        New password
-      </label>
-      <input id="new-password" name="password" type="password" autoComplete="new-password" required minLength={8} className={INPUT} />
-      <label htmlFor="confirm-password" className="mt-4 block text-sm font-semibold">
-        Repeat new password
-      </label>
-      <input id="confirm-password" name="confirm" type="password" autoComplete="new-password" required minLength={8} className={INPUT} />
+      <PasswordField id="new-password" name="password" label="New password" autoComplete="new-password" />
+      <PasswordField id="confirm-password" name="confirm" label="Repeat new password" autoComplete="new-password" className="mt-4" />
       <p className={`${ui.meta} mt-2`}>At least 8 characters.</p>
       {renderMessage(state)}
       <PendingButton label="Save new password" className={`${ui.primaryButton} mt-5 w-full`} />

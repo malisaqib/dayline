@@ -41,7 +41,7 @@ function renderTodayInThree(items: Brief["todayInThree"]) {
       </h3>
       <ol className="mt-2 space-y-2">
         {items.map((item, index) => (
-          <li key={item.story.id} className="flex gap-3 text-[15px]">
+          <li key={item.story.id} className="flex gap-3 text-base">
             <span className="w-5 shrink-0 font-serif text-lg font-bold leading-6 text-accent" aria-hidden="true">
               {index + 1}
             </span>
@@ -115,7 +115,7 @@ function renderPulse(pulse: BriefStory[]) {
         {pulse.map((item) => (
           <li key={item.story.id}>
             <a href={`#story-${item.position}`} className="flex min-h-11 flex-wrap items-baseline gap-x-2 py-2 text-sm hover:text-accent-strong">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{item.story.kicker.split(" · ")[0]}</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted">{item.story.kicker.split(" · ")[0]}</span>
               <span className="font-semibold hover:underline">{item.story.headline}</span>
             </a>
           </li>

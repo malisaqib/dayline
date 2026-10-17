@@ -7,7 +7,7 @@ export const ui = {
   ghostButton: `${buttonBase} text-ink hover:bg-ink/5`,
   card: "rounded-card border border-white/5 bg-card shadow-card",
   eyebrow: "text-xs font-semibold uppercase tracking-[0.12em] text-accent",
-  meta: "text-[13px] text-muted",
+  meta: "text-sm text-muted",
   chip: "inline-flex items-center gap-1 rounded-full border border-rule bg-paper px-2.5 py-1 text-xs font-medium text-ink",
 } as const;
 

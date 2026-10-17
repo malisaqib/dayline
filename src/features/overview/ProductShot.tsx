@@ -19,7 +19,7 @@ export function ProductShot() {
           <span className="size-2.5 rounded-full bg-white/15" />
           <span className="size-2.5 rounded-full bg-white/15" />
           <span className="size-2.5 rounded-full bg-white/15" />
-          <span className="ml-3 hidden rounded-md bg-white/5 px-3 py-1 text-[11px] text-night-muted sm:block">dayline-swart.vercel.app / edition</span>
+          <span className="ml-3 hidden rounded-md bg-white/5 px-3 py-1 text-xs text-night-muted sm:block">dayline-swart.vercel.app / edition</span>
         </div>
         <Image
           src="/overview/edition.webp"

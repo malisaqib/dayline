@@ -25,7 +25,7 @@ export function LearningMockup() {
         <span className="rounded-full border border-white/15 px-3 py-1">Less like this</span>
         <span className="rounded-full border border-white/15 px-3 py-1">Skip</span>
       </div>
-      <p className="mt-4 text-[11px] text-night-muted">Illustration. Your own weights appear in your paper.</p>
+      <p className="mt-4 text-xs text-night-muted">Illustration. Your own weights appear in your paper.</p>
     </div>
   );
 }

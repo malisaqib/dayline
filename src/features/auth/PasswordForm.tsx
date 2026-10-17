@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
+import { PasswordField } from "./PasswordField";
 import { useActionState, useState } from "react";
 import { passwordAuth, type PasswordState } from "@/app/auth-actions";
 import { fadeUp } from "@/features/shared/motion";
@@ -65,6 +66,13 @@ function renderTabs(intent: Intent, setIntent: (next: Intent) => void) {
   );
 }
 
+function renderConfirm(intent: Intent) {
+  if (intent !== "create") {
+    return null;
+  }
+  return <PasswordField id="pw-confirm" name="confirm" label="Confirm password" autoComplete="new-password" className="mt-4" />;
+}
+
 function renderForgot(intent: Intent) {
   if (intent !== "signin") {
     return null;
@@ -91,10 +99,8 @@ export function PasswordForm({ next, initialIntent = "signin" }: { next: string;
         Email address
       </label>
       <input id="pw-email" name="email" type="email" autoComplete="email" required defaultValue={state.email} className={INPUT} />
-      <label htmlFor="pw-password" className="mt-4 block text-sm font-semibold">
-        Password
-      </label>
-      <input id="pw-password" name="password" type="password" autoComplete={copy.autocomplete} required minLength={8} className={INPUT} />
+      <PasswordField id="pw-password" name="password" label="Password" autoComplete={copy.autocomplete} className="mt-4" />
+      {renderConfirm(intent)}
       <AnimatePresence mode="wait" initial={false}>
         <motion.p key={intent} variants={fadeUp} initial="initial" animate="animate" exit="exit" className={`${ui.meta} mt-2`}>
           {copy.hint}

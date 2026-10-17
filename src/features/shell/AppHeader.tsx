@@ -2,6 +2,8 @@ import Link from "next/link";
 import { EDITION_TIMEZONE, formatEditionDate, localEditionDate } from "@/domain/editions/edition";
 import { AccountBlock } from "./AccountBlock";
 import { AppNav } from "./AppNav";
+import { ThemeToggle } from "./ThemeToggle";
+import { ui } from "@/features/shared/ui";
 
 export function AppHeader() {
   const dateLabel = `${formatEditionDate(localEditionDate(new Date()))} · ${EDITION_TIMEZONE}`;
@@ -14,13 +16,14 @@ export function AppHeader() {
           </span>
           <span className="flex flex-col leading-tight">
             <span className="font-serif text-xl font-bold tracking-wide">Dayline</span>
-            <span className="hidden text-[11px] text-muted sm:block">{dateLabel}</span>
+            <span className="hidden text-xs text-muted sm:block">{dateLabel}</span>
           </span>
         </Link>
         <nav aria-label="Main" className="order-3 w-full sm:order-none sm:w-auto sm:flex-1">
           <AppNav />
         </nav>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          <ThemeToggle className={ui.ghostButton} />
           <AccountBlock />
         </div>
       </div>

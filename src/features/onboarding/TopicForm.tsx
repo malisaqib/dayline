@@ -142,7 +142,7 @@ export function TopicForm({ topics, selected, interests: savedInterests, maxTopi
               <TopicIcon topic={topic.id} />
               {topic.label}
             </span>
-            <span className="mt-0.5 block text-[13px] leading-snug text-muted">{topic.description}</span>
+            <span className="mt-0.5 block text-sm leading-snug text-muted">{topic.description}</span>
           </span>
         </label>
       </SpotlightCard>
@@ -189,7 +189,7 @@ export function TopicForm({ topics, selected, interests: savedInterests, maxTopi
       <div>
         <h2 className="font-serif text-2xl font-bold">Your morning paper</h2>
         <p className="mt-2 text-sm text-muted">Every morning at 06:00 Pakistan time you&apos;ll get:</p>
-        <ul className="mt-4 space-y-2 text-[15px]">
+        <ul className="mt-4 space-y-2 text-base">
           {WHAT_YOU_GET.map((item) => (
             <li key={item} className="flex gap-2">
               <span aria-hidden="true" className="text-accent">

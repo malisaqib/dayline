@@ -7,8 +7,8 @@ import { ui } from "@/features/shared/ui";
 
 type StoryCardProps = { story: PresentedStory; position: number; footer: ReactNode };
 
-const AI_BADGE = "rounded bg-ink px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-paper";
-const SOURCE_BADGE = "rounded border border-ink/25 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-ink";
+const AI_BADGE = "rounded bg-ink px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-paper";
+const SOURCE_BADGE = "rounded border border-ink/25 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-ink";
 
 function badgeClass(story: PresentedStory): string {
   if (story.bodyLabel === "AI summary") {
@@ -21,15 +21,15 @@ function renderKicker(story: PresentedStory) {
   if (!story.kicker) {
     return null;
   }
-  return <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-accent">{story.kicker}</p>;
+  return <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-accent">{story.kicker}</p>;
 }
 
 function renderBody(story: PresentedStory, isLead: boolean) {
   if (!story.body) {
-    return <p className="mt-2 text-[15px] text-muted">The publisher only shares the headline. Open the original article to read it.</p>;
+    return <p className="mt-2 text-base text-muted">The publisher only shares the headline. Open the original article to read it.</p>;
   }
-  const size = isLead ? "text-[17px]" : "text-[15px]";
-  return <p className={`mt-2 leading-relaxed ${size}`}>{story.body}</p>;
+  const size = isLead ? "text-xl" : "text-lg";
+  return <p className={`mt-3 leading-relaxed text-ink/90 ${size}`}>{story.body}</p>;
 }
 
 function renderTakeaways(story: PresentedStory) {
@@ -39,7 +39,7 @@ function renderTakeaways(story: PresentedStory) {
   return (
     <div className="mt-3 border-l-2 border-accent/40 pl-4">
       <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-muted">What happened</h3>
-      <ul className="mt-1 list-disc space-y-1.5 pl-4 text-[15px]">
+      <ul className="mt-1 list-disc space-y-1.5 pl-4 text-lg">
         {story.takeaways.map((item) => (
           <li key={item}>{item}</li>
         ))}
@@ -137,7 +137,7 @@ function renderReadingTime(minutes: number | null) {
 
 function renderLabel(isLead: boolean, position: number) {
   if (isLead) {
-    return <span className="rounded bg-accent px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-night">Top story</span>;
+    return <span className="rounded bg-accent px-2 py-0.5 text-xs font-bold uppercase tracking-[0.12em] text-night">Top story</span>;
   }
   return (
     <span className="font-serif text-xl font-bold leading-none text-accent" aria-hidden="true">

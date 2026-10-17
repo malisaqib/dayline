@@ -209,7 +209,8 @@ async function main() {
     await secondReader(browser, email, account.editionId);
     await passwordReset(browser, email);
   } catch (error) {
-    if (lastPage) {
+    console.log(`error: ${(error as Error).message}`);
+    if (lastPage && !lastPage.isClosed()) {
       console.log(`last page: ${lastPage.url()}`);
       await lastPage.screenshot({ path: "tmp/auth-crash.png", fullPage: true });
     }

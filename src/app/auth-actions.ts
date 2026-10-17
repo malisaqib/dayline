@@ -39,6 +39,9 @@ export async function passwordAuth(_prev: PasswordState, form: FormData): Promis
   if (!password.success) {
     return { error: password.error.issues[0]?.message ?? "Check your password.", notice: null, email: email.data };
   }
+  if (form.get("intent") === "create" && String(form.get("confirm") ?? "") !== password.data) {
+    return { error: "The two passwords don't match.", notice: null, email: email.data };
+  }
   const next = safeReturnPath(String(form.get("next") ?? ""));
   const db = await createReaderSupabase();
   try {

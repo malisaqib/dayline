@@ -15,7 +15,7 @@ export async function AccountBlock() {
   }
   return (
     <div className="flex items-center gap-2">
-      <span className="hidden max-w-48 truncate text-[13px] text-muted xl:inline" title={reader.email ?? undefined}>
+      <span className="hidden max-w-48 truncate text-sm text-muted xl:inline" title={reader.email ?? undefined}>
         {reader.email}
       </span>
       <SignOutButton className={ui.secondaryButton} />

@@ -132,7 +132,7 @@ export function FeedbackControls({ editionId, articleHash, topicLabels, initial 
       <div className="flex flex-wrap items-center justify-between gap-3 sm:flex-nowrap">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold">Was this relevant?</h3>
-          <p className="text-[13px] text-muted">These choices improve future papers. Today&apos;s paper stays unchanged.</p>
+          <p className="text-sm text-muted">These choices improve future papers. Today&apos;s paper stays unchanged.</p>
         </div>
         <div className="flex flex-wrap gap-2 sm:shrink-0">
           {buttons}

@@ -117,7 +117,7 @@ function renderSources() {
           <RevealCell key={source.topic} className="rounded-2xl border border-white/5 bg-night-card p-6 transition-colors duration-[185ms] hover:border-white/20">
             <TopicIcon topic={source.topic} className="size-7 text-glow" />
             <h3 className="mt-4 text-xl font-semibold text-white">{source.title}</h3>
-            <p className="mt-2 text-[15px] leading-relaxed text-night-muted">{source.text}</p>
+            <p className="mt-2 text-base leading-relaxed text-night-muted">{source.text}</p>
           </RevealCell>
         ))}
         <RevealCell className="flex flex-col justify-between rounded-2xl border border-dashed border-white/15 p-6">

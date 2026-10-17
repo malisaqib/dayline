@@ -69,7 +69,7 @@ function renderTodayInThree(edition: Edition, stories: PresentedStory[]) {
           <span className="font-serif text-2xl font-bold leading-none text-accent" aria-hidden="true">
             {index + 1}
           </span>
-          <span className="text-[15px] leading-relaxed">
+          <span className="text-base leading-relaxed">
             {item.sentence} <span className="text-muted">({sourceOf(stories, item.articleHash)})</span>
           </span>
         </li>
@@ -146,7 +146,7 @@ function renderHeadlines(edition: Edition | null) {
                   {story.topicLabels.join(" · ")}
                 </span>
                 <span className="mt-3 font-serif text-lg font-bold leading-snug group-hover:text-accent-strong">{story.headline}</span>
-                <span className="mt-auto pt-4 text-[13px] text-muted">
+                <span className="mt-auto pt-4 text-sm text-muted">
                   {story.sourceName} · {story.publishedLabel}
                 </span>
               </Link>

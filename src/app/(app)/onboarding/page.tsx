@@ -31,7 +31,7 @@ export default async function OnboardingPage() {
         <p className={ui.eyebrow}>Set up your paper</p>
         <h1 className="mt-3 font-serif text-3xl font-bold leading-tight sm:text-4xl">Your five-minute morning paper.</h1>
         <p className="mt-3 font-serif text-xl">Choose what you want in it.</p>
-        <p className="mt-4 text-[15px] text-muted">Pick the topics you care about. It takes about ten seconds, and you can change them any time.</p>
+        <p className="mt-4 text-base text-muted">Pick the topics you care about. It takes about ten seconds, and you can change them any time.</p>
         <ol className="mt-8 space-y-4 border-t border-rule pt-6">
           {HOW_IT_WORKS.map((item, index) => (
             <li key={item.title} className="flex gap-4">
