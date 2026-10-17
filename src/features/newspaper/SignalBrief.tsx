@@ -22,6 +22,13 @@ function renderSentence(sentence: string | null) {
   return <p className="mt-1 line-clamp-3 text-sm">{sentence}</p>;
 }
 
+function sourceLabel(item: Brief["todayInThree"][number]): string {
+  if (item.quoted) {
+    return `${item.story.sourceName}, quoted`;
+  }
+  return item.story.sourceName;
+}
+
 function renderTodayInThree(items: Brief["todayInThree"]) {
   if (items.length === 0) {
     return null;
@@ -40,7 +47,7 @@ function renderTodayInThree(items: Brief["todayInThree"]) {
             </span>
             <span>
               {item.sentence}{" "}
-              <span className="text-sm text-muted">({item.story.sourceName})</span>{" "}
+              <span className="text-sm text-muted">({sourceLabel(item)})</span>{" "}
               <a href={`#story-${item.position}`} className="relative whitespace-nowrap text-sm font-semibold text-accent-strong underline-offset-4 after:absolute after:-inset-x-1 after:-inset-y-4 after:content-[''] hover:underline">
                 Story {item.position}
               </a>
@@ -48,7 +55,7 @@ function renderTodayInThree(items: Brief["todayInThree"]) {
           </li>
         ))}
       </ol>
-      <p className={`${ui.meta} mt-2`}>Written by AI from each story&apos;s own headline and text. The source is named and linked on the story.</p>
+      <p className={`${ui.meta} mt-2`}>Short lines written by AI and checked against each story&apos;s text, or quoted from the publisher where marked.</p>
     </section>
     </RevealCell>
   );

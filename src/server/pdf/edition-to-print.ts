@@ -8,6 +8,7 @@ export function toPrintEdition(presented: PresentedEdition): PrintEdition {
     timezone: presented.timezone,
     editionLabel: presented.editionLabel,
     fixtureNotice: null,
+    highlights: presented.highlights,
     lead,
     stories: rest,
   };

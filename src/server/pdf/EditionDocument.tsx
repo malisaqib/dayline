@@ -1,4 +1,5 @@
 import { Document, Font, Link, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import type { PresentedHighlight } from "@/domain/editions/presentation";
 
 // Never split words with hyphens: broken headlines read badly and the PDF text must match the web text.
 Font.registerHyphenationCallback((word) => [word]);
@@ -20,6 +21,7 @@ export type PrintEdition = {
   editionLabel: string;
   /** Shown as a banner when the content is not a real generated edition. */
   fixtureNotice: string | null;
+  highlights: PresentedHighlight[];
   lead: PrintStory;
   stories: PrintStory[];
 };
@@ -69,6 +71,13 @@ const styles = StyleSheet.create({
   meta: { fontFamily: "Helvetica", fontSize: 7, marginTop: 3, color: MUTED },
   kicker: { fontFamily: "Helvetica-Bold", fontSize: 7, letterSpacing: 0.5, color: ACCENT, marginBottom: 2 },
   takeaway: { fontSize: 9.5, lineHeight: 1.35, marginTop: 2, paddingLeft: 8 },
+  brief: { borderWidth: 0.75, borderColor: INK, padding: 8, marginBottom: 12 },
+  briefTitle: { fontFamily: "Helvetica-Bold", fontSize: 8, letterSpacing: 1, color: ACCENT, marginBottom: 4 },
+  briefItem: { flexDirection: "row", marginTop: 3 },
+  briefNumber: { fontFamily: "Times-Bold", fontSize: 11, width: 14, color: ACCENT },
+  briefText: { flex: 1, fontSize: 10, lineHeight: 1.35 },
+  briefSource: { fontFamily: "Helvetica", fontSize: 7, color: MUTED },
+  briefNote: { fontFamily: "Helvetica", fontSize: 6.5, color: MUTED, marginTop: 5 },
   footer: { position: "absolute", bottom: 16, left: 36, right: 36, fontFamily: "Helvetica", fontSize: 7, textAlign: "center", color: MUTED },
 });
 
@@ -93,6 +102,36 @@ function Takeaways({ items }: { items: string[] }) {
           {item}
         </Text>
       ))}
+    </View>
+  );
+}
+
+function highlightLabel(item: PresentedHighlight): string {
+  if (item.kind === "quote") {
+    return `${item.sourceName}, quoted · story ${item.position}`;
+  }
+  return `${item.sourceName} · story ${item.position}`;
+}
+
+function TodayInThree({ items }: { items: PresentedHighlight[] }) {
+  if (items.length === 0) {
+    return null;
+  }
+  return (
+    <View style={styles.brief} wrap={false}>
+      <Text style={styles.briefTitle}>TODAY IN THREE</Text>
+      {items.map((item, index) => (
+        <View key={`${item.position}-${index}`} style={styles.briefItem}>
+          <Text style={styles.briefNumber}>{index + 1}</Text>
+          <Text style={styles.briefText}>
+            {item.sentence}{" "}
+            <Link src={item.sourceUrl} style={styles.briefSource}>
+              ({highlightLabel(item)})
+            </Link>
+          </Text>
+        </View>
+      ))}
+      <Text style={styles.briefNote}>Short lines written by AI and checked against each story&apos;s text, or quoted from the publisher where marked.</Text>
     </View>
   );
 }
@@ -132,6 +171,8 @@ export function EditionDocument({ edition }: { edition: PrintEdition }) {
           <Text>{edition.editionLabel}</Text>
           <Text>{edition.timezone}</Text>
         </View>
+
+        <TodayInThree items={edition.highlights} />
 
         {edition.lead.kicker && <Text style={styles.kicker}>{edition.lead.kicker.toUpperCase()}</Text>}
         <Text style={styles.leadHeadline}>{edition.lead.headline}</Text>

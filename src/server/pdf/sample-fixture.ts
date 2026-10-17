@@ -23,6 +23,7 @@ export function buildSamplePrintEdition(now = new Date()): PrintEdition {
     timezone: EDITION_TIMEZONE,
     editionLabel: "Sample edition",
     fixtureNotice: "SAMPLE CONTENT — LAYOUT TEST, NOT REAL NEWS",
+    highlights: [],
     lead: {
       headline: "Sample lead story: a placeholder headline long enough to wrap across two lines of the front page",
       body: `${FILLER} ${FILLER} ${FILLER}`,

@@ -94,5 +94,19 @@ describe("presentEdition", () => {
     const print = toPrintEdition(web);
     assert.deepEqual([print.lead, ...print.stories], web.stories);
     assert.deepEqual(web.stories.map((s) => s.headline), edition.stories.map((s) => s.title));
+    assert.deepEqual(print.highlights, [], "an older edition without highlights still prints");
+
+    const first = edition.stories[0];
+    const withBrief: Edition = {
+      ...edition,
+      todayInThree: [
+        { articleHash: first.articleHash, sentence: "A saved line about the first story.", kind: "ai" },
+        { articleHash: "f".repeat(64), sentence: "Refers to no story in this paper.", kind: "quote" },
+      ],
+    };
+    const briefWeb = presentEdition(withBrief);
+    const briefPrint = toPrintEdition(briefWeb);
+    assert.deepEqual(briefPrint.highlights, briefWeb.highlights, "web and PDF share the same saved highlights");
+    assert.deepEqual(briefWeb.highlights, [{ position: 1, sentence: "A saved line about the first story.", kind: "ai", sourceName: first.sourceName, sourceUrl: first.url }]);
   });
 });

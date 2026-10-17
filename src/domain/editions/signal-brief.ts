@@ -15,7 +15,7 @@ export type SignalBrief = {
   topSignal: BriefStory & { sentence: string | null };
   focus: (BriefStory & { topic: TopicId; explanation: string }) | null;
   pulse: BriefStory[];
-  todayInThree: (BriefStory & { sentence: string })[];
+  todayInThree: (BriefStory & { sentence: string; quoted: boolean })[];
 };
 
 export function firstSentence(text: string): string | null {
@@ -54,13 +54,13 @@ function findFocus(stories: PresentedStory[], topic: TopicId): BriefStory | null
   return matches.find((m) => m.position !== 1 && !isNearDuplicateTitle(m.story.headline, top.headline)) ?? matches[0];
 }
 
-export function resolveHighlights(stories: PresentedStory[], highlights: Highlight[]): (BriefStory & { sentence: string })[] {
+export function resolveHighlights(stories: PresentedStory[], highlights: Highlight[]): (BriefStory & { sentence: string; quoted: boolean })[] {
   return highlights.flatMap((item) => {
     const index = stories.findIndex((story) => story.id === item.articleHash);
     if (index === -1) {
       return [];
     }
-    return [{ position: index + 1, story: stories[index], sentence: item.sentence }];
+    return [{ position: index + 1, story: stories[index], sentence: item.sentence, quoted: item.kind === "quote" }];
   });
 }
 

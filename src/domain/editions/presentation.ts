@@ -61,7 +61,21 @@ export type PresentedEdition = {
   timezone: string;
   editionLabel: string;
   stories: PresentedStory[];
+  highlights: PresentedHighlight[];
 };
+
+export type PresentedHighlight = { position: number; sentence: string; kind: "ai" | "quote"; sourceName: string; sourceUrl: string };
+
+function presentHighlights(edition: Edition): PresentedHighlight[] {
+  return edition.todayInThree.flatMap((item) => {
+    const index = edition.stories.findIndex((story) => story.articleHash === item.articleHash);
+    if (index < 0) {
+      return [];
+    }
+    const story = edition.stories[index];
+    return [{ position: index + 1, sentence: item.sentence, kind: item.kind, sourceName: story.sourceName, sourceUrl: story.url }];
+  });
+}
 
 function formatPublished(iso: string | null): string {
   if (!iso) {
@@ -96,5 +110,6 @@ export function presentEdition(edition: Edition): PresentedEdition {
     timezone: edition.timezone,
     editionLabel: `Edition ${edition.id.slice(0, 8)}`,
     stories: edition.stories.map(presentStory),
+    highlights: presentHighlights(edition),
   };
 }
