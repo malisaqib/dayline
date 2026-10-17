@@ -34,8 +34,13 @@ export type GdacsAlert = {
   severity: string;
 };
 
+// GDACS text often has a space before punctuation ("is 3815 ."), which wraps badly.
+function tidy(text: string): string {
+  return htmlToText(text).replace(/\s+([.,;:])/g, "$1");
+}
+
 function toAlert(item: Record<string, unknown>): GdacsAlert | null {
-  const title = htmlToText(asText(item.title));
+  const title = tidy(asText(item.title));
   const link = asText(item.link).trim();
   const publishedAt = toIsoDate(asText(item.pubDate) || asText(item["gdacs:dateadded"]));
   const alertLevel = asText(item["gdacs:alertlevel"]).trim();
@@ -45,7 +50,7 @@ function toAlert(item: Record<string, unknown>): GdacsAlert | null {
   const code = asText(item["gdacs:eventtype"]).trim();
   return {
     title,
-    description: htmlToText(asText(item.description)),
+    description: tidy(asText(item.description)),
     link,
     publishedAt,
     eventType: EVENT_TYPES[code] ?? code,

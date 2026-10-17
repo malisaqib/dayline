@@ -82,7 +82,7 @@ describe("Hacker News selection", () => {
 describe("GDACS parsing", () => {
   const item = (level: string, country: string, type = "EQ", current = "true") => `
     <item>
-      <title>${level} earthquake in ${country}</title>
+      <title>${level} earthquake in ${country} , affected 3815 .</title>
       <description>Official description for ${country}.</description>
       <link>https://www.gdacs.org/report.aspx?eventtype=${type}&amp;eventid=${country.length}${level.length}</link>
       <pubDate>Sat, 17 Oct 2026 05:26:57 GMT</pubDate>
@@ -97,6 +97,7 @@ describe("GDACS parsing", () => {
   it("extracts event type, location, alert level and severity, preferring Orange/Red alerts", () => {
     const { alerts } = parseGdacsRss(rss(item("Green", "Chile"), item("Orange", "Japan", "TC"), item("Red", "Peru", "EQ", "false")));
     assert.equal(alerts.length, 1, "Green dropped when a serious alert exists; non-current dropped");
+    assert.equal(alerts[0].title, "Orange earthquake in Japan, affected 3815.");
     assert.deepEqual(
       { type: alerts[0].eventType, country: alerts[0].country, level: alerts[0].alertLevel, severity: alerts[0].severity },
       { type: "Tropical cyclone", country: "Japan", level: "Orange", severity: "Magnitude 6.1M, Depth:10km" },
