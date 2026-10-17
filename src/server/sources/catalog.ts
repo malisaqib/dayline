@@ -57,6 +57,25 @@ export const SOURCES: FeedSource[] = [
     reuseNote: "Feed includes long article text; republication rights unclear. Short excerpt plus link only until checked.",
   },
   {
+    // Dawn returns HTTP 403 to Vercel's servers, so Pakistan coverage also needs the feeds below.
+    id: "geo",
+    name: "Geo News",
+    url: "https://www.geo.tv/rss/1/1",
+    topics: ["pakistan"],
+    enabled: true,
+    usage: EXCERPT_UNVERIFIED,
+    reuseNote: "Geo/Jang Group terms; RSS reuse and AI processing unverified. Excerpt plus link only.",
+  },
+  {
+    id: "app",
+    name: "Associated Press of Pakistan",
+    url: "https://www.app.com.pk/feed/",
+    topics: ["pakistan"],
+    enabled: true,
+    usage: EXCERPT_UNVERIFIED,
+    reuseNote: "State news agency; reuse terms not reviewed. Excerpt plus link only.",
+  },
+  {
     id: "bbc",
     name: "BBC News",
     url: "https://feeds.bbci.co.uk/news/rss.xml",
