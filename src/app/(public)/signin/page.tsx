@@ -121,6 +121,13 @@ function renderGuest(next: string, notice: string | null) {
       </p>
       {renderNotice(notice)}
       <PasswordForm next={next} initialIntent="upgrade" />
+      <p className={`${ui.meta} mt-5`}>
+        Already have a Dayline account?{" "}
+        <Link href="/signin?mode=signin" className="font-semibold text-ink underline underline-offset-4">
+          Sign in instead
+        </Link>
+        . This browser then switches to that account; your guest paper is kept, not merged.
+      </p>
       <Link href="/today" className={`${ui.ghostButton} mt-4 -ml-4`}>
         Not now, back to my paper
       </Link>
@@ -154,6 +161,9 @@ async function renderSignIn({ searchParams }: { searchParams: SearchParams }) {
   const entry = await readReaderEntry();
   if (entry.kind === "visitor") {
     return renderVisitor(next ?? "", notice, first(params.mode) === "create");
+  }
+  if (entry.account.isAnonymous && first(params.mode) === "signin") {
+    return renderVisitor(next ?? "", notice, false);
   }
   if (entry.account.isAnonymous) {
     return renderGuest(next ?? "", notice);
