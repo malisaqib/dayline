@@ -11,9 +11,3 @@ export const ui = {
   chip: "inline-flex items-center gap-1 rounded-full border border-rule bg-paper px-2.5 py-1 text-xs font-medium text-ink",
 } as const;
 
-const MAX_STAGGER_STEPS = 6;
-const STAGGER_MS = 60;
-
-export function staggerStyle(index: number): { animationDelay: string } {
-  return { animationDelay: `${Math.min(index, MAX_STAGGER_STEPS) * STAGGER_MS}ms` };
-}

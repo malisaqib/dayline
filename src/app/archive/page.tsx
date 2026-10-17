@@ -3,7 +3,8 @@ import type { EditionSummary } from "@/domain/editions/edition";
 import { formatEditionDate } from "@/domain/editions/edition";
 import { topicIdSchema, topicLabel } from "@/domain/topics";
 import { TodayForm } from "@/features/newspaper/TodayForm";
-import { staggerStyle, ui } from "@/features/shared/ui";
+import { RevealItem, RevealList } from "@/features/shared/Reveal";
+import { ui } from "@/features/shared/ui";
 import { getVerifiedReader } from "@/server/auth/session";
 import { createReaderSupabase } from "@/server/db/supabase-server";
 import { listEditions } from "@/server/repositories/editions";
@@ -20,9 +21,9 @@ function topicNames(topics: string[]): string[] {
   });
 }
 
-function renderCard(edition: EditionSummary, index: number) {
+function renderCard(edition: EditionSummary) {
   return (
-    <li key={edition.id} className={`${ui.card} animate-fade-up flex flex-col p-5 sm:only:col-span-2`} style={staggerStyle(index)}>
+    <RevealItem key={edition.id} className={`${ui.card} flex flex-col p-5 sm:only:col-span-2`}>
       <div className="flex items-start justify-between gap-3">
         <h2 className="font-serif text-xl font-bold leading-snug">{formatEditionDate(edition.localDate)}</h2>
         <span className="shrink-0 rounded-full bg-ink px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-paper">Saved</span>
@@ -47,7 +48,7 @@ function renderCard(edition: EditionSummary, index: number) {
           Download PDF
         </a>
       </div>
-    </li>
+    </RevealItem>
   );
 }
 
@@ -73,7 +74,7 @@ function renderSummary(editions: EditionSummary[]) {
     { label: "Next paper", value: "06:00 PKT" },
   ];
   return (
-    <aside className={`${ui.card} animate-fade-up p-5 lg:sticky lg:top-20 lg:self-start`} aria-labelledby="summary-heading">
+    <aside className={`${ui.card} p-5 lg:sticky lg:top-20 lg:self-start`} aria-labelledby="summary-heading">
       <h2 id="summary-heading" className="font-serif text-lg font-bold">
         Your reading so far
       </h2>
@@ -106,7 +107,9 @@ function renderBody(editions: EditionSummary[]) {
   }
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] lg:gap-8">
-      <ul className="grid content-start gap-4 sm:grid-cols-2">{editions.map(renderCard)}</ul>
+      <RevealList className="grid content-start gap-4 sm:grid-cols-2" label="Saved papers">
+        {editions.map(renderCard)}
+      </RevealList>
       {renderSummary(editions)}
     </div>
   );

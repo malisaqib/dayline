@@ -9,7 +9,7 @@ const PANEL_TITLE = "text-xs font-bold uppercase tracking-[0.12em] text-accent";
 
 function storyLink(item: BriefStory) {
   return (
-    <a href={`#story-${item.position}`} className="font-serif text-lg font-bold leading-snug hover:text-accent-strong hover:underline">
+    <a href={`#story-${item.position}`} className="relative font-serif text-lg font-bold leading-snug after:absolute after:-inset-y-2 after:inset-x-0 after:content-[''] hover:text-accent-strong hover:underline">
       {item.story.headline}
     </a>
   );
@@ -41,7 +41,7 @@ function renderTodayInThree(items: Brief["todayInThree"]) {
             <span>
               {item.sentence}{" "}
               <span className="text-sm text-muted">({item.story.sourceName})</span>{" "}
-              <a href={`#story-${item.position}`} className="inline-flex min-h-11 items-center whitespace-nowrap text-sm font-semibold text-accent-strong underline-offset-4 hover:underline sm:min-h-0">
+              <a href={`#story-${item.position}`} className="relative whitespace-nowrap text-sm font-semibold text-accent-strong underline-offset-4 after:absolute after:-inset-x-1 after:-inset-y-4 after:content-[''] hover:underline">
                 Story {item.position}
               </a>
             </span>

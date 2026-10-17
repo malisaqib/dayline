@@ -35,13 +35,13 @@ function renderIndex(stories: PresentedStory[]) {
       <div className="mt-3">
         <ReadingProgress total={stories.length} />
       </div>
-      <ol className="mt-4 space-y-2">
+      <ol className="mt-3">
         {stories.map((story, index) => (
           <li key={story.id} className="flex gap-3 text-sm">
             <span className="w-5 shrink-0 font-serif font-bold text-accent" aria-hidden="true">
               {index + 1}
             </span>
-            <a href={`#story-${index + 1}`} className="line-clamp-2 hover:text-accent-strong hover:underline">
+            <a href={`#story-${index + 1}`} className="line-clamp-2 py-2 hover:text-accent-strong hover:underline">
               {story.headline}
             </a>
           </li>

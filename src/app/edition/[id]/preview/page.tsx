@@ -6,6 +6,7 @@ import { FeedbackControls } from "@/features/feedback/FeedbackControls";
 import { storyWrapper } from "@/features/feedback/story-wrapper";
 import { PreferencesPanel } from "@/features/feedback/PreferencesPanel";
 import { EditionView } from "@/features/newspaper/EditionView";
+import { Reveal } from "@/features/shared/Reveal";
 import { ui } from "@/features/shared/ui";
 import { readOwnEditionWithContext } from "@/server/services/read-edition";
 
@@ -13,14 +14,16 @@ export const dynamic = "force-dynamic";
 
 function renderBanner(editionId: string) {
   return (
-    <div role="note" className="animate-fade-up rounded-xl border-2 border-dashed border-accent bg-accent-soft px-4 py-4 sm:px-5">
+    <Reveal className="rounded-card border-2 border-dashed border-accent bg-accent-soft px-4 py-4 sm:px-5">
+      <div role="note">
       <p className="text-xs font-bold uppercase tracking-[0.12em] text-accent-strong">Preview only</p>
-      <p className="mt-1 font-semibold">This is how your next paper may look. Your saved paper is unchanged.</p>
+      <p className="mt-1 font-semibold">This shows how your next paper may look. Your saved paper is unchanged.</p>
       <p className="mt-1 text-sm text-muted">{PREVIEW_LABEL} Tomorrow&apos;s paper will use tomorrow&apos;s news with these preferences.</p>
       <Link href={`/edition/${editionId}`} className="mt-2 inline-flex min-h-11 items-center font-semibold text-accent-strong underline-offset-4 hover:underline">
         ← Back to today&apos;s saved paper
       </Link>
-    </div>
+      </div>
+    </Reveal>
   );
 }
 
