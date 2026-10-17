@@ -3,7 +3,7 @@ import { z } from "zod";
 /*
  * Two kinds of configuration:
  * - Public: Supabase URL and publishable key. Safe in the browser; RLS protects data.
- * - Secret: Supabase secret/service-role key, database URL and Anthropic key.
+ * - Secret: Supabase secret key (sb_secret_...), database URL and Anthropic key.
  *   Server-only; never prefix with NEXT_PUBLIC_.
  */
 const publicSupabaseSchema = z.object({
@@ -12,12 +12,18 @@ const publicSupabaseSchema = z.object({
 });
 
 const supabaseSecretSchema = z.object({
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(20),
+  SUPABASE_SECRET_KEY: z.string().startsWith("sb_secret_"),
 });
+
+export const DEFAULT_ANTHROPIC_MODEL = "claude-opus-5-5";
 
 const anthropicEnvSchema = z.object({
   ANTHROPIC_API_KEY: z.string().min(20),
-  ANTHROPIC_MODEL: z.string().min(1).default("claude-opus-5-5"),
+  // An empty value in .env.local means "use the default", not an invalid model.
+  ANTHROPIC_MODEL: z
+    .string()
+    .optional()
+    .transform((value) => value?.trim() || DEFAULT_ANTHROPIC_MODEL),
 });
 
 const databaseEnvSchema = z.object({

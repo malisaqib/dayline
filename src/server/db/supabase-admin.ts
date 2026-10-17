@@ -10,7 +10,7 @@ let adminClient: SupabaseClient | null = null;
  */
 export function getSupabaseAdmin(): SupabaseClient {
   if (!adminClient) {
-    adminClient = createClient(getPublicSupabaseEnv().NEXT_PUBLIC_SUPABASE_URL, getSupabaseSecretEnv().SUPABASE_SERVICE_ROLE_KEY, {
+    adminClient = createClient(getPublicSupabaseEnv().NEXT_PUBLIC_SUPABASE_URL, getSupabaseSecretEnv().SUPABASE_SECRET_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
   }

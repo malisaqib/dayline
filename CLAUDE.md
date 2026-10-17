@@ -15,7 +15,7 @@ Next.js 15 App Router, TypeScript (strict), Tailwind v4, Supabase (Postgres/auth
 - Article snapshots are immutable: keep `fetchedAt`, `publishedAt` and `contentHash`. Editions store frozen story snapshots and never re-read URLs.
 - Web and PDF must render the same saved edition snapshot (same stories, same order, same text).
 - One daily edition per user and local date (Asia/Karachi), enforced in the DB.
-- Keys: the Supabase URL and publishable key are public (`NEXT_PUBLIC_`, protected by RLS). The Supabase secret/service-role key, DB URL and Anthropic key are secret: server-only, never `NEXT_PUBLIC_`. Never commit .env files.
+- Keys: the Supabase URL and publishable key are public (`NEXT_PUBLIC_`, protected by RLS). The Supabase secret key (`SUPABASE_SECRET_KEY`, sb_secret_...), DB URL and Anthropic key are secret: server-only, never `NEXT_PUBLIC_`. Never commit .env files.
 - Reader reads and writes use the reader's cookie session (`createReaderSupabase`) and RLS. The secret client (`getSupabaseAdmin`) is only for shared tables (articles, summaries) and for inserting an edition for a reader verified with `auth.getUser()`.
 - Fetchable does not mean permitted. `SourceUsage` in the catalog decides what is displayed or sent to the model. Only sources with `aiProcessing: true` get AI summaries; the others show the publisher's excerpt or the headline only.
 - Web and PDF both render `presentEdition(edition)`; don't fork the content path.
