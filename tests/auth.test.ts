@@ -24,7 +24,7 @@ describe("safe return paths", () => {
     assert.ok(isPrivatePath("/archive"));
     assert.ok(!isPrivatePath("/"));
     assert.ok(!isPrivatePath("/signin"));
-    assert.ok(!isPrivatePath("/onboarding"));
+    assert.ok(isPrivatePath("/onboarding"));
   });
 });
 

@@ -101,36 +101,11 @@ function renderVisitor(next: string, notice: string | null, creating: boolean) {
       {renderNotice(notice)}
       <PasswordForm next={next} initialIntent={intent} />
       <div className="mt-6 border-t border-rule pt-4">
-        <p className={ui.meta}>Just looking? Try Dayline without an account; your paper is then saved to this browser only.</p>
-        <Link href="/onboarding" className={`${ui.ghostButton} mt-2 -ml-4`}>
-          Try without an account →
+        <p className={ui.meta}>Just looking? See a real Dayline paper before you sign up.</p>
+        <Link href="/#sample" className={`${ui.ghostButton} mt-2 -ml-4`}>
+          See a sample paper →
         </Link>
       </div>
-    </>,
-  );
-}
-
-function renderGuest(next: string, notice: string | null) {
-  return renderShell(
-    <>
-      <p className={ui.eyebrow}>Keep your paper</p>
-      <h1 className="mt-3 font-serif text-3xl font-bold">Save this paper to your account</h1>
-      <p className="mt-3 text-muted">
-        You&apos;re reading as a guest, so your topics, feedback and archive live in this browser only. Add an email and password to keep them and sign in on other
-        devices. Nothing you&apos;ve made so far is lost.
-      </p>
-      {renderNotice(notice)}
-      <PasswordForm next={next} initialIntent="upgrade" />
-      <p className={`${ui.meta} mt-5`}>
-        Already have a Dayline account?{" "}
-        <Link href="/signin?mode=signin" className="font-semibold text-ink underline underline-offset-4">
-          Sign in instead
-        </Link>
-        . This browser then switches to that account; your guest paper is kept, not merged.
-      </p>
-      <Link href="/today" className={`${ui.ghostButton} mt-4 -ml-4`}>
-        Not now, back to my paper
-      </Link>
     </>,
   );
 }
@@ -161,12 +136,6 @@ async function renderSignIn({ searchParams }: { searchParams: SearchParams }) {
   const entry = await readReaderEntry();
   if (entry.kind === "visitor") {
     return renderVisitor(next ?? "", notice, first(params.mode) === "create");
-  }
-  if (entry.account.isAnonymous && first(params.mode) === "signin") {
-    return renderVisitor(next ?? "", notice, false);
-  }
-  if (entry.account.isAnonymous) {
-    return renderGuest(next ?? "", notice);
   }
   if (entry.kind === "reader" && next) {
     redirect(next);

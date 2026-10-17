@@ -9,9 +9,7 @@ import {
   emailSchema,
   passwordSchema,
   signInWithPassword,
-  upgradeGuestWithPassword,
 } from "@/server/auth/password-auth";
-import { getVerifiedReader } from "@/server/auth/session";
 import { createReaderSupabase } from "@/server/db/supabase-server";
 import { destinationAfterSignIn } from "@/server/services/account";
 
@@ -41,14 +39,6 @@ export async function passwordAuth(_prev: PasswordState, form: FormData): Promis
   const next = safeReturnPath(String(form.get("next") ?? ""));
   const db = await createReaderSupabase();
   try {
-    const reader = await getVerifiedReader(db);
-    if (reader?.isAnonymous && form.get("intent") === "upgrade") {
-      const result = await upgradeGuestWithPassword(db, email.data, password.data, await confirmUrl(next));
-      if (result.needsConfirmation) {
-        return { error: null, notice: `Check ${email.data} for a confirmation link. Your paper stays here meanwhile.`, email: email.data };
-      }
-      redirect(next ?? "/today");
-    }
     if (form.get("intent") === "create") {
       const result = await createPasswordAccount(db, email.data, password.data, await confirmUrl(next));
       if (result.needsConfirmation) {
@@ -61,11 +51,7 @@ export async function passwordAuth(_prev: PasswordState, form: FormData): Promis
     const failure = describeAuthError(error);
     console.error("[auth] password failed", failure.kind);
     if (failure.kind === "email_taken") {
-      return {
-        error: "This email already has a Dayline account. Dayline won't merge accounts; your guest paper stays in this browser.",
-        notice: null,
-        email: email.data,
-      };
+      return { error: "This email already has a Dayline account. Sign in instead.", notice: null, email: email.data };
     }
     return { error: failure.message, notice: null, email: email.data };
   }

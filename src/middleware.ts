@@ -23,7 +23,8 @@ export async function middleware(request: NextRequest) {
   });
 
   const { data } = await supabase.auth.getUser();
-  if (data.user || !isPrivatePath(request.nextUrl.pathname)) {
+  const signedIn = data.user !== null && data.user.is_anonymous !== true;
+  if (signedIn || !isPrivatePath(request.nextUrl.pathname)) {
     return response;
   }
 

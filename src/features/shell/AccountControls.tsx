@@ -11,8 +11,8 @@ export async function AccountControls() {
   }
   if (reader.isAnonymous) {
     return (
-      <Link href="/signin" className={`${ui.ghostButton} text-accent-strong`}>
-        Save to email
+      <Link href="/signin" className={ui.ghostButton}>
+        Sign in
       </Link>
     );
   }

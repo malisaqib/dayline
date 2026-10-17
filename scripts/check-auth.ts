@@ -68,6 +68,8 @@ async function routing(browser: Browser): Promise<void> {
   const url = new URL(page.url());
   check(url.pathname === "/signin" && url.searchParams.get("next") === "/archive" && url.searchParams.get("reason") === "signin", "signed-out /archive -> /signin?next=/archive");
   check(await page.getByText("Sign in to open your paper.").isVisible(), "sign-in page explains why");
+  await page.goto(`${BASE_URL}/onboarding`);
+  check(new URL(page.url()).pathname === "/signin", "signed-out /onboarding -> /signin (no anonymous papers)");
   await page.goto(`${BASE_URL}/signin?next=https://evil.example`);
   check((await page.locator('input[name="next"]').first().inputValue()) === "", "external return path is dropped");
   await page.goto(`${BASE_URL}/auth/confirm?token_hash=not-a-real-token&type=magiclink&next=/today`);
@@ -123,63 +125,34 @@ async function permanentAccount(browser: Browser, email: string): Promise<{ id: 
   return { id, editionId };
 }
 
-async function guestUpgrade(browser: Browser, sql: postgres.Sql, takenEmail: string, otherEditionId: string): Promise<void> {
+async function secondReader(browser: Browser, takenEmail: string, otherEditionId: string): Promise<void> {
+  const email = testEmail("second");
+  const password = `pw-${randomBytes(9).toString("hex")}`;
+  const created = await getSupabaseAdmin().auth.admin.createUser({ email, password, email_confirm: true });
+  if (!created.data.user) {
+    throw new Error(`could not create the second test account: ${created.error?.message}`);
+  }
+  cleanupIds.push(created.data.user.id);
   const context = await browser.newContext();
   const page = await context.newPage();
-  await page.goto(`${BASE_URL}/signin`);
-  await page.getByRole("link", { name: "Try without an account" }).click();
-  await page.waitForURL(/\/onboarding/);
-  const guestEdition = await onboard(page, ["security", "science"]);
-  const guest = await sessionUser(page);
-  if (guest) {
-    cleanupIds.push(guest.id);
-  }
-  check(guest?.anonymous === true, "guest path creates an anonymous reader");
-  if (!guest) {
-    await context.close();
-    return;
-  }
 
+  await page.goto(`${BASE_URL}/signin?mode=create`);
+  check((await page.locator('[role=tab][aria-selected=true]').textContent()) === "Create account", "Create my paper opens the Create account tab");
+  await page.getByLabel("Email address").fill(takenEmail);
+  await page.getByLabel("Password").fill("another-password-123");
+  await page.getByRole("button", { name: "Create my account" }).click();
+  const taken = await page.getByText("already has a Dayline account").waitFor({ timeout: 15_000 }).then(() => true, () => false);
+  check(taken, "creating an account with a taken email is refused clearly");
+
+  await page.goto(`${BASE_URL}/signin`);
+  await page.getByLabel("Email address").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.waitForURL(/\/onboarding/);
+  check(true, "a second account signs in with email and password");
   await page.goto(`${BASE_URL}/edition/${otherEditionId}`);
   const hidden = await page.getByRole("heading", { name: "Paper not found" }).waitFor({ timeout: 15_000 }).then(() => true, () => false);
-  check(hidden && (await page.locator("article h2 a").count()) === 0, "a second reader cannot open the first reader's paper");
-
-  await page.goto(`${BASE_URL}/signin`);
-  check(await page.getByRole("heading", { name: "Save this paper to your account" }).isVisible(), "guest sees the upgrade offer");
-  await page.getByLabel("Email address").fill(takenEmail);
-  await page.getByLabel("Password").fill("guest-password-123");
-  await page.getByRole("button", { name: "Save my paper" }).click();
-  await page.getByText("already has a Dayline account").waitFor();
-  check(true, "an email that already has an account shows the explicit conflict");
-  check((await sessionUser(page))?.id === guest.id, "conflict leaves the guest session and data in place");
-
-  const email = testEmail("upgrade");
-  await page.getByLabel("Email address").fill(email);
-  await page.getByLabel("Password").fill("guest-password-123");
-  await page.getByRole("button", { name: "Save my paper" }).click();
-  const pending = page.getByText("Check ").first();
-  const failed = page.locator("form p[role=alert]");
-  await Promise.race([page.waitForURL(/\/today/), pending.waitFor(), failed.waitFor()]);
-  if (await failed.isVisible()) {
-    check(false, `upgrade failed: ${await failed.textContent()}`);
-    await context.close();
-    return;
-  }
-  if (await pending.isVisible()) {
-    check(true, "upgrade asks for email confirmation (Confirm email is on)");
-    const [row] = await sql<{ token: string }[]>`select email_change_token_new as token from auth.users where id = ${guest.id}`;
-    await confirm(page, row.token, "email_change", "/archive");
-  } else {
-    check(true, "upgrade applied immediately (Confirm email is off)");
-    await page.goto(`${BASE_URL}/archive`);
-  }
-  const upgraded = await sessionUser(page);
-  check(upgraded?.id === guest.id && upgraded.anonymous === false && upgraded.email === email, "upgrade keeps the same user id and makes it permanent");
-  check((await page.locator(`a[href="/edition/${guestEdition}"]`).count()) === 1, `guest archive survives the upgrade (${new URL(page.url()).pathname})`);
-  await page.goto(`${BASE_URL}/edition/${otherEditionId}`);
-  const notFound = await page.getByRole("heading", { name: "Paper not found" }).waitFor({ timeout: 15_000 }).then(() => true, () => false);
-  const leaked = await page.locator("article h2 a").count();
-  check(notFound && leaked === 0, `upgraded reader cannot open another reader's paper (not found shown: ${notFound}, stories visible: ${leaked})`);
+  check(hidden && (await page.locator("article h2 a").count()) === 0, "the second reader cannot open the first reader's paper");
   const pdf = await context.request.get(`${BASE_URL}/api/editions/${otherEditionId}/pdf`);
   check(pdf.status() === 404, "nor download its PDF");
   await context.close();
@@ -193,7 +166,7 @@ async function main() {
     await routing(browser);
     const email = testEmail("account");
     const account = await permanentAccount(browser, email);
-    await guestUpgrade(browser, sql, email, account.editionId);
+    await secondReader(browser, email, account.editionId);
   } catch (error) {
     if (lastPage) {
       console.log(`last page: ${lastPage.url()}`);

@@ -7,7 +7,7 @@ import { fadeUp } from "@/features/shared/motion";
 import { PendingButton } from "@/features/shared/PendingButton";
 import { ui } from "@/features/shared/ui";
 
-type Intent = "signin" | "create" | "upgrade";
+type Intent = "signin" | "create";
 
 const INPUT = "mt-1 block min-h-11 w-full rounded-xl border border-ink/20 bg-paper px-4 text-base focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30";
 const TAB = "relative min-h-10 flex-1 rounded-full px-4 text-sm font-semibold transition-colors duration-[185ms]";
@@ -15,7 +15,6 @@ const TAB = "relative min-h-10 flex-1 rounded-full px-4 text-sm font-semibold tr
 const COPY: Record<Intent, { submit: string; autocomplete: string; hint: string }> = {
   signin: { submit: "Sign in", autocomplete: "current-password", hint: "Welcome back. Your topics, feedback and archive are waiting." },
   create: { submit: "Create my account", autocomplete: "new-password", hint: "At least 8 characters." },
-  upgrade: { submit: "Save my paper", autocomplete: "new-password", hint: "At least 8 characters. You keep everything you've made as a guest." },
 };
 
 function tabClass(active: boolean): string {
@@ -51,9 +50,6 @@ function renderMessage(state: PasswordState) {
 }
 
 function renderTabs(intent: Intent, setIntent: (next: Intent) => void) {
-  if (intent === "upgrade") {
-    return null;
-  }
   return (
     <div className="relative isolate flex rounded-full border border-rule p-1" role="tablist" aria-label="Account">
       <button type="button" role="tab" aria-selected={intent === "signin"} className={tabClass(intent === "signin")} onClick={() => setIntent("signin")}>

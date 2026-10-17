@@ -19,7 +19,7 @@ export function describeAuthError(error: unknown): AuthFailure {
     return { kind: "email_taken", message: "This email already has a Dayline account." };
   }
   if (code === "email_address_not_authorized") {
-    return { kind: "not_allowed", message: "Dayline can't send email to this address yet. Try another address or continue without an account." };
+    return { kind: "not_allowed", message: "Dayline can't send email to this address yet. Try another address." };
   }
   if (code === "invalid_credentials") {
     return { kind: "expired", message: "That email and password don't match. Try again, or email yourself a code instead." };
@@ -55,12 +55,4 @@ export async function createPasswordAccount(db: SupabaseClient, email: string, p
     throw new AuthError("This email already has a Dayline account.", 422, "user_already_exists");
   }
   return { needsConfirmation: !data.session };
-}
-
-export async function upgradeGuestWithPassword(db: SupabaseClient, email: string, password: string, redirectTo: string): Promise<{ needsConfirmation: boolean }> {
-  const { data, error } = await db.auth.updateUser({ email, password }, { emailRedirectTo: redirectTo });
-  if (error) {
-    throw error;
-  }
-  return { needsConfirmation: data.user.email !== email };
 }

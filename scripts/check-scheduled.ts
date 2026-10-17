@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { chromium } from "playwright";
 import { localEditionDate } from "@/domain/editions/edition";
 import { deriveTopicWeights } from "@/domain/personalization/weights";
-import { ensureReader } from "@/server/auth/session";
+import { randomBytes } from "node:crypto";
 import { getSupabaseAdmin } from "@/server/db/supabase-admin";
 import { getCronEnv, getPublicSupabaseEnv } from "@/server/env";
 import { saveProfile } from "@/server/repositories/profiles";
@@ -35,12 +35,19 @@ async function main() {
   check((await trigger()).status === 401, "no authorization -> 401");
   check((await trigger(`Bearer ${"x".repeat(secret.length)}`)).status === 401, "wrong token -> 401");
 
-  // An anonymous reader with a profile but no edition, signed in through the same cookie format the app uses.
+  // A signed-in reader with a profile but no edition, signed in through the same cookie format the app uses.
   const jar = new Map<string, string>();
   const db = createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
     cookies: { getAll: () => [...jar].map(([name, value]) => ({ name, value })), setAll: (set) => set.forEach((c) => jar.set(c.name, c.value)) },
   });
-  const reader = await ensureReader(db);
+  const email = `dayline-scheduled-${randomBytes(4).toString("hex")}@mailinator.com`;
+  const password = `pw-${randomBytes(9).toString("hex")}`;
+  const created = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+  const signedIn = await db.auth.signInWithPassword({ email, password });
+  if (!created.data.user || signedIn.error) {
+    throw new Error("could not create and sign in the test reader");
+  }
+  const reader = { id: created.data.user.id, isAnonymous: false, email };
   try {
     await saveProfile(db, reader.id, ["security", "disasters"], deriveTopicWeights(["security", "disasters"], []));
     const today = localEditionDate(new Date());

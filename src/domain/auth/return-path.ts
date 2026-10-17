@@ -24,5 +24,5 @@ export function safeReturnPath(raw: string | null | undefined): string | null {
 }
 
 export function isPrivatePath(pathname: string): boolean {
-  return pathname === "/today" || pathname === "/archive" || pathname.startsWith("/edition/");
+  return pathname === "/today" || pathname === "/archive" || pathname === "/onboarding" || pathname.startsWith("/edition/");
 }

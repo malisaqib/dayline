@@ -12,7 +12,7 @@ export type ReaderEntry =
 export async function readReaderEntry(now = new Date()): Promise<ReaderEntry> {
   const db = await createReaderSupabase();
   const reader = await getVerifiedReader(db);
-  if (!reader) {
+  if (!reader || reader.isAnonymous) {
     return { kind: "visitor" };
   }
   const profile = await findProfile(db, reader.id);

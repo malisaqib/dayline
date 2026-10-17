@@ -1,5 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
+import { randomBytes } from "node:crypto";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
+import { getSupabaseAdmin } from "@/server/db/supabase-admin";
 
 /*
  * Browser journey against a running app (local or deployed):
@@ -30,8 +32,25 @@ async function readStories(page: Page): Promise<Story[]> {
   );
 }
 
+const createdReaders: string[] = [];
+
+async function signInFreshReader(page: Page): Promise<void> {
+  const email = `dayline-journey-${randomBytes(4).toString("hex")}@mailinator.com`;
+  const password = `pw-${randomBytes(9).toString("hex")}`;
+  const created = await getSupabaseAdmin().auth.admin.createUser({ email, password, email_confirm: true });
+  if (!created.data.user) {
+    throw new Error(`could not create a test reader: ${created.error?.message}`);
+  }
+  createdReaders.push(created.data.user.id);
+  await page.goto(`${BASE_URL}/signin`);
+  await page.getByLabel("Email address").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.waitForURL(/\/onboarding/);
+}
+
 async function onboard(page: Page, topics: string[]): Promise<string> {
-  await page.goto(`${BASE_URL}/onboarding`);
+  await signInFreshReader(page);
   for (const topic of topics) {
     await page.locator(`input[name="topics"][value="${topic}"]`).check();
   }
@@ -157,7 +176,7 @@ async function isolationCheck(browser: Browser, editionId: string): Promise<void
   const context = await browser.newContext();
   const page = await context.newPage();
   const ownId = await onboard(page, ["pakistan"]);
-  check(ownId !== editionId, "second anonymous reader gets their own edition");
+  check(ownId !== editionId, "second reader gets their own edition");
 
   await page.goto(`${BASE_URL}/edition/${editionId}`);
   check((await page.getByRole("heading", { name: "Paper not found" }).count()) === 1, "second reader cannot open first reader's edition page");
@@ -175,6 +194,10 @@ async function main() {
     await isolationCheck(browser, editionId);
   } finally {
     await browser.close();
+    for (const id of createdReaders) {
+      await getSupabaseAdmin().auth.admin.deleteUser(id);
+    }
+    console.log(`cleanup: deleted ${createdReaders.length} test readers`);
   }
   console.log(failures === 0 ? "\nJOURNEY PASSED" : `\nJOURNEY FAILED (${failures} checks)`);
   process.exit(failures === 0 ? 0 : 1);

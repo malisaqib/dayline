@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import type { TopicWeights } from "@/domain/personalization/weights";
 import { interestsSchema } from "@/domain/interests";
 import { profileTopicsSchema } from "@/domain/topics";
-import { ensureReader, getVerifiedReader } from "@/server/auth/session";
+import { getVerifiedReader } from "@/server/auth/session";
 import { createReaderSupabase } from "@/server/db/supabase-server";
 import { saveProfile } from "@/server/repositories/profiles";
 import { supportedTopicIds } from "@/server/sources/catalog";
@@ -62,8 +62,11 @@ export async function completeOnboarding(_prev: ActionState, form: FormData): Pr
   }
 
   const db = await createReaderSupabase();
+  const reader = await getVerifiedReader(db);
+  if (!reader || reader.isAnonymous) {
+    return { error: "Sign in to save your topics and make your paper." };
+  }
   try {
-    const reader = await ensureReader(db);
     await saveProfile(db, reader.id, parsed.data, await weightsForTopics(db, reader, parsed.data), interests.data);
   } catch (error) {
     console.error("[onboarding] failed", error);
