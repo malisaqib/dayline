@@ -2,7 +2,7 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
-## Phase 3: automatic daily generation. Endpoint and cron VERIFIED; authorized production run PENDING one manual step
+## Phase 3: automatic daily generation. VERIFIED on production (deployment 339f8be)
 - **Endpoint:** `POST /api/internal/daily-editions` checks `Bearer CRON_SECRET` in constant time. A missing or wrong token, or an unset server secret, gets 401. The response is counts only: `{localDate, examined, created, reused, failed, durationMs}`.
 - **Job** (`src/server/services/daily-job.ts`):
   - Profiles in keyset pages of 100, 3 readers at a time, each through the existing `getOrCreateDailyEdition`, so ranking, weights, caching, source isolation and snapshots are unchanged.
@@ -15,7 +15,11 @@ Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: htt
   - `check:daily`: 6 of 6. The scheduled edition used the reader's saved weights. The second run gave created 0 / reused 33. The edition rejected an update even with the secret key.
   - `check:scheduled` against the local server: PASSED. Covers the 401s, run 1 creating the missing edition (created 1, reused 31), run 2 creating nothing (reused 32), and the reader opening that scheduled edition via "Open today's paper", the archive and the PDF (200).
 - **Verified on production (deployment bf19931):** no token and wrong token get 401; GET gets 405. `/api/health` reports `cron.missingFields: ["CRON_SECRET"]` without ever showing a value, so health returns `ok:false` until the secret is set.
-- **PENDING (user):** add `CRON_SECRET` to Vercel Production, using the same value as `.env.local`, and redeploy. Then run `npm run cron:setup -- --trigger` and `BASE_URL=https://dayline-swart.vercel.app npm run check:scheduled`.
+- **Production, after `CRON_SECRET` was added to Vercel:**
+  - `/api/health` returns `ok:true` with `cron.valid:true`; no secret values appear in the body.
+  - `npm run cron:setup -- --trigger`: the real pg_cron path (Vault → `internal.trigger_daily_editions()` → pg_net) got **HTTP 200** `{"examined":31,"created":0,"reused":31,"failed":0,"durationMs":8084}`.
+  - `BASE_URL=https://dayline-swart.vercel.app npm run check:scheduled`: PASSED. The 401s held; run 1 got HTTP 200 (created 1, reused 31); run 2 got HTTP 200 (created 0, reused 32); counts only; the reader opened the scheduled edition via "Open today's paper", the archive and the PDF (200).
+  - Database: 31 editions for 31 readers on 2026-10-17, **0 duplicates**. The cron job `dayline-daily-editions` is `0 1 * * *` and `active: true`.
 - **Commits:** `c434290` (job and endpoint), `bf19931` (cron schedule and docs).
 - **Limits:** a single run must fit in 300 s (about 5 s for 33 readers now). There is no automatic retry; on-demand generation covers gaps.
 
