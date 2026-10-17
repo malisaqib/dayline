@@ -3,7 +3,7 @@
 import { useFormStatus } from "react-dom";
 import { ui } from "./ui";
 
-type PendingButtonProps = { label: string; pendingMessage: string; className?: string };
+type PendingButtonProps = { label: string; className?: string };
 
 function renderSpinner(pending: boolean) {
   if (!pending) {
@@ -16,20 +16,13 @@ function renderSpinner(pending: boolean) {
   );
 }
 
-export function PendingButton({ label, pendingMessage, className = ui.primaryButton }: PendingButtonProps) {
+export function PendingButton({ label, className = ui.primaryButton }: PendingButtonProps) {
   const { pending } = useFormStatus();
   const labelClass = pending ? "invisible" : undefined;
-  const statusClass = pending ? "text-sm text-muted" : "sr-only";
-  const status = pending ? pendingMessage : "";
   return (
-    <>
-      <button type="submit" disabled={pending} aria-busy={pending} className={`relative ${className}`}>
-        <span className={labelClass}>{label}</span>
-        {renderSpinner(pending)}
-      </button>
-      <p aria-live="polite" className={statusClass}>
-        {status}
-      </p>
-    </>
+    <button type="submit" disabled={pending} aria-busy={pending} className={`relative ${className}`}>
+      <span className={labelClass}>{label}</span>
+      {renderSpinner(pending)}
+    </button>
   );
 }
