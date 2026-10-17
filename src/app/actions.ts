@@ -6,7 +6,7 @@ import { ensureReader, getVerifiedReader } from "@/server/auth/session";
 import { createReaderSupabase } from "@/server/db/supabase-server";
 import { saveProfile } from "@/server/repositories/profiles";
 import { supportedTopicIds } from "@/server/sources/catalog";
-import { weightsForTopics } from "@/server/services/feedback";
+import { FeedbackError, feedbackInputSchema, recordFeedback, weightsForTopics } from "@/server/services/feedback";
 import { GenerationError, getOrCreateDailyEdition } from "@/server/services/generate-edition";
 
 export type ActionState = { error: string | null };
@@ -53,4 +53,30 @@ export async function completeOnboarding(_prev: ActionState, form: FormData): Pr
 
 export async function openTodaysEdition(): Promise<ActionState> {
   return generateAndOpen();
+}
+
+export type FeedbackActionResult =
+  | { ok: true; changes: { label: string; direction: "stronger" | "weaker" }[] }
+  | { ok: false; error: string };
+
+export async function submitFeedback(input: unknown): Promise<FeedbackActionResult> {
+  const parsed = feedbackInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "That feedback could not be read." };
+  }
+  const db = await createReaderSupabase();
+  const reader = await getVerifiedReader(db);
+  if (!reader) {
+    return { ok: false, error: "Your session expired. Reload the page and try again." };
+  }
+  try {
+    const result = await recordFeedback(db, reader, parsed.data);
+    return { ok: true, changes: result.changes.map(({ label, direction }) => ({ label, direction })) };
+  } catch (error) {
+    if (error instanceof FeedbackError) {
+      return { ok: false, error: error.message };
+    }
+    console.error("[feedback] failed", error);
+    return { ok: false, error: "We couldn't save that. Please try again." };
+  }
 }

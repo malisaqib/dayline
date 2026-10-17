@@ -1,6 +1,9 @@
+import type { ReactNode } from "react";
 import type { PresentedEdition, PresentedStory } from "@/domain/editions/presentation";
 
-function StoryArticle({ story, lead }: { story: PresentedStory; lead: boolean }) {
+type StoryFooter = (story: PresentedStory) => ReactNode;
+
+function StoryArticle({ story, lead, footer }: { story: PresentedStory; lead: boolean; footer?: StoryFooter }) {
   return (
     <article className={lead ? "border-b border-rule pb-8" : "break-inside-avoid pb-6"}>
       <h2 className={`font-serif font-bold leading-tight ${lead ? "text-3xl sm:text-4xl" : "text-xl"}`}>
@@ -21,11 +24,21 @@ function StoryArticle({ story, lead }: { story: PresentedStory; lead: boolean })
       <a href={story.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-xs font-medium text-accent hover:underline">
         Read the original at {story.sourceName} &rarr;
       </a>
+      {footer?.(story)}
     </article>
   );
 }
 
-export function EditionView({ edition, pdfHref }: { edition: PresentedEdition; pdfHref: string }) {
+type EditionViewProps = {
+  edition: PresentedEdition;
+  /** Null hides the download link (e.g. previews, which are not saved editions). */
+  pdfHref: string | null;
+  notice?: string;
+  storyFooter?: StoryFooter;
+  children?: ReactNode;
+};
+
+export function EditionView({ edition, pdfHref, notice, storyFooter, children }: EditionViewProps) {
   const [lead, ...rest] = edition.stories;
 
   return (
@@ -39,9 +52,11 @@ export function EditionView({ edition, pdfHref }: { edition: PresentedEdition; p
           <span>{edition.timezone}</span>
         </div>
         <nav className="mt-3 flex justify-center gap-4 text-sm">
-          <a href={pdfHref} className="font-medium text-accent hover:underline">
-            Download PDF
-          </a>
+          {pdfHref && (
+            <a href={pdfHref} className="font-medium text-accent hover:underline">
+              Download PDF
+            </a>
+          )}
           <a href="/archive" className="hover:underline">
             Archive
           </a>
@@ -51,14 +66,20 @@ export function EditionView({ edition, pdfHref }: { edition: PresentedEdition; p
         </nav>
       </header>
 
+      {notice && (
+        <p role="note" className="mt-6 rounded border border-accent/40 bg-accent/5 px-4 py-2 text-center text-sm font-medium text-accent">
+          {notice}
+        </p>
+      )}
       <section className="mt-8">
-        <StoryArticle story={lead} lead />
+        <StoryArticle story={lead} lead footer={storyFooter} />
       </section>
       <section className="mt-8 gap-8 sm:columns-2">
         {rest.map((story) => (
-          <StoryArticle key={story.sourceUrl} story={story} lead={false} />
+          <StoryArticle key={story.sourceUrl} story={story} lead={false} footer={storyFooter} />
         ))}
       </section>
+      {children}
     </div>
   );
 }

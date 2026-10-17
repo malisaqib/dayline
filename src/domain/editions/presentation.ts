@@ -5,6 +5,8 @@ import { bodyKindLabel, formatEditionDate, type Edition, type StorySnapshot } fr
  * function's output, so story order and text cannot drift between them.
  */
 export type PresentedStory = {
+  /** Article content hash; identifies the story for feedback. */
+  id: string;
   headline: string;
   body: string;
   takeaways: string[];
@@ -30,6 +32,7 @@ function formatPublished(iso: string | null): string {
 
 function presentStory(story: StorySnapshot): PresentedStory {
   return {
+    id: story.articleHash,
     headline: story.title,
     body: story.body,
     takeaways: story.takeaways,

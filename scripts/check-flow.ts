@@ -5,6 +5,8 @@ import { ensureReader, type Reader } from "@/server/auth/session";
 import { getSupabaseAdmin } from "@/server/db/supabase-admin";
 import { getPublicSupabaseEnv } from "@/server/env";
 import { findEditionById } from "@/server/repositories/editions";
+import { findProfile } from "@/server/repositories/profiles";
+import { FeedbackError, recordFeedback } from "@/server/services/feedback";
 import { saveProfile } from "@/server/repositories/profiles";
 import { getOrCreateDailyEdition } from "@/server/services/generate-edition";
 
@@ -52,6 +54,33 @@ async function main() {
     check((await findEditionById(anonClient(), a1.edition.id)) === null, "a client with no session cannot read any edition");
     const { count } = await getSupabaseAdmin().from("editions").select("id", { count: "exact", head: true }).eq("user_id", a.reader.id);
     check(count === 1, `database holds exactly one edition for reader A today (found ${count})`);
+
+    // Phase 2: feedback learning against the live database.
+    const before = JSON.stringify(await findEditionById(a.db, a1.edition.id));
+    const target = a1.edition.stories[0];
+    const input = { editionId: a1.edition.id, articleHash: target.articleHash };
+    const first = await recordFeedback(a.db, a.reader, { ...input, signal: "more" });
+    const repeat = await recordFeedback(a.db, a.reader, { ...input, signal: "more" });
+    check(JSON.stringify(first.weights) === JSON.stringify(repeat.weights), `same signal twice has one effect (${JSON.stringify(repeat.weights)})`);
+    const switched = await recordFeedback(a.db, a.reader, { ...input, signal: "less" });
+    check(target.topics.every((t) => switched.weights[t] === 0.75), `more -> less replaces the effect (${JSON.stringify(switched.weights)})`);
+    const stored = await findProfile(a.db, a.reader.id);
+    check(JSON.stringify(stored?.weights) === JSON.stringify(switched.weights), "derived weights are saved on the profile");
+    const { count: rows } = await getSupabaseAdmin().from("feedback_events").select("id", { count: "exact", head: true }).eq("user_id", a.reader.id);
+    check(rows === 1, `one stored signal row for the story (found ${rows})`);
+    check(JSON.stringify(await findEditionById(a.db, a1.edition.id)) === before, "saved edition is unchanged after feedback");
+
+    const crossTarget = { editionId: bResult.edition.id, articleHash: bResult.edition.stories[0].articleHash, signal: "more" as const };
+    const cross = await recordFeedback(a.db, a.reader, crossTarget).then(() => "accepted", (e) => (e instanceof FeedbackError ? "rejected" : `error ${e}`));
+    check(cross === "rejected", "service rejects feedback on another reader's edition");
+    const direct = await a.db.from("feedback_events").insert({
+      user_id: a.reader.id,
+      edition_id: bResult.edition.id,
+      article_hash: crossTarget.articleHash,
+      topics: ["world"],
+      signal: "more",
+    });
+    check(direct.error !== null, `RLS blocks a direct insert against another reader's edition (${direct.error?.code ?? "no error"})`);
 
     for (const story of a1.edition.stories) {
       console.log(`  A [${story.bodyKind}] ${story.sourceName}: ${story.title.slice(0, 70)}`);
