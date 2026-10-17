@@ -35,7 +35,7 @@ export function EditionMockup() {
         </div>
         <div className="space-y-3">
           <article className="rounded-xl border border-white/10 bg-night p-4">
-            <span className="rounded bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white">Top story</span>
+            <span className="rounded bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-night">Top story</span>
             <p className="mt-2 font-serif text-xl font-bold leading-snug text-white">Sample headline for a story on your topic</p>
             <p className="mt-1 text-xs text-night-muted">Publisher · published time · AI summary</p>
             <div className="mt-3 space-y-2" aria-hidden="true">
@@ -63,25 +63,25 @@ export function EditionMockup() {
 
 export function PdfMockup() {
   return (
-    <div className="mx-auto w-full max-w-xs rotate-[-2deg] rounded-md bg-[#fbf8f1] p-5 text-ink shadow-[0_30px_80px_-30px_rgb(0_0_0/0.8)]">
-      <p className="border-b-2 border-ink pb-1 text-center font-serif text-2xl font-bold">Dayline</p>
-      <p className="mt-1 text-center text-[9px] uppercase tracking-[0.2em] text-muted">Your morning paper · PDF</p>
+    <div className="mx-auto w-full max-w-xs rotate-[-2deg] rounded-md bg-[#fbf8f1] p-5 text-[#1d2433] shadow-[0_30px_80px_-30px_rgb(0_0_0/0.8)]">
+      <p className="border-b-2 border-[#1d2433] pb-1 text-center font-serif text-2xl font-bold">Dayline</p>
+      <p className="mt-1 text-center text-[9px] uppercase tracking-[0.2em] text-[#566074]">Your morning paper · PDF</p>
       <p className="mt-4 font-serif text-base font-bold leading-tight">Sample headline set in newspaper type</p>
       <div className="mt-3 grid grid-cols-2 gap-3" aria-hidden="true">
         <div className="space-y-1.5">
-          <span className="block h-1.5 rounded bg-ink/15" />
-          <span className="block h-1.5 rounded bg-ink/15" />
-          <span className="block h-1.5 w-3/4 rounded bg-ink/15" />
-          <span className="block h-1.5 rounded bg-ink/15" />
+          <span className="block h-1.5 rounded bg-[#1d2433]/15" />
+          <span className="block h-1.5 rounded bg-[#1d2433]/15" />
+          <span className="block h-1.5 w-3/4 rounded bg-[#1d2433]/15" />
+          <span className="block h-1.5 rounded bg-[#1d2433]/15" />
         </div>
         <div className="space-y-1.5">
-          <span className="block h-1.5 rounded bg-ink/15" />
-          <span className="block h-1.5 w-2/3 rounded bg-ink/15" />
-          <span className="block h-1.5 rounded bg-ink/15" />
-          <span className="block h-1.5 rounded bg-ink/15" />
+          <span className="block h-1.5 rounded bg-[#1d2433]/15" />
+          <span className="block h-1.5 w-2/3 rounded bg-[#1d2433]/15" />
+          <span className="block h-1.5 rounded bg-[#1d2433]/15" />
+          <span className="block h-1.5 rounded bg-[#1d2433]/15" />
         </div>
       </div>
-      <p className="mt-4 border-t border-ink/20 pt-2 text-[9px] text-muted">Every story links to its publisher.</p>
+      <p className="mt-4 border-t border-[#1d2433]/20 pt-2 text-[9px] text-[#566074]">Every story links to its publisher.</p>
     </div>
   );
 }

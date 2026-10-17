@@ -23,7 +23,7 @@ const CARD_ON = `${CARD} border-accent bg-accent-soft`;
 const CARD_OFF = `${CARD} border-rule bg-card hover:border-ink/40`;
 const CARD_LOCKED = `${CARD} cursor-not-allowed border-rule bg-card opacity-50`;
 const CHECKBOX =
-  "mt-0.5 size-5 shrink-0 cursor-pointer appearance-none rounded border-2 border-ink/40 bg-card checked:border-accent checked:bg-accent checked:bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3E%3Cpath d='M6.2 11.2 3 8l1-1 2.2 2.2L12 3.4l1 1z'/%3E%3C/svg%3E\")] disabled:cursor-not-allowed";
+  "mt-0.5 size-5 shrink-0 cursor-pointer appearance-none rounded border-2 border-ink/40 bg-card checked:border-accent checked:bg-accent checked:bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%230b0f17'%3E%3Cpath d='M6.2 11.2 3 8l1-1 2.2 2.2L12 3.4l1 1z'/%3E%3C/svg%3E\")] disabled:cursor-not-allowed";
 
 function cardClass(checked: boolean, locked: boolean): string {
   if (checked) {

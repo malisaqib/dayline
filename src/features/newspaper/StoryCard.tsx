@@ -104,7 +104,7 @@ function renderReadingTime(minutes: number | null) {
 
 function renderLabel(isLead: boolean, position: number) {
   if (isLead) {
-    return <span className="rounded bg-accent px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-white">Top story</span>;
+    return <span className="rounded bg-accent px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-night">Top story</span>;
   }
   return (
     <span className="font-serif text-xl font-bold leading-none text-accent" aria-hidden="true">
