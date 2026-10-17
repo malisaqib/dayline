@@ -25,8 +25,15 @@
 - `npm test` passes 6 of 6 domain tests: ranking is deterministic and topic-only; the per-source cap and stale-story filter work; two profiles get different leads; a non-permitted source never gets an AI summary; headline-only fallback works; web and PDF get identical stories in the same order.
 - Phase 0 checks still apply: 6 of 6 feeds are live and the sample PDF renders.
 
-### Blocked (needs `.env.local`, which doesn't exist yet)
-Not run: `db:migrate`, `check:db`, `check:ai`, `check:flow`, and the browser journey onboarding → edition → reload → archive → PDF. Deployment is also unverified because there is no hosting login.
+### Live verification attempt (commit 9dacd89)
+- Renamed the secret key variable to `SUPABASE_SECRET_KEY` (an `sb_secret_` key, checked by format).
+- Passed: `npm test` (6 of 6), `typecheck`, `lint`, `build`. The secret key works (admin `listUsers` returns ok). The URL and publishable key have the right format.
+- BLOCKED, the user must fix these:
+  1. `SUPABASE_DB_URL` holds an `https://` URL (the project URL), not a Postgres connection string, so `db:migrate` fails. `check:db` fails with "table not found" because the migrations never ran. Fix: Supabase → Connect → Session pooler → copy the `postgresql://postgres.<ref>:<password>@aws-…pooler.supabase.com:5432/postgres` string. Alternative: paste `supabase/migrations/0001_*.sql` and `0002_*.sql` into the SQL editor.
+  2. `ANTHROPIC_API_KEY` is empty, so `check:ai` can't run. Without it, generation falls back to publisher excerpts, which is labelled honestly.
+  3. Anonymous sign-ins are disabled ("Anonymous sign-ins are disabled"). Fix: Authentication → Sign In / Providers → Anonymous: on.
+  4. The Vercel command-line tool isn't logged in here, so Vercel env var names can't be checked and nothing can be redeployed from this machine. Fix: run `npx vercel login` and `npx vercel link`, or check the env vars and redeploy in the dashboard.
+- Not yet run: `check:flow`, the local browser journey, and the deployed journey.
 
 ### Exact next actions
 1. User: create `.env.local` from `.env.example`. Enable Supabase anonymous sign-ins (Authentication > Sign In / Providers > Anonymous). Choose `ANTHROPIC_MODEL`; the default is `claude-opus-5-5`.
