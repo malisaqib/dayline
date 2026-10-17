@@ -39,6 +39,13 @@ def main(directory: str) -> int:
         page.get_pixmap(dpi=80).save(out / f"pdf-page{page.number + 1}.png")
 
     print(f"pages: {doc.page_count}")
+
+    after_path = out / "edition-after-feedback.pdf"
+    if after_path.exists():
+        after = " ".join(" ".join(p.get_text().split()) for p in pymupdf.open(after_path))
+        same = after == text
+        print(f"{'PASS' if same else 'FAIL'} PDF text identical before and after feedback")
+        failures += 0 if same else 1
     return 1 if failures else 0
 
 

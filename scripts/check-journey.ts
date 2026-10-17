@@ -11,6 +11,7 @@ import { chromium, type Browser, type Page } from "playwright";
 const BASE_URL = (process.env.BASE_URL ?? "http://localhost:3100").replace(/\/$/, "");
 const OUT_DIR = `tmp/journey/${new URL(BASE_URL).host.replace(/[^a-z0-9.-]/gi, "_")}`;
 const GENERATION_TIMEOUT_MS = 120_000;
+const BOT_BLOCK_STATUSES = new Set([401, 403, 405, 429]);
 
 let failures = 0;
 function check(ok: boolean, label: string): void {
@@ -42,7 +43,7 @@ async function readerJourney(browser: Browser): Promise<{ editionId: string; sto
   const context = await browser.newContext({ acceptDownloads: true });
   const page = await context.newPage();
 
-  const editionId = await onboard(page, ["space", "science"]);
+  const editionId = await onboard(page, ["space", "technology"]);
   const stories = await readStories(page);
   check(stories.length > 0, `onboarding generated edition ${editionId} with ${stories.length} stories`);
   await page.screenshot({ path: `${OUT_DIR}/edition.png`, fullPage: true });
@@ -69,15 +70,53 @@ async function readerJourney(browser: Browser): Promise<{ editionId: string; sto
   await (await download).saveAs(pdfPath);
   check(true, `PDF downloaded to ${pdfPath}`);
 
+  await feedbackJourney(page, editionId, stories);
+  const after = page.waitForEvent("download");
+  await page.goto(`${BASE_URL}/edition/${editionId}`);
+  await page.getByRole("link", { name: "Download PDF" }).click();
+  await (await after).saveAs(`${OUT_DIR}/edition-after-feedback.pdf`);
+  check(true, "PDF downloaded again after feedback (compare with inspect_pdf.py)");
+
   for (const story of stories) {
     const response = await context.request.get(story.href, { maxRedirects: 5, failOnStatusCode: false, timeout: 15_000 }).catch(() => null);
     const status = response?.status() ?? 0;
+    // Some publishers refuse automated clients; that proves nothing about the link for readers.
+    if (BOT_BLOCK_STATUSES.has(status)) {
+      console.log(`WARN source link ${status} (publisher blocks automated requests; not verifiable here) ${story.href}`);
+      continue;
+    }
     check(status > 0 && status < 400, `source link ${status} ${story.href}`);
   }
 
   await writeFile(`${OUT_DIR}/stories.json`, JSON.stringify({ editionId, stories }, null, 2));
   await context.close();
   return { editionId, stories };
+}
+
+// Phase 2: More/Less feedback, preference change, labelled preview; the saved edition must not change.
+async function feedbackJourney(page: Page, editionId: string, stories: Story[]): Promise<void> {
+  const lead = page.locator("article").first();
+  await lead.getByRole("button", { name: "Less like this" }).click();
+  await lead.getByText(/^Saved/).waitFor({ timeout: 30_000 });
+  const message = await lead.getByText(/^Saved/).innerText();
+  check(/weaker/.test(message), `feedback confirms a weaker preference ("${message.split(".")[0]}")`);
+
+  await page.reload();
+  check(JSON.stringify(await readStories(page)) === JSON.stringify(stories), "saved edition keeps the same stories and order after feedback");
+  const pressed = await page.locator("article").first().getByRole("button", { name: "Less like this" }).getAttribute("aria-pressed");
+  check(pressed === "true", "the chosen signal is shown as selected after reload");
+  check((await page.getByText("showing less").count()) > 0, "preferences panel shows a topic as 'showing less'");
+
+  await page.goto(`${BASE_URL}/edition/${editionId}/preview`);
+  const preview = await readStories(page);
+  check((await page.getByText("Preview based on today’s available stories.", { exact: false }).count()) === 1, "preview is labelled 'Preview based on today's available stories.'");
+  check((await page.getByRole("link", { name: "Download PDF" }).count()) === 0, "preview offers no PDF download");
+  const sameSet = JSON.stringify(preview.map((s) => s.title).sort()) === JSON.stringify(stories.map((s) => s.title).sort());
+  check(sameSet, "preview reuses exactly today's saved stories");
+  check(preview[0].title !== stories[0].title, `preview order responds to feedback (lead moved from "${stories[0].title.slice(0, 40)}")`);
+
+  await page.goto(`${BASE_URL}/archive`);
+  check((await page.locator('a[href^="/edition/"]').count()) === 1, "archive still lists only the saved edition (preview not archived)");
 }
 
 async function isolationCheck(browser: Browser, editionId: string): Promise<void> {
