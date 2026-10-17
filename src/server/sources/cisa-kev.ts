@@ -7,6 +7,7 @@ import { buildSnapshot, fetchWithTimeout, type SourceFetchResult } from "./snaps
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_CATALOG_BYTES = 8_000_000;
 export const KEV_MAX_ITEMS = 8;
+const KEV_BASE_IMPORTANCE = 0.75;
 const CATALOG_PAGE = "https://www.cisa.gov/known-exploited-vulnerabilities-catalog";
 const isoDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -46,6 +47,7 @@ function toSnapshot(source: FeedSource, entry: KevEntry, fetchedAt: string): Art
       text: `${entry.shortDescription} CISA required action: ${firstSentence(entry.requiredAction)} Federal remediation due date: ${entry.dueDate}.`,
       fromFullContentField: false,
       labels,
+      importance: entry.knownRansomwareCampaignUse === "Known" ? 1 : KEV_BASE_IMPORTANCE,
     },
     fetchedAt,
   );

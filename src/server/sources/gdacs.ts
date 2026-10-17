@@ -20,6 +20,7 @@ const EVENT_TYPES: Record<string, string> = {
   TS: "Tsunami",
 };
 const ALERT_RANK: Record<string, number> = { Red: 3, Orange: 2, Green: 1 };
+const ALERT_IMPORTANCE: Record<string, number> = { Red: 1, Orange: 0.6, Green: 0.2 };
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_", textNodeName: "#text" });
 
@@ -81,7 +82,7 @@ function toSnapshot(source: FeedSource, alert: GdacsAlert, fetchedAt: string): A
   const labels = ["Disaster alert", alert.eventType, alert.country, `${alert.alertLevel} alert`, alert.severity].filter(Boolean).map((l) => l.slice(0, 120));
   return buildSnapshot(
     source,
-    { title: alert.title, url: alert.link, publishedAt: alert.publishedAt, text: alert.description, fromFullContentField: false, labels },
+    { title: alert.title, url: alert.link, publishedAt: alert.publishedAt, text: alert.description, fromFullContentField: false, labels, importance: ALERT_IMPORTANCE[alert.alertLevel] },
     fetchedAt,
   );
 }

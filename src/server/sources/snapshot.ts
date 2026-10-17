@@ -31,6 +31,7 @@ export type SnapshotInput = {
   text: string;
   fromFullContentField: boolean;
   labels?: string[];
+  importance?: number;
 };
 
 /** Validated, hashed, immutable snapshot of one item as fetched now. Returns null if invalid. */
@@ -51,6 +52,7 @@ export function buildSnapshot(source: FeedSource, input: SnapshotInput, fetchedA
     text,
     coverage: classifyCoverage(text, input.fromFullContentField),
     labels,
+    importance: input.importance,
     // Labels join the hash only when present, so plain feed items keep their earlier hashes (and cached summaries).
     contentHash: createHash("sha256").update(`${url}\n${input.title}\n${text}${labels.length ? `\n${labels.join("|")}` : ""}`).digest("hex"),
   });

@@ -7,6 +7,8 @@ import { buildSnapshot, fetchWithTimeout, type SourceFetchResult } from "./snaps
 const ITEM_URL = (id: number) => `https://hacker-news.firebaseio.com/v0/item/${id}.json`;
 export const HN_TOP_IDS = 20;
 export const HN_MAX_STORIES = 8;
+const HN_POINTS_FOR_MAX = 500;
+const HN_COMMENTS_FOR_MAX = 300;
 const ITEM_CONCURRENCY = 5;
 const LIST_TIMEOUT_MS = 8_000;
 const ITEM_TIMEOUT_MS = 6_000;
@@ -62,6 +64,7 @@ function toSnapshot(source: FeedSource, story: HackerNewsStory, fetchedAt: strin
       text: "",
       fromFullContentField: false,
       labels: ["Hacker News front page", `${story.score} points`, `${story.comments} comments`],
+      importance: Math.min(1, Math.max(story.score / HN_POINTS_FOR_MAX, story.comments / HN_COMMENTS_FOR_MAX)),
     },
     fetchedAt,
   );

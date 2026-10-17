@@ -2,6 +2,25 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
+## Content quality 1: coverage and ranking (feat: improve edition coverage and ranking)
+- **Near-duplicates** (`src/domain/articles/similarity.ts`): titles are normalized by removing punctuation, stop words, date words, years, 1–2 digit numbers and boilerplate (live, updates, Show HN…). Same story = word overlap ≥ 0.7, or ≥ 0.8 containment for titles of 4+ words. Fresh articles are clustered; the highest-scoring matching member represents the cluster, and `sourceCount` = distinct sources in the cluster.
+- **Importance:** max(coverage, source signal).
+  - Coverage: (sources − 1) / 2, capped at 1.
+  - Source signals set by the adapters: HN max(points/500, comments/300); GDACS Red 1, Orange 0.6, Green 0.2; CISA 1 if ransomware use is known, else 0.75.
+  - Score = 0.6 topic + 0.2 freshness + 0.2 importance, so a major story beats a slightly newer minor one (tested: a Red alert 20 h old beats a Green alert 1 h old).
+- **Fill and diversity:** first pass at 2 per source; if fewer than 6, a second pass allows a 3rd per source, never more. Relaxed picks carry the reason "Included to fill your paper…".
+- **Snapshots:** stories store `sourceCount` and `importance` (edition JSON defaults; no migration). The preview uses the same scorer. "Why this story?" adds Coverage and Selection rows.
+- **World topic:** BBC and NPR now use their world feeds (BBC `/news/world`, NPR `1004`), not the UK and US front pages.
+- **Measured on the live pool (11 topic mixes):**
+  - Average stories 4.1 → **5.0**.
+  - World, Pakistan, Technology, Science and all multi-topic mixes reach 6 of 6.
+  - Single-topic Space and Security reach 3 (one source each). Disasters reaches 1 (GDACS had one fresh alert).
+  - The DeepSeek near-duplicate is gone.
+- **Limits:**
+  - Cross-source clustering rarely fires with today's feeds (different phrasings), so coverage importance seldom applies.
+  - Single-source topics stay thin until new sources are allowed.
+- **Checks:** `npm test` 49 of 49 (similarity, coverage ranking, Red-over-Green, relaxed cap, sparse topics). `check:flow` 13 of 13. Typecheck, lint and build pass.
+
 ## Signal Brief (UI). VERIFIED locally
 - A Signal Brief at the top of the edition page:
   - "Today in 5 minutes": story count, reading time from saved bodies, date.

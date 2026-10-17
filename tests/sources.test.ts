@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { canSummarize } from "@/domain/editions/build-edition";
-import { MAX_STORIES_PER_SOURCE, rankArticles, type RankableArticle } from "@/domain/personalization/rank";
+import { MAX_STORIES_PER_SOURCE, MAX_STORIES_PER_SOURCE_RELAXED, rankArticles, type RankableArticle } from "@/domain/personalization/rank";
 import { deriveTopicWeights } from "@/domain/personalization/weights";
 import { SOURCES, sourceById, type FeedSource } from "@/server/sources/catalog";
 import { parseKevCatalog } from "@/server/sources/cisa-kev";
@@ -138,7 +138,7 @@ describe("source pool and policy", () => {
     const article = (n: number, sourceId: string): RankableArticle => ({
       sourceId,
       sourceName: sourceId,
-      title: `Fixture ${sourceId} ${n}`,
+      title: `Item${n}${sourceId.replace("_", "")}`,
       url: `https://example.org/${sourceId}/${n}`,
       publishedAt: NOW.toISOString(),
       fetchedAt: NOW.toISOString(),
@@ -148,9 +148,17 @@ describe("source pool and policy", () => {
       contentHash: `${sourceId === "hacker_news" ? "a" : "b"}${n.toString(16).padStart(63, "0")}`,
       topics: ["technology"],
     });
-    const pool = [...Array.from({ length: 10 }, (_, i) => article(i, "hacker_news")), article(1, "ars"), article(2, "ars")];
-    const ranked = rankArticles(pool, deriveTopicWeights(["technology"], []), NOW, 6);
+    const weights = deriveTopicWeights(["technology"], []);
+    const hn = Array.from({ length: 10 }, (_, i) => article(i, "hacker_news"));
+    const diverse = [...hn, ...["ars", "verge", "wired", "tc"].map((src, i) => article(20 + i, src))];
+    const ranked = rankArticles(diverse, weights, NOW, 6);
+    assert.equal(ranked.length, 6);
     assert.equal(ranked.filter((r) => r.article.sourceId === "hacker_news").length, MAX_STORIES_PER_SOURCE);
+
+    const sparse = rankArticles([...hn, article(1, "ars"), article(2, "ars")], weights, NOW, 6);
+    const fromHn = sparse.filter((r) => r.article.sourceId === "hacker_news");
+    assert.equal(fromHn.length, MAX_STORIES_PER_SOURCE_RELAXED, "a third story only when coverage is insufficient");
+    assert.ok(fromHn.some((r) => r.reasons.some((reason) => reason.startsWith("Included to fill"))), "the relaxed pick says why");
   });
 
   it("drops a second copy of the same headline from another feed", () => {
@@ -160,5 +168,43 @@ describe("source pool and policy", () => {
       { ...base, sourceId: "b", sourceName: "B", title: "quake hits coast", url: "https://b.example/1", contentHash: "2".repeat(64) },
     ];
     assert.equal(rankArticles(pool, deriveTopicWeights(["world"], []), NOW, 6).length, 1);
+  });
+});
+
+describe("story similarity", () => {
+  it("treats punctuation, boilerplate and date variants as the same story", async () => {
+    const { isNearDuplicateTitle } = await import("@/domain/articles/similarity");
+    assert.ok(isNearDuplicateTitle("DeepSeek: DeepSeek v4.1 Flash 1017", "DeepSeek-v4.1-Flash-1017"));
+    assert.ok(isNearDuplicateTitle("LIVE updates: Earthquake strikes northern Chile", "Earthquake strikes northern Chile on Saturday"));
+  });
+
+  it("keeps genuinely different stories apart", async () => {
+    const { isNearDuplicateTitle } = await import("@/domain/articles/similarity");
+    assert.ok(!isNearDuplicateTitle("Apple releases new iPhone", "Apple releases new iPad"));
+    assert.ok(!isNearDuplicateTitle("Earthquake hits Japan", "Earthquake hits Chile"));
+  });
+
+  it("ranks a story covered by several sources above a newer single-source story", () => {
+    const base = { fetchedAt: NOW.toISOString(), text: "", coverage: "none" as const, labels: [], topics: ["world" as const] };
+    const hoursAgo = (h: number) => new Date(NOW.getTime() - h * 3_600_000).toISOString();
+    const pool: RankableArticle[] = [
+      { ...base, sourceId: "a", sourceName: "A", title: "Ceasefire agreed in regional conflict talks", url: "https://a.example/1", publishedAt: hoursAgo(10), contentHash: "1".repeat(64) },
+      { ...base, sourceId: "b", sourceName: "B", title: "Regional conflict talks: ceasefire agreed", url: "https://b.example/1", publishedAt: hoursAgo(9), contentHash: "2".repeat(64) },
+      { ...base, sourceId: "c", sourceName: "C", title: "Ceasefire agreed after regional conflict talks", url: "https://c.example/1", publishedAt: hoursAgo(11), contentHash: "3".repeat(64) },
+      { ...base, sourceId: "d", sourceName: "D", title: "Local bakery wins regional pastry award", url: "https://d.example/1", publishedAt: hoursAgo(1), contentHash: "4".repeat(64) },
+    ];
+    const ranked = rankArticles(pool, deriveTopicWeights(["world"], []), NOW, 6);
+    assert.equal(ranked.length, 2, "three copies collapse into one story");
+    assert.equal(ranked[0].sourceCount, 3);
+    assert.ok(ranked[0].reasons.includes("Covered by 3 sources"));
+  });
+
+  it("lets a Red disaster alert outrank a newer Green one", () => {
+    const base = { fetchedAt: NOW.toISOString(), text: "", coverage: "none" as const, labels: [], topics: ["disasters" as const], sourceId: "gdacs", sourceName: "GDACS" };
+    const pool: RankableArticle[] = [
+      { ...base, title: "Green flood alert minor river", url: "https://g.example/1", publishedAt: new Date(NOW.getTime() - 3_600_000).toISOString(), importance: 0.2, contentHash: "5".repeat(64) },
+      { ...base, title: "Red cyclone alert coastal evacuation", url: "https://g.example/2", publishedAt: new Date(NOW.getTime() - 20 * 3_600_000).toISOString(), importance: 1, contentHash: "6".repeat(64) },
+    ];
+    assert.equal(rankArticles(pool, deriveTopicWeights(["disasters"], []), NOW, 6)[0].article.url, "https://g.example/2");
   });
 });

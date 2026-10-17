@@ -27,6 +27,8 @@ function story(n: number, topics: TopicId[], hoursOld: number): StorySnapshot {
     takeaways: [],
     coverage: "excerpt",
     labels: [],
+    sourceCount: 1,
+    importance: 0,
     summaryModel: null,
     summaryPromptVersion: null,
   };

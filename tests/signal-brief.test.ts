@@ -7,7 +7,7 @@ import type { TopicId } from "@/domain/topics";
 function story(id: string, topics: TopicId[], options: { body?: string; kicker?: string; minutes?: number | null } = {}): PresentedStory {
   return {
     id,
-    headline: `Fixture headline ${id}`,
+    headline: `Fixture report ${id.repeat(3)} development`,
     kicker: options.kicker ?? "",
     body: options.body ?? "First sentence of the fixture. Second sentence.",
     takeaways: [],

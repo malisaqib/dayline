@@ -27,6 +27,8 @@ export const storySnapshotSchema = z.object({
   takeaways: z.array(z.string()).default([]),
   coverage: z.enum(["full", "excerpt", "none"]).default("excerpt"),
   labels: z.array(z.string()).default([]),
+  sourceCount: z.number().int().min(1).default(1),
+  importance: z.number().min(0).max(1).default(0),
   summaryModel: z.string().nullable(),
   summaryPromptVersion: z.string().nullable(),
 });

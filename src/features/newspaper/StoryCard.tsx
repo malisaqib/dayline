@@ -50,8 +50,15 @@ function capitalise(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
+function extraReasonLabel(reason: string): string {
+  if (reason.startsWith("Covered by")) {
+    return "Coverage";
+  }
+  return "Selection";
+}
+
 function whyRows(story: PresentedStory): { label: string; value: string }[] {
-  const [match, recency] = story.reasons;
+  const [match, recency, ...extra] = story.reasons;
   const rows: { label: string; value: string }[] = [];
   if (match) {
     rows.push({ label: "Topic", value: match.replace(/ \((boosted|reduced) by your feedback\)/g, "") });
@@ -60,6 +67,9 @@ function whyRows(story: PresentedStory): { label: string; value: string }[] {
     rows.push({ label: "Recency", value: `${capitalise(recency)} when this paper was made` });
   }
   rows.push({ label: "Source", value: `${story.sourceName} (${story.bodyLabel.toLowerCase()})` });
+  for (const reason of extra) {
+    rows.push({ label: extraReasonLabel(reason), value: reason });
+  }
   if (match && /boosted by your feedback/.test(match)) {
     rows.push({ label: "Personalization", value: "Ranked higher because you asked for more like this topic" });
   }

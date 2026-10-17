@@ -35,7 +35,7 @@ export function chooseStoryBody(article: ArticleSnapshot, usage: SourceUsage, su
 }
 
 export function buildEditionStories(ranked: RankedArticle[], bodies: Map<string, StoryBody>): StorySnapshot[] {
-  return ranked.map(({ article, matchedTopics, reasons }) => {
+  return ranked.map(({ article, matchedTopics, reasons, sourceCount, importance }) => {
     const body = bodies.get(article.contentHash);
     if (!body) {
       throw new Error(`missing body for article ${article.contentHash}`);
@@ -55,6 +55,8 @@ export function buildEditionStories(ranked: RankedArticle[], bodies: Map<string,
       takeaways: body.takeaways,
       coverage: article.coverage,
       labels: article.labels,
+      sourceCount,
+      importance,
       summaryModel: body.model,
       summaryPromptVersion: body.promptVersion,
     };

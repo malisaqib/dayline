@@ -1,11 +1,10 @@
-import { normalizeTitle } from "@/domain/personalization/rank";
+import { isNearDuplicateTitle } from "@/domain/articles/similarity";
 import { WEIGHT_POLICY, type TopicWeights } from "@/domain/personalization/weights";
 import { topicLabel, type TopicId } from "@/domain/topics";
 import type { PresentedStory } from "./presentation";
 
 const MAX_PULSE_ITEMS = 3;
 const MAX_SENTENCE_CHARS = 220;
-const NEAR_DUPLICATE_OVERLAP = 0.6;
 
 export type BriefStory = { position: number; story: PresentedStory };
 
@@ -44,25 +43,13 @@ function strongestTopic(topics: TopicId[], weights: TopicWeights): TopicId | nul
   return best;
 }
 
-function titleTokens(headline: string): Set<string> {
-  return new Set(normalizeTitle(headline).split(" ").filter(Boolean));
-}
-
-export function isNearDuplicate(a: string, b: string): boolean {
-  const left = titleTokens(a);
-  const right = titleTokens(b);
-  const shared = [...left].filter((token) => right.has(token)).length;
-  const union = new Set([...left, ...right]).size;
-  return union > 0 && shared / union >= NEAR_DUPLICATE_OVERLAP;
-}
-
 function findFocus(stories: PresentedStory[], topic: TopicId): BriefStory | null {
   const top = stories[0];
   const matches = stories.map((story, index) => ({ position: index + 1, story })).filter(({ story }) => story.topics.includes(topic));
   if (matches.length === 0) {
     return null;
   }
-  return matches.find((m) => m.position !== 1 && !isNearDuplicate(m.story.headline, top.headline)) ?? matches[0];
+  return matches.find((m) => m.position !== 1 && !isNearDuplicateTitle(m.story.headline, top.headline)) ?? matches[0];
 }
 
 export function buildSignalBrief(stories: PresentedStory[], readerTopics: TopicId[], weights: TopicWeights): SignalBrief | null {
@@ -76,7 +63,7 @@ export function buildSignalBrief(stories: PresentedStory[], readerTopics: TopicI
   const shown = [top.headline, focus ? focus.story.headline : ""].filter(Boolean);
   const pulse = stories
     .map((story, index) => ({ position: index + 1, story }))
-    .filter(({ story }) => story.kicker.length > 0 && !shown.some((headline) => isNearDuplicate(headline, story.headline)))
+    .filter(({ story }) => story.kicker.length > 0 && !shown.some((headline) => isNearDuplicateTitle(headline, story.headline)))
     .slice(0, MAX_PULSE_ITEMS);
   const readingMinutes = Math.max(1, stories.reduce((total, story) => total + (story.readingMinutes ?? 0), 0));
 
