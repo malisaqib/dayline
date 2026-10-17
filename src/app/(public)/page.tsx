@@ -66,21 +66,27 @@ function renderHero() {
       />
       <Reveal className="relative mx-auto max-w-4xl text-center">
         <h1 className="font-serif text-4xl font-bold leading-[1.1] text-white sm:text-6xl">
-          Your morning paper for <RotatingWord words={ROTATING} className="text-glow" />
+          <span className="block">Your morning paper for</span>
+          <RotatingWord words={ROTATING} className="text-glow" />
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-night-muted sm:text-xl">
           Dayline reads trusted newsrooms and official alerts overnight, then hands you one short, source-linked paper at 06:00 Pakistan time. Read
           it on the web or as a PDF.
         </p>
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <Link href="/signin" className={pill}>
+          <Link href="/signin?mode=create" className={pill}>
             Create my paper
           </Link>
           <a href="#sample" className={ghostPill}>
             See a sample
           </a>
         </div>
-        <p className="mt-4 text-sm text-night-muted">Free. Sign in with your email, or try it without an account.</p>
+        <p className="mt-5 text-sm text-night-muted">
+          Free. Already reading Dayline?{" "}
+          <Link href="/signin" className="font-semibold text-white underline decoration-glow/60 underline-offset-4 hover:decoration-glow">
+            Sign in
+          </Link>
+        </p>
       </Reveal>
       <Reveal className="relative mx-auto mt-16 max-w-5xl">
         <div id="sample" className="scroll-mt-24">
@@ -199,7 +205,7 @@ function renderClosing() {
           <br />
           Only what you follow.
         </h2>
-        <Link href="/signin" className={`${pill} mt-9`}>
+        <Link href="/signin?mode=create" className={`${pill} mt-9`}>
           Create my paper
         </Link>
         <p className="mt-4 text-sm text-night-muted">On the web and as a PDF. Ready at 06:00 Pakistan time.</p>

@@ -27,6 +27,13 @@ const NOTICES: Record<string, string> = {
   signed_out: "You've signed out. Sign in again any time; your topics and papers are kept.",
 };
 
+const VISITOR_TITLE = { signin: "Welcome back", create: "Create your paper" } as const;
+
+const VISITOR_TEXT = {
+  signin: "Sign in to open your paper, archive and saved topics on any device.",
+  create: "Create a free account. Next you'll choose what you follow, then your first paper is made.",
+} as const;
+
 const JOURNEY = [
   { title: "Sign in", text: "Email and password, Google, or a one-time code." },
   { title: "Choose what you follow", text: "Pick topics and add your own interests, like AI agents." },
@@ -105,15 +112,16 @@ function renderShell(card: ReactNode) {
   );
 }
 
-function renderVisitor(next: string, notice: string | null, google: boolean) {
+function renderVisitor(next: string, notice: string | null, google: boolean, creating: boolean) {
+  const intent = creating ? "create" : "signin";
   return renderShell(
     <>
       <p className={ui.eyebrow}>Step 1 of 3 · Sign in</p>
-      <h1 className="mt-3 font-serif text-3xl font-bold sm:text-4xl">Your paper, on any device</h1>
-      <p className="mt-3 text-muted">Sign in or create an account. Next you&apos;ll choose what you follow, then your first paper is made.</p>
+      <h1 className="mt-3 font-serif text-3xl font-bold sm:text-4xl">{VISITOR_TITLE[intent]}</h1>
+      <p className="mt-3 text-muted">{VISITOR_TEXT[intent]}</p>
       {renderNotice(notice)}
       {renderGoogle(google, next)}
-      <PasswordForm next={next} />
+      <PasswordForm next={next} initialIntent={intent} />
       <div className="mt-6 border-t border-rule pt-2">
         <Disclosure label="Prefer a one-time code by email?">
           <SignInForm upgrade={false} next={next} />
@@ -173,7 +181,7 @@ async function renderSignIn({ searchParams }: { searchParams: SearchParams }) {
   const notice = pickNotice(params);
   const [entry, providers] = await Promise.all([readReaderEntry(), enabledProviders()]);
   if (entry.kind === "visitor") {
-    return renderVisitor(next ?? "", notice, providers.google);
+    return renderVisitor(next ?? "", notice, providers.google, first(params.mode) === "create");
   }
   if (entry.account.isAnonymous) {
     return renderGuest(next ?? "", notice, providers.google);

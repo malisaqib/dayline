@@ -19,7 +19,7 @@ export function RotatingWord({ words, className }: { words: string[]; className?
   }, [reduced, words.length]);
 
   return (
-    <span className={`relative inline-grid ${className ?? ""}`}>
+    <span className={`relative grid justify-items-center ${className ?? ""}`}>
       <span className="sr-only">{words.join(", ")}</span>
       <AnimatePresence mode="wait" initial={false}>
         <motion.span key={words[index]} variants={fadeUp} initial="initial" animate="animate" exit="exit" aria-hidden="true" className="whitespace-nowrap">

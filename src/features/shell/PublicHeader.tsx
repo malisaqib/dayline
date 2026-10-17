@@ -4,7 +4,7 @@ import { ScrollHeader } from "./ScrollHeader";
 
 const pill =
   "group inline-flex min-h-11 items-center gap-1.5 rounded-full bg-glow px-5 text-sm font-semibold text-night transition-[background-color,transform] duration-[185ms] hover:bg-white active:scale-[0.97]";
-const quiet = "hidden min-h-11 sm:inline-flex items-center px-3 text-sm font-semibold text-white/80 transition-colors duration-[185ms] hover:text-white";
+const quiet = "inline-flex min-h-11 items-center rounded-full border border-white/20 px-4 text-sm font-semibold text-white/80 transition-colors duration-[185ms] hover:text-white";
 const navLink =
   "relative inline-flex min-h-11 items-center px-3 text-sm font-medium text-white/70 transition-colors duration-[185ms] hover:text-white after:absolute after:inset-x-3 after:bottom-2 after:h-px after:origin-left after:scale-x-0 after:bg-glow after:transition-transform after:duration-[300ms] hover:after:scale-x-100";
 
@@ -30,8 +30,9 @@ async function renderActions() {
         <Link href="/signin" className={quiet}>
           Sign in
         </Link>
-        <Link href="/signin" className={pill}>
-          Create my paper {renderArrow()}
+        <Link href="/signin?mode=create" className={pill}>
+          <span className="sm:hidden">Start</span>
+          <span className="hidden sm:inline">Create my paper</span> {renderArrow()}
         </Link>
       </>
     );
@@ -53,7 +54,7 @@ export async function PublicHeader() {
         >
           D
         </span>
-        <span className="font-serif text-xl font-bold tracking-wide">Dayline</span>
+        <span className="hidden font-serif text-xl font-bold tracking-wide sm:inline">Dayline</span>
       </Link>
       <nav aria-label="Overview sections" className="hidden items-center md:flex">
         {SECTIONS.map((section) => (

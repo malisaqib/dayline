@@ -49,8 +49,8 @@ function renderMessage(state: PasswordState) {
   return null;
 }
 
-export function PasswordForm({ next }: { next: string }) {
-  const [intent, setIntent] = useState<Intent>("signin");
+export function PasswordForm({ next, initialIntent = "signin" }: { next: string; initialIntent?: Intent }) {
+  const [intent, setIntent] = useState<Intent>(initialIntent);
   const [state, action] = useActionState(passwordAuth, { error: null, notice: null, email: "" });
   const copy = COPY[intent];
   return (
