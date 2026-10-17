@@ -28,8 +28,9 @@
 ### Live verification attempt (commit 9dacd89)
 - Renamed the secret key variable to `SUPABASE_SECRET_KEY` (an `sb_secret_` key, checked by format).
 - Passed: `npm test` (6 of 6), `typecheck`, `lint`, `build`. The secret key works (admin `listUsers` returns ok). The URL and publishable key have the right format.
+- The user applied migrations 0001 and 0002 by hand in the SQL editor. Verified: all 5 tables respond. `npm run check:db` passed (write, read back, delete). The article immutability trigger works: an update was rejected with "articles rows are immutable".
 - BLOCKED, the user must fix these:
-  1. `SUPABASE_DB_URL` holds an `https://` URL (the project URL), not a Postgres connection string, so `db:migrate` fails. `check:db` fails with "table not found" because the migrations never ran. Fix: Supabase → Connect → Session pooler → copy the `postgresql://postgres.<ref>:<password>@aws-…pooler.supabase.com:5432/postgres` string. Alternative: paste `supabase/migrations/0001_*.sql` and `0002_*.sql` into the SQL editor.
+  1. (Minor) `SUPABASE_DB_URL` is still the project URL, so `npm run db:migrate` can't run. It isn't recorded which migrations were applied by hand. Future migrations need either the session pooler string or another SQL editor paste.
   2. `ANTHROPIC_API_KEY` is empty, so `check:ai` can't run. Without it, generation falls back to publisher excerpts, which is labelled honestly.
   3. Anonymous sign-ins are disabled ("Anonymous sign-ins are disabled"). Fix: Authentication → Sign In / Providers → Anonymous: on.
   4. The Vercel command-line tool isn't logged in here, so Vercel env var names can't be checked and nothing can be redeployed from this machine. Fix: run `npx vercel login` and `npx vercel link`, or check the env vars and redeploy in the dashboard.
