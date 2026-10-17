@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { safeReturnPath } from "@/domain/auth/return-path";
 import { PasswordForm } from "@/features/auth/PasswordForm";
-import { SignInForm } from "@/features/auth/SignInForm";
 import { SignOutButton } from "@/features/auth/SignOutButton";
 import { InView, Reveal } from "@/features/shared/Reveal";
 import { ui } from "@/features/shared/ui";
@@ -117,11 +116,11 @@ function renderGuest(next: string, notice: string | null) {
       <p className={ui.eyebrow}>Keep your paper</p>
       <h1 className="mt-3 font-serif text-3xl font-bold">Save this paper to your account</h1>
       <p className="mt-3 text-muted">
-        You&apos;re reading as a guest, so your topics, feedback and archive live in this browser only. Add your email to keep them and sign in on other
+        You&apos;re reading as a guest, so your topics, feedback and archive live in this browser only. Add an email and password to keep them and sign in on other
         devices. Nothing you&apos;ve made so far is lost.
       </p>
       {renderNotice(notice)}
-      <SignInForm upgrade next={next} />
+      <PasswordForm next={next} initialIntent="upgrade" />
       <Link href="/today" className={`${ui.ghostButton} mt-4 -ml-4`}>
         Not now, back to my paper
       </Link>

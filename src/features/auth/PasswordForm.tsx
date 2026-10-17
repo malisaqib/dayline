@@ -7,14 +7,15 @@ import { fadeUp } from "@/features/shared/motion";
 import { PendingButton } from "@/features/shared/PendingButton";
 import { ui } from "@/features/shared/ui";
 
-type Intent = "signin" | "create";
+type Intent = "signin" | "create" | "upgrade";
 
 const INPUT = "mt-1 block min-h-11 w-full rounded-xl border border-ink/20 bg-paper px-4 text-base focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30";
 const TAB = "relative min-h-10 flex-1 rounded-full px-4 text-sm font-semibold transition-colors duration-[185ms]";
 
 const COPY: Record<Intent, { submit: string; autocomplete: string; hint: string }> = {
   signin: { submit: "Sign in", autocomplete: "current-password", hint: "Welcome back. Your topics, feedback and archive are waiting." },
-  create: { submit: "Create my account", autocomplete: "new-password", hint: "At least 8 characters. We'll email a link to confirm it's you." },
+  create: { submit: "Create my account", autocomplete: "new-password", hint: "At least 8 characters." },
+  upgrade: { submit: "Save my paper", autocomplete: "new-password", hint: "At least 8 characters. You keep everything you've made as a guest." },
 };
 
 function tabClass(active: boolean): string {
@@ -49,22 +50,31 @@ function renderMessage(state: PasswordState) {
   return null;
 }
 
+function renderTabs(intent: Intent, setIntent: (next: Intent) => void) {
+  if (intent === "upgrade") {
+    return null;
+  }
+  return (
+    <div className="relative isolate flex rounded-full border border-rule p-1" role="tablist" aria-label="Account">
+      <button type="button" role="tab" aria-selected={intent === "signin"} className={tabClass(intent === "signin")} onClick={() => setIntent("signin")}>
+        {renderPill(intent === "signin")}
+        Sign in
+      </button>
+      <button type="button" role="tab" aria-selected={intent === "create"} className={tabClass(intent === "create")} onClick={() => setIntent("create")}>
+        {renderPill(intent === "create")}
+        Create account
+      </button>
+    </div>
+  );
+}
+
 export function PasswordForm({ next, initialIntent = "signin" }: { next: string; initialIntent?: Intent }) {
   const [intent, setIntent] = useState<Intent>(initialIntent);
   const [state, action] = useActionState(passwordAuth, { error: null, notice: null, email: "" });
   const copy = COPY[intent];
   return (
     <form action={action} className="mt-6" noValidate>
-      <div className="relative isolate flex rounded-full border border-rule p-1" role="tablist" aria-label="Account">
-        <button type="button" role="tab" aria-selected={intent === "signin"} className={tabClass(intent === "signin")} onClick={() => setIntent("signin")}>
-          {renderPill(intent === "signin")}
-          Sign in
-        </button>
-        <button type="button" role="tab" aria-selected={intent === "create"} className={tabClass(intent === "create")} onClick={() => setIntent("create")}>
-          {renderPill(intent === "create")}
-          Create account
-        </button>
-      </div>
+      {renderTabs(intent, setIntent)}
       <input type="hidden" name="intent" value={intent} />
       <input type="hidden" name="next" value={next} />
       <label htmlFor="pw-email" className="mt-5 block text-sm font-semibold">

@@ -147,26 +147,32 @@ async function guestUpgrade(browser: Browser, sql: postgres.Sql, takenEmail: str
   await page.goto(`${BASE_URL}/signin`);
   check(await page.getByRole("heading", { name: "Save this paper to your account" }).isVisible(), "guest sees the upgrade offer");
   await page.getByLabel("Email address").fill(takenEmail);
-  await page.getByRole("button", { name: "Save my paper to this email" }).click();
+  await page.getByLabel("Password").fill("guest-password-123");
+  await page.getByRole("button", { name: "Save my paper" }).click();
   await page.getByText("already has a Dayline account").waitFor();
   check(true, "an email that already has an account shows the explicit conflict");
   check((await sessionUser(page))?.id === guest.id, "conflict leaves the guest session and data in place");
 
-  await page.getByRole("button", { name: "Use a different email" }).click();
   const email = testEmail("upgrade");
   await page.getByLabel("Email address").fill(email);
-  await page.getByRole("button", { name: "Save my paper to this email" }).click();
-  const sent = page.getByText("We sent an email to");
+  await page.getByLabel("Password").fill("guest-password-123");
+  await page.getByRole("button", { name: "Save my paper" }).click();
+  const pending = page.getByText("Check ").first();
   const failed = page.locator("form p[role=alert]");
-  await Promise.race([sent.waitFor(), failed.waitFor()]);
-  if (!(await sent.isVisible())) {
-    check(false, `upgrade email request failed: ${await failed.textContent()}`);
+  await Promise.race([page.waitForURL(/\/today/), pending.waitFor(), failed.waitFor()]);
+  if (await failed.isVisible()) {
+    check(false, `upgrade failed: ${await failed.textContent()}`);
     await context.close();
     return;
   }
-  check(true, "upgrade email requested through Supabase");
-  const [row] = await sql<{ token: string }[]>`select email_change_token_new as token from auth.users where id = ${guest.id}`;
-  await confirm(page, row.token, "email_change", "/archive");
+  if (await pending.isVisible()) {
+    check(true, "upgrade asks for email confirmation (Confirm email is on)");
+    const [row] = await sql<{ token: string }[]>`select email_change_token_new as token from auth.users where id = ${guest.id}`;
+    await confirm(page, row.token, "email_change", "/archive");
+  } else {
+    check(true, "upgrade applied immediately (Confirm email is off)");
+    await page.goto(`${BASE_URL}/archive`);
+  }
   const upgraded = await sessionUser(page);
   check(upgraded?.id === guest.id && upgraded.anonymous === false && upgraded.email === email, "upgrade keeps the same user id and makes it permanent");
   check((await page.locator(`a[href="/edition/${guestEdition}"]`).count()) === 1, `guest archive survives the upgrade (${new URL(page.url()).pathname})`);

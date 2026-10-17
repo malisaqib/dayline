@@ -3,9 +3,6 @@ import { z } from "zod";
 
 export const emailSchema = z.email().trim().toLowerCase();
 export const passwordSchema = z.string().min(8, "Use at least 8 characters.").max(72, "Use at most 72 characters.");
-export const otpSchema = z.string().trim().regex(/^\d{6,10}$/);
-
-export type OtpMode = "signin" | "upgrade";
 
 export type AuthFailure = { kind: "expired" | "rate_limited" | "email_taken" | "not_allowed" | "delivery" | "unknown"; message: string };
 
@@ -42,27 +39,6 @@ export function describeAuthError(error: unknown): AuthFailure {
   return { kind: "unknown", message: "Something went wrong. Please try again." };
 }
 
-export async function requestSignInCode(db: SupabaseClient, email: string, redirectTo: string): Promise<void> {
-  const { error } = await db.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: redirectTo } });
-  if (error) {
-    throw error;
-  }
-}
-
-export async function requestGuestUpgrade(db: SupabaseClient, email: string, redirectTo: string): Promise<void> {
-  const { error } = await db.auth.updateUser({ email }, { emailRedirectTo: redirectTo });
-  if (error) {
-    throw error;
-  }
-}
-
-export async function verifyEmailCode(db: SupabaseClient, email: string, token: string, mode: OtpMode): Promise<void> {
-  const { error } = await db.auth.verifyOtp({ email, token, type: mode === "upgrade" ? "email_change" : "email" });
-  if (error) {
-    throw error;
-  }
-}
-
 export async function signInWithPassword(db: SupabaseClient, email: string, password: string): Promise<void> {
   const { error } = await db.auth.signInWithPassword({ email, password });
   if (error) {
@@ -79,4 +55,12 @@ export async function createPasswordAccount(db: SupabaseClient, email: string, p
     throw new AuthError("This email already has a Dayline account.", 422, "user_already_exists");
   }
   return { needsConfirmation: !data.session };
+}
+
+export async function upgradeGuestWithPassword(db: SupabaseClient, email: string, password: string, redirectTo: string): Promise<{ needsConfirmation: boolean }> {
+  const { data, error } = await db.auth.updateUser({ email, password }, { emailRedirectTo: redirectTo });
+  if (error) {
+    throw error;
+  }
+  return { needsConfirmation: data.user.email !== email };
 }
