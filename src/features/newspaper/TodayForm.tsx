@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { openTodaysEdition, type ActionState } from "@/app/actions";
+import { GenerationProgress } from "@/features/shared/GenerationProgress";
 import { PendingButton } from "@/features/shared/PendingButton";
 import { ui } from "@/features/shared/ui";
 
@@ -16,9 +17,14 @@ function renderError(state: ActionState) {
     <div role="alert" className="animate-toast rounded-lg border border-accent/40 bg-accent-soft px-4 py-3 text-sm">
       <p className="font-semibold text-accent-strong">Today&apos;s paper isn&apos;t ready</p>
       <p className="mt-1">{state.error}</p>
-      <Link href="/onboarding" className="mt-2 inline-flex min-h-11 items-center font-semibold text-accent-strong underline-offset-4 hover:underline">
-        Change your topics
-      </Link>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <button type="submit" className={ui.secondaryButton}>
+          Try again
+        </button>
+        <Link href="/onboarding" className={ui.ghostButton}>
+          Change your topics
+        </Link>
+      </div>
     </div>
   );
 }
@@ -27,7 +33,8 @@ export function TodayForm({ className = ui.primaryButton }: { className?: string
   const [state, action] = useActionState(openTodaysEdition, INITIAL);
   return (
     <form action={action} className="flex flex-col items-start gap-3">
-      <PendingButton label="Open today's paper" pendingMessage="Preparing today's paper. This can take up to a minute." className={className} />
+      <PendingButton label="Open today's paper" className={className} />
+      <GenerationProgress message="Gathering stories and preparing your paper…" />
       {renderError(state)}
     </form>
   );

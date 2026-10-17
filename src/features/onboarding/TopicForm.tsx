@@ -1,8 +1,13 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import { useActionState, useState } from "react";
 import { completeOnboarding, type ActionState } from "@/app/actions";
+import { GenerationProgress } from "@/features/shared/GenerationProgress";
+import { fadeUp } from "@/features/shared/motion";
 import { PendingButton } from "@/features/shared/PendingButton";
+import { SpotlightCard } from "@/features/shared/SpotlightCard";
+import { TopicIcon } from "./TopicIcon";
 import { ui } from "@/features/shared/ui";
 import { WHAT_YOU_GET } from "./topic-copy";
 
@@ -13,7 +18,7 @@ type TopicFormProps = { topics: TopicOption[]; selected: string[]; maxTopics: nu
 const INITIAL: ActionState = { error: null };
 const TOTAL_STEPS = 2;
 
-const CARD = "flex min-h-11 cursor-pointer gap-3 rounded-lg border p-4 transition-colors duration-[185ms]";
+const CARD = "flex min-h-11 cursor-pointer gap-3 rounded-lg border p-4 transition-colors duration-[185ms] h-full";
 const CARD_ON = `${CARD} border-accent bg-accent-soft`;
 const CARD_OFF = `${CARD} border-rule bg-card hover:border-ink/40`;
 const CARD_LOCKED = `${CARD} cursor-not-allowed border-rule bg-card opacity-50`;
@@ -49,6 +54,9 @@ function renderError(state: ActionState) {
     <div role="alert" className="animate-toast rounded-lg border border-accent/40 bg-accent-soft px-4 py-3 text-sm">
       <p className="font-semibold text-accent-strong">We couldn&apos;t make your paper</p>
       <p className="mt-1">{state.error}</p>
+      <button type="submit" className={`${ui.secondaryButton} mt-3`}>
+        Try again
+      </button>
     </div>
   );
 }
@@ -60,6 +68,18 @@ function renderSelectionHint(count: number, max: number) {
   return (
     <p className={ui.meta}>
       {count} of {max} chosen
+    </p>
+  );
+}
+
+function renderChosen(topics: TopicOption[], chosen: string[]) {
+  if (chosen.length === 0) {
+    return null;
+  }
+  const labels = topics.filter((t) => chosen.includes(t.id)).map((t) => t.label);
+  return (
+    <p className="mt-3 text-sm">
+      <span className="font-semibold">Your paper will cover:</span> {labels.join(", ")}
     </p>
   );
 }
@@ -85,13 +105,18 @@ export function TopicForm({ topics, selected, maxTopics, isReturning }: TopicFor
     const checked = chosen.includes(topic.id);
     const locked = !checked && chosen.length >= maxTopics;
     return (
-      <label key={topic.id} className={cardClass(checked, locked)}>
-        <input type="checkbox" name="topics" value={topic.id} checked={checked} disabled={locked} onChange={() => toggle(topic.id)} className={CHECKBOX} />
-        <span>
-          <span className="block font-semibold">{topic.label}</span>
-          <span className="mt-0.5 block text-[13px] leading-snug text-muted">{topic.description}</span>
-        </span>
-      </label>
+      <SpotlightCard key={topic.id} className="rounded-lg">
+        <label className={cardClass(checked, locked)}>
+          <input type="checkbox" name="topics" value={topic.id} checked={checked} disabled={locked} onChange={() => toggle(topic.id)} className={CHECKBOX} />
+          <span className="min-w-0">
+            <span className="flex items-center gap-2 font-semibold">
+              <TopicIcon topic={topic.id} />
+              {topic.label}
+            </span>
+            <span className="mt-0.5 block text-[13px] leading-snug text-muted">{topic.description}</span>
+          </span>
+        </label>
+      </SpotlightCard>
     );
   }
 
@@ -106,6 +131,7 @@ export function TopicForm({ topics, selected, maxTopics, isReturning }: TopicFor
           </button>
           {renderSelectionHint(chosen.length, maxTopics)}
         </div>
+        {renderChosen(topics, chosen)}
       </fieldset>
     );
   }
@@ -135,11 +161,12 @@ export function TopicForm({ topics, selected, maxTopics, isReturning }: TopicFor
           ))}
         </div>
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <PendingButton label={submitLabel} pendingMessage="Collecting today's stories and building your paper. This can take up to a minute." />
+          <PendingButton label={submitLabel} />
           <button type="button" className={ui.secondaryButton} onClick={() => setStep(1)}>
             Back
           </button>
         </div>
+        <GenerationProgress message="Gathering stories and preparing your paper…" />
       </div>
     );
   }
@@ -154,9 +181,11 @@ export function TopicForm({ topics, selected, maxTopics, isReturning }: TopicFor
   return (
     <form action={action} className={`${ui.card} space-y-5 p-4 sm:p-6`}>
       {renderProgress(step)}
-      <div key={step} className="animate-fade-up">
-        {renderStep()}
-      </div>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div key={step} variants={fadeUp} initial="initial" animate="animate" exit="exit">
+          {renderStep()}
+        </motion.div>
+      </AnimatePresence>
       {renderError(state)}
       {renderReturningNote(isReturning)}
     </form>
