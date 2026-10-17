@@ -1,5 +1,6 @@
 import type { BriefStory, SignalBrief as Brief } from "@/domain/editions/signal-brief";
 import { ExternalIcon } from "@/features/shared/ExternalIcon";
+import { RevealCell, RevealGroup } from "@/features/shared/Reveal";
 import { ui } from "@/features/shared/ui";
 import { ReadingProgress } from "./ReadingProgress";
 
@@ -26,7 +27,8 @@ function renderTodayInThree(items: Brief["todayInThree"]) {
     return null;
   }
   return (
-    <section className={`${PANEL} sm:col-span-2`} aria-labelledby="brief-three">
+    <RevealCell className="sm:col-span-2">
+    <section className={`${PANEL} h-full`} aria-labelledby="brief-three">
       <h3 id="brief-three" className={PANEL_TITLE}>
         Today in three
       </h3>
@@ -38,6 +40,7 @@ function renderTodayInThree(items: Brief["todayInThree"]) {
             </span>
             <span>
               {item.sentence}{" "}
+              <span className="text-sm text-muted">({item.story.sourceName})</span>{" "}
               <a href={`#story-${item.position}`} className="inline-flex min-h-11 items-center whitespace-nowrap text-sm font-semibold text-accent-strong underline-offset-4 hover:underline sm:min-h-0">
                 Story {item.position}
               </a>
@@ -45,14 +48,15 @@ function renderTodayInThree(items: Brief["todayInThree"]) {
           </li>
         ))}
       </ol>
-      <p className={`${ui.meta} mt-2`}>AI-written from each story&apos;s headline and text. Follow the story link for the source.</p>
+      <p className={`${ui.meta} mt-2`}>Written by AI from each story&apos;s own headline and text. The source is named and linked on the story.</p>
     </section>
+    </RevealCell>
   );
 }
 
 function renderTopSignal(top: Brief["topSignal"]) {
   return (
-    <section className={PANEL} aria-labelledby="brief-top">
+    <section className={`${PANEL} h-full`} aria-labelledby="brief-top">
       <h3 id="brief-top" className={PANEL_TITLE}>
         Top signal
       </h3>
@@ -75,7 +79,8 @@ function renderFocus(focus: Brief["focus"]) {
     return null;
   }
   return (
-    <section className={PANEL} aria-labelledby="brief-focus">
+    <RevealCell>
+    <section className={`${PANEL} h-full`} aria-labelledby="brief-focus">
       <h3 id="brief-focus" className={PANEL_TITLE}>
         Your focus
       </h3>
@@ -85,6 +90,7 @@ function renderFocus(focus: Brief["focus"]) {
         {focus.story.sourceName} · {focus.story.publishedLabel}
       </p>
     </section>
+    </RevealCell>
   );
 }
 
@@ -93,7 +99,8 @@ function renderPulse(pulse: BriefStory[]) {
     return null;
   }
   return (
-    <section className={`${PANEL} sm:col-span-2`} aria-labelledby="brief-pulse">
+    <RevealCell className="sm:col-span-2">
+    <section className={PANEL} aria-labelledby="brief-pulse">
       <h3 id="brief-pulse" className={PANEL_TITLE}>
         Internet pulse
       </h3>
@@ -108,18 +115,19 @@ function renderPulse(pulse: BriefStory[]) {
         ))}
       </ul>
     </section>
+    </RevealCell>
   );
 }
 
 export function SignalBrief({ brief, dateLabel }: { brief: Brief; dateLabel: string }) {
   return (
-    <section aria-labelledby="signal-brief" className="animate-fade-up rounded-xl border border-rule border-t-4 border-t-ink bg-paper p-4 sm:p-5">
+    <section aria-labelledby="signal-brief" className="rounded-card border border-rule border-t-4 border-t-ink bg-paper p-4 shadow-card sm:p-5">
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>
           <h2 id="signal-brief" className="font-serif text-2xl font-bold">
             Signal Brief
           </h2>
-          <p className="text-sm font-semibold">Today in 5 minutes</p>
+          <p className="text-sm font-semibold">Today in five minutes</p>
           <p className={ui.meta}>
             {brief.storyCount} stories · about {brief.readingMinutes} min · {dateLabel}
           </p>
@@ -128,12 +136,12 @@ export function SignalBrief({ brief, dateLabel }: { brief: Brief; dateLabel: str
           <ReadingProgress total={brief.storyCount} />
         </div>
       </div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <RevealGroup className="mt-4 grid gap-3 sm:grid-cols-2">
         {renderTodayInThree(brief.todayInThree)}
-        {renderTopSignal(brief.topSignal)}
+        <RevealCell>{renderTopSignal(brief.topSignal)}</RevealCell>
         {renderFocus(brief.focus)}
         {renderPulse(brief.pulse)}
-      </div>
+      </RevealGroup>
     </section>
   );
 }

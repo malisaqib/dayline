@@ -105,7 +105,7 @@ async function readerJourney(browser: Browser): Promise<{ editionId: string; sto
 async function feedbackJourney(page: Page, editionId: string, stories: Story[]): Promise<void> {
   const lead = page.locator("article").first();
   await lead.getByRole("button", { name: "Less like this" }).click();
-  const confirmation = lead.getByText(/in future papers|already at its/);
+  const confirmation = lead.getByText(/will appear (more|less) often|already at its/);
   await confirmation.waitFor({ timeout: 30_000 });
   const message = await confirmation.innerText();
   check(/less often/.test(message), `feedback explains the weaker preference ("${message.split(".")[0]}")`);

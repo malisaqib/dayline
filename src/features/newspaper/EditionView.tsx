@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { PresentedEdition, PresentedStory } from "@/domain/editions/presentation";
+import { RevealItem, RevealList } from "@/features/shared/Reveal";
 import { ui } from "@/features/shared/ui";
 import { ReadingProgress } from "./ReadingProgress";
 import { StoryCard } from "./StoryCard";
@@ -54,7 +55,7 @@ export function EditionView({ edition, eyebrow, actions, notices, brief, storyFo
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] lg:gap-8">
       <div className="min-w-0 space-y-4">
-        <header className="animate-fade-up flex flex-col gap-4 border-b border-rule pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <header className="flex flex-col gap-4 border-b border-rule pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className={ui.eyebrow}>{eyebrow}</p>
             <h1 className="mt-2 font-serif text-3xl font-bold leading-tight">{edition.dateLabel}</h1>
@@ -66,13 +67,11 @@ export function EditionView({ edition, eyebrow, actions, notices, brief, storyFo
         </header>
         {notices}
         {brief}
-        <ol className="space-y-4" aria-label="Stories">
+        <RevealList className="space-y-4" label="Stories">
           {edition.stories.map((story, index) => (
-            <li key={story.id}>
-              {storyWrapper(story, <StoryCard story={story} position={index + 1} footer={storyFooter(story)} />)}
-            </li>
+            <RevealItem key={story.id}>{storyWrapper(story, <StoryCard story={story} position={index + 1} footer={storyFooter(story)} />)}</RevealItem>
           ))}
-        </ol>
+        </RevealList>
       </div>
       <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start" aria-label="Paper tools">
         {renderIndex(edition.stories)}

@@ -20,6 +20,22 @@ export function RevealItem({ children, className }: { children: ReactNode; class
   );
 }
 
+export function RevealGroup({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <motion.div variants={stagger} initial="initial" animate="animate" className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
+export function RevealCell({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <motion.div variants={fadeUp} className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
 export function Reveal({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <motion.div variants={fadeUp} initial="initial" animate="animate" className={className}>

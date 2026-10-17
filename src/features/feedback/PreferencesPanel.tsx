@@ -25,10 +25,10 @@ export function PreferencesPanel({ topics, weights, previewHref }: PreferencesPa
       </h2>
       <LearningChips topics={topics} initialWeights={weights} />
       <p className="mt-3 text-sm text-muted">
-        Each More or Less nudges that story&apos;s topics for future papers. Choices are saved once per story, so you can change your mind.
+        More, Less and Skip adjust each topic, and opening or skipping stories also teaches Dayline which sources you prefer. Every choice is bounded, so one click never takes over your paper.
       </p>
       {renderPreviewLink(previewHref)}
-      <p className={`${ui.meta} mt-3`}>Your current paper stays unchanged.</p>
+      <p className={`${ui.meta} mt-3`}>Your current paper is saved and will not change.</p>
     </section>
   );
 }

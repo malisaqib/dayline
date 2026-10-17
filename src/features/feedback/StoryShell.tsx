@@ -1,7 +1,9 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import { createContext, useContext, useRef, useState, type ReactNode } from "react";
 import { submitReading, undoSkipStory, type ReadingActionResult } from "@/app/actions";
+import { fade, fadeUp } from "@/features/shared/motion";
 import { ui } from "@/features/shared/ui";
 import { WEIGHTS_EVENT } from "./LearningChips";
 
@@ -74,9 +76,16 @@ export function StoryShell({ editionId, articleHash, headline, initiallySkipped,
     },
   };
 
-  if (skipped) {
+  const content = skipped ? renderSkipped() : renderStory();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      {content}
+    </AnimatePresence>
+  );
+
+  function renderSkipped() {
     return (
-      <div role="status" className={`${ui.card} animate-toast flex flex-wrap items-center justify-between gap-3 p-4`}>
+      <motion.div key="skipped" layout variants={fadeUp} initial="initial" animate="animate" exit="exit" role="status" className={`${ui.card} flex flex-wrap items-center justify-between gap-3 p-4`}>
         <div className="min-w-0">
           <p className="font-semibold">This story was skipped.</p>
           <p className="text-sm text-muted">Your current paper is unchanged. Future papers will show fewer stories like it.</p>
@@ -86,14 +95,18 @@ export function StoryShell({ editionId, articleHash, headline, initiallySkipped,
         <button type="button" disabled={pending} onClick={() => run(() => undoSkipStory({ editionId, articleHash, kind: "skip" }), () => setSkipped(false))} className={ui.secondaryButton}>
           Undo
         </button>
-      </div>
+      </motion.div>
     );
   }
 
-  return (
-    <StoryContext.Provider value={actions}>
-      {children}
-      {renderError(error)}
-    </StoryContext.Provider>
-  );
+  function renderStory() {
+    return (
+      <motion.div key="story" layout variants={fade} initial="initial" animate="animate" exit="exit">
+        <StoryContext.Provider value={actions}>
+          {children}
+          {renderError(error)}
+        </StoryContext.Provider>
+      </motion.div>
+    );
+  }
 }

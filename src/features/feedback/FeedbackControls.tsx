@@ -1,7 +1,9 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { submitFeedback, type FeedbackActionResult } from "@/app/actions";
+import { fade, fadeUp } from "@/features/shared/motion";
 import { WEIGHTS_EVENT } from "./LearningChips";
 import { useStoryActions } from "./StoryShell";
 
@@ -34,10 +36,10 @@ function describeResult(result: Success, signal: Signal, topicLabels: string[]):
   const weaker = result.changes.filter((c) => c.direction === "weaker").map((c) => c.label);
   const parts: string[] = [];
   if (stronger.length > 0) {
-    parts.push(`${joinLabels(stronger)} will appear more often in future papers.`);
+    parts.push(`${joinLabels(stronger)} will appear more often.`);
   }
   if (weaker.length > 0) {
-    parts.push(`${joinLabels(weaker)} will appear less often in future papers.`);
+    parts.push(`${joinLabels(weaker)} will appear less often.`);
   }
   if (parts.length > 0) {
     return parts.join(" ");
@@ -66,25 +68,29 @@ function renderCheck(selected: boolean) {
 
 function renderStatus(pending: boolean, message: string | null, error: string | null, editionId: string) {
   if (pending) {
-    return <p className="text-sm text-muted">Saving…</p>;
+    return (
+      <motion.p key="saving" variants={fade} initial="initial" animate="animate" exit="exit" className="text-sm text-muted">
+        Saving…
+      </motion.p>
+    );
   }
   if (error) {
     return (
-      <p role="alert" className="animate-toast text-sm font-medium text-accent-strong">
+      <motion.p key="error" variants={fade} initial="initial" animate="animate" exit="exit" role="alert" className="text-sm font-medium text-accent-strong">
         {error}
-      </p>
+      </motion.p>
     );
   }
   if (!message) {
     return null;
   }
   return (
-    <div className="animate-toast flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-accent-soft px-3 py-2 text-sm">
+    <motion.div key={message} variants={fadeUp} initial="initial" animate="animate" exit="exit" className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-accent-soft px-3 py-2 text-sm">
       <span>{message}</span>
       <a href={`/edition/${editionId}/preview`} className="inline-flex min-h-11 items-center font-semibold text-accent-strong underline-offset-4 hover:underline">
         Preview next edition
       </a>
-    </div>
+    </motion.div>
   );
 }
 
@@ -126,7 +132,7 @@ export function FeedbackControls({ editionId, articleHash, topicLabels, initial 
       <div className="flex flex-wrap items-center justify-between gap-3 sm:flex-nowrap">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold">Train your paper</h3>
-          <p className="text-[13px] text-muted">These choices affect future papers. Today&apos;s paper stays unchanged.</p>
+          <p className="text-[13px] text-muted">These choices improve future papers. Today&apos;s paper stays unchanged.</p>
         </div>
         <div className="flex flex-wrap gap-2 sm:shrink-0">
           {buttons}
@@ -134,7 +140,9 @@ export function FeedbackControls({ editionId, articleHash, topicLabels, initial 
         </div>
       </div>
       <div aria-live="polite" className="mt-2 empty:mt-0">
-        {renderStatus(pending, message, error, editionId)}
+        <AnimatePresence mode="wait" initial={false}>
+          {renderStatus(pending, message, error, editionId)}
+        </AnimatePresence>
       </div>
     </section>
   );

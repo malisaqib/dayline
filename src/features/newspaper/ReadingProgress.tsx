@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 
 const STORY_SELECTOR = "article[id^='story-']";
@@ -48,7 +49,7 @@ export function ReadingProgress({ total }: { total: number }) {
         aria-valuetext={label}
         className="mt-2 h-2 overflow-hidden rounded-full bg-rule"
       >
-        <div className="h-full rounded-full bg-accent transition-[width] duration-[300ms]" style={{ width: `${percent}%` }} />
+        <motion.div className="h-full rounded-full bg-accent" initial={false} animate={{ width: `${percent}%` }} />
       </div>
     </div>
   );

@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import type { PresentedStory } from "@/domain/editions/presentation";
 import { TrackedLink } from "@/features/feedback/TrackedLink";
+import { Disclosure } from "@/features/shared/Disclosure";
 import { ExternalIcon } from "@/features/shared/ExternalIcon";
-import { staggerStyle, ui } from "@/features/shared/ui";
+import { ui } from "@/features/shared/ui";
 
 type StoryCardProps = { story: PresentedStory; position: number; footer: ReactNode };
 
@@ -82,13 +83,7 @@ function whyRows(story: PresentedStory): { label: string; value: string }[] {
 
 function renderWhy(story: PresentedStory) {
   return (
-    <details className="group mt-3 border-t border-rule pt-1">
-      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-semibold">
-        <span aria-hidden="true" className="transition-transform duration-[185ms] group-open:rotate-90">
-          ›
-        </span>
-        Why this story?
-      </summary>
+    <Disclosure label="Why you're seeing this">
       <ul className="space-y-1 pb-2 pl-5 text-sm">
         {whyRows(story).map((row) => (
           <li key={row.label}>
@@ -96,7 +91,7 @@ function renderWhy(story: PresentedStory) {
           </li>
         ))}
       </ul>
-    </details>
+    </Disclosure>
   );
 }
 
@@ -124,7 +119,7 @@ export function StoryCard({ story, position, footer }: StoryCardProps) {
   const padding = isLead ? "p-5 sm:p-8" : "p-4 sm:p-6";
   const accentBorder = isLead ? "border-t-4 border-t-accent" : "";
   return (
-    <article id={`story-${position}`} className={`${ui.card} ${padding} ${accentBorder} animate-fade-up scroll-mt-24`} style={staggerStyle(position)}>
+    <article id={`story-${position}`} className={`${ui.card} ${padding} ${accentBorder} scroll-mt-24`}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         {renderLabel(isLead, position)}
         {story.topicLabels.map((label) => (
