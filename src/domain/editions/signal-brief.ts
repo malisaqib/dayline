@@ -47,11 +47,13 @@ function strongestTopic(topics: TopicId[], weights: TopicWeights): TopicId | nul
 
 function findFocus(stories: PresentedStory[], topic: TopicId): BriefStory | null {
   const top = stories[0];
-  const matches = stories.map((story, index) => ({ position: index + 1, story })).filter(({ story }) => story.topics.includes(topic));
-  if (matches.length === 0) {
+  const distinct = stories
+    .map((story, index) => ({ position: index + 1, story }))
+    .find(({ story, position }) => position !== 1 && story.topics.includes(topic) && !isNearDuplicateTitle(story.headline, top.headline));
+  if (!distinct) {
     return null;
   }
-  return matches.find((m) => m.position !== 1 && !isNearDuplicateTitle(m.story.headline, top.headline)) ?? matches[0];
+  return distinct;
 }
 
 export function resolveHighlights(stories: PresentedStory[], highlights: Highlight[]): (BriefStory & { sentence: string; quoted: boolean })[] {

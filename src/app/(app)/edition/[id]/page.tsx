@@ -8,6 +8,7 @@ import { FeedbackControls } from "@/features/feedback/FeedbackControls";
 import { storyWrapper } from "@/features/feedback/story-wrapper";
 import { PreferencesPanel } from "@/features/feedback/PreferencesPanel";
 import { EditionView } from "@/features/newspaper/EditionView";
+import { DownloadAction } from "@/features/newspaper/PaperFilters";
 import { SignalBrief } from "@/features/newspaper/SignalBrief";
 import { ui } from "@/features/shared/ui";
 import { readOwnEditionWithContext, type EditionContext } from "@/server/services/read-edition";
@@ -49,9 +50,7 @@ function renderNotices(params: SearchParams, edition: Edition) {
 function renderActions(editionId: string) {
   return (
     <>
-      <a href={`/api/editions/${editionId}/pdf`} className={`${ui.primaryButton} col-span-2`}>
-        Download PDF
-      </a>
+      <DownloadAction href={`/api/editions/${editionId}/pdf`} />
       <Link href="/archive" className={ui.secondaryButton}>
         Archive
       </Link>

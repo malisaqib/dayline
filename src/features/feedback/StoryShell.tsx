@@ -88,7 +88,7 @@ export function StoryShell({ editionId, articleHash, headline, initiallySkipped,
       <motion.div key="skipped" layout variants={fadeUp} initial="initial" animate="animate" exit="exit" role="status" className={`${ui.card} flex flex-wrap items-center justify-between gap-3 p-4`}>
         <div className="min-w-0">
           <p className="font-semibold">This story was skipped.</p>
-          <p className="text-sm text-muted">Your current paper is unchanged. Future papers will show fewer stories like it.</p>
+          <p className="text-sm text-muted">Hidden from this view only; the saved paper and PDF still include it. Future papers will show fewer stories like it.</p>
           <p className="mt-1 line-clamp-1 text-sm text-muted line-through">{headline}</p>
           {renderError(error)}
         </div>

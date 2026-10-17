@@ -116,7 +116,7 @@ function whyRows(story: PresentedStory): { label: string; value: string }[] {
 
 function renderWhy(story: PresentedStory) {
   return (
-    <Disclosure label="Why you're seeing this">
+    <Disclosure label="Why this story?">
       <ul className="space-y-1 pb-2 pl-5 text-sm">
         {whyRows(story).map((row) => (
           <li key={row.label}>

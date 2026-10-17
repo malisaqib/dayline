@@ -4,24 +4,22 @@ import { ui } from "@/features/shared/ui";
 import { getVerifiedReader } from "@/server/auth/session";
 import { createReaderSupabase } from "@/server/db/supabase-server";
 
-export async function AccountControls() {
+export async function AccountBlock() {
   const reader = await getVerifiedReader(await createReaderSupabase());
-  if (!reader) {
-    return null;
-  }
-  if (reader.isAnonymous) {
+  if (!reader || reader.isAnonymous) {
     return (
-      <Link href="/signin" className={ui.ghostButton}>
+      <Link href="/signin" className={`${ui.primaryButton} w-full`}>
         Sign in
       </Link>
     );
   }
   return (
-    <div className="flex items-center gap-1">
-      <span className="hidden max-w-48 truncate text-[13px] text-muted md:inline" title={reader.email ?? undefined}>
+    <div>
+      <p className="text-xs text-muted">Signed in as</p>
+      <p className="truncate text-sm font-semibold" title={reader.email ?? undefined}>
         {reader.email}
-      </span>
-      <SignOutButton className={ui.ghostButton} />
+      </p>
+      <SignOutButton className={`${ui.secondaryButton} mt-3 w-full`} />
     </div>
   );
 }

@@ -32,12 +32,12 @@ export function ReadingProgress({ total }: { total: number }) {
 
   const count = Math.min(seen.size, total);
   const percent = total === 0 ? 0 : Math.round((count / total) * 100);
-  const label = `${count} of ${total} stories`;
+  const label = `${count} of ${total} stories reached`;
 
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3 text-sm">
-        <span className="font-semibold">Reading progress</span>
+        <span className="font-semibold">Stories reached</span>
         <span className="text-muted">{label}</span>
       </div>
       <div
