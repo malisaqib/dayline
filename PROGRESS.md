@@ -2,6 +2,22 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
+## Phase 2: feedback learning and preview. VERIFIED locally and on production (deployment 6793a10)
+- Policy (`domain/personalization/weights.ts`): each selected topic starts at 1.0; More adds 0.25 and Less subtracts 0.25 per story topic; weights are clamped to 0.25–2.0. Weights are re-derived from all stored signals, so repeats and retries can't compound. `profiles.topic_weights` caches the result.
+- `feedback_events`: one current signal per user + edition + story, enforced by a unique key. The story's topics are copied from the owned edition snapshot. RLS lets readers read their own rows only, and inserts and updates must reference an edition the reader owns.
+- Ranking: `scoreItem` = 0.75 × (strongest matched weight ÷ 2.0) + 0.25 × freshness. The source cap, age filter and deterministic tie-break are unchanged. Reasons say "(boosted/reduced by your feedback)".
+- Preview at `/edition/[id]/preview`: today's saved stories reordered with current weights and labelled "Preview based on today's available stories." It isn't stored, archived or downloadable as a PDF, and it makes no model calls.
+- UI: More/Less buttons under each story (aria-pressed, pending and error states, repeat and in-flight clicks ignored), a confirmation such as "Saved: Space weaker", and a preferences panel. The PDF has no controls.
+- Migration 0004 was applied with `npm run db:migrate`.
+- Checks:
+  - `npm test`: 21 of 21. Covers same signal twice, more→less, clamping, default weights, ignoring unfollowed topics, preview reordering and immutability, and future ranking using the new weights.
+  - `check:flow`: 13 of 13. Covers live idempotency, more→less, saved weights, one row per story, edition unchanged, and cross-reader feedback rejected both by the service and by RLS (42501).
+  - `check:journey`: passes locally and on production.
+  - `inspect_pdf.py`: PDF text identical before and after feedback.
+  - `typecheck`, `lint` and `build` pass.
+- Commits: `7532079` (migration and learning logic), `d0ffdc0` (feedback persistence and UI), `6793a10` (preview and journey).
+- Limitations: weights are per topic only (no entities); topics come from the source, not per article; Ars Technica blocks automated link checks (reported as WARN).
+
 ## Phase 1: persisted newspaper flow. VERIFIED locally and on production
 
 ### Local verification (2026-10-17, against live Supabase and OpenRouter)
@@ -49,8 +65,8 @@ Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: htt
 - Dawn is blocked from Vercel, so production Pakistan coverage depends on Geo News alone.
 - PDFs are rendered on request from the saved snapshot and not stored.
 
-## Next milestone (after production passes)
-Feedback learning: more/less like this per story, then stored topic weights, then ranking uses those weights for the next edition, plus a labelled preview. Then scheduled daily generation.
+## Next milestone
+Internet Pulse sources (CISA KEV, Hacker News, GDACS), then scheduled daily generation.
 
 ## Deferred
 Scheduling, "Since your last read", elaborate styling.
