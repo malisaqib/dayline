@@ -106,13 +106,17 @@ function StoryBlock({ story }: { story: PrintStory }) {
   );
 }
 
-function splitIntoColumns<T>(items: T[]): [T[], T[]] {
-  const half = Math.ceil(items.length / 2);
-  return [items.slice(0, half), items.slice(half)];
+// Rows of two keep reading order (left, right, next row) even when a row breaks onto the next page.
+function pairIntoRows<T>(items: T[]): T[][] {
+  const rows: T[][] = [];
+  for (let i = 0; i < items.length; i += 2) {
+    rows.push(items.slice(i, i + 2));
+  }
+  return rows;
 }
 
 export function EditionDocument({ edition }: { edition: PrintEdition }) {
-  const [left, right] = splitIntoColumns(edition.stories);
+  const rows = pairIntoRows(edition.stories);
 
   return (
     <Document title={`Dayline — ${edition.dateLabel}`} author="Dayline">
@@ -133,18 +137,16 @@ export function EditionDocument({ edition }: { edition: PrintEdition }) {
 
         <View style={styles.sectionRule} />
 
-        <View style={styles.columns}>
-          <View style={styles.column}>
-            {left.map((story) => (
-              <StoryBlock key={story.sourceUrl + story.headline} story={story} />
+        {rows.map((row) => (
+          <View key={row[0].sourceUrl} style={styles.columns} wrap={false}>
+            {row.map((story) => (
+              <View key={story.sourceUrl + story.headline} style={styles.column}>
+                <StoryBlock story={story} />
+              </View>
             ))}
+            {row.length === 1 && <View style={styles.column} />}
           </View>
-          <View style={styles.column}>
-            {right.map((story) => (
-              <StoryBlock key={story.sourceUrl + story.headline} story={story} />
-            ))}
-          </View>
-        </View>
+        ))}
 
         <Text style={styles.footer} render={({ pageNumber, totalPages }) => `Dayline · page ${pageNumber} of ${totalPages}`} fixed />
       </Page>
