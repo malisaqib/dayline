@@ -9,6 +9,11 @@
   --accent-strong: #9e2f17;
   --accent-soft: #fbe9e3;
   --rule: #e2d8c7;
+  --night: #0b0f17;
+  --night-card: #151b27;
+  --night-rule: #273042;
+  --night-muted: #a3acbd;
+  --glow: #f08a72;
   --elevation-card: 0 1px 2px rgb(29 36 51 / 0.05), 0 4px 16px -8px rgb(29 36 51 / 0.12);
   --elevation-raised: 0 2px 4px rgb(29 36 51 / 0.06), 0 12px 32px -12px rgb(29 36 51 / 0.2);
 }
@@ -22,6 +27,11 @@
   --color-accent-strong: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
   --color-rule: var(--rule);
+  --color-night: var(--night);
+  --color-night-card: var(--night-card);
+  --color-night-rule: var(--night-rule);
+  --color-night-muted: var(--night-muted);
+  --color-glow: var(--glow);
   --shadow-card: var(--elevation-card);
   --shadow-raised: var(--elevation-raised);
   --radius-card: 0.875rem;

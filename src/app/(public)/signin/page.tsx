@@ -4,6 +4,7 @@ import { safeReturnPath } from "@/domain/auth/return-path";
 import { SignInForm } from "@/features/auth/SignInForm";
 import { SignOutButton } from "@/features/auth/SignOutButton";
 import { ui } from "@/features/shared/ui";
+import { PageMain } from "@/features/shell/PageMain";
 import type { Reader } from "@/server/auth/session";
 import { readReaderEntry } from "@/server/services/reader-entry";
 
@@ -99,7 +100,7 @@ function renderSignedIn(account: Reader, hasProfile: boolean) {
   );
 }
 
-export default async function SignInPage({ searchParams }: { searchParams: SearchParams }) {
+async function renderSignIn({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const next = safeReturnPath(first(params.next));
   const notice = pickNotice(params);
@@ -117,4 +118,8 @@ export default async function SignInPage({ searchParams }: { searchParams: Searc
     return renderSignedIn(entry.account, false);
   }
   return renderSignedIn(entry.account, true);
+}
+
+export default async function SignInPage({ searchParams }: { searchParams: SearchParams }) {
+  return <PageMain>{await renderSignIn({ searchParams })}</PageMain>;
 }

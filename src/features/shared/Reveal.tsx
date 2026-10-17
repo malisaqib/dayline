@@ -49,3 +49,11 @@ export function Reveal({ children, className }: Props) {
     </motion.div>
   );
 }
+
+export function InView({ children, className }: Props) {
+  return (
+    <motion.div variants={fadeUp} initial={useEntrance()} whileInView="animate" viewport={{ once: true, margin: "-80px" }} className={className}>
+      {children}
+    </motion.div>
+  );
+}

@@ -8,9 +8,9 @@ const PATHS: Record<string, string> = {
   disasters: "M12 3 2 20h20L12 3Zm0 6v5m0 3h.01",
 };
 
-export function TopicIcon({ topic }: { topic: string }) {
+export function TopicIcon({ topic, className = "size-5 shrink-0 text-accent" }: { topic: string; className?: string }) {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 shrink-0 text-accent" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg aria-hidden="true" viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d={PATHS[topic] ?? PATHS.world} />
     </svg>
   );
