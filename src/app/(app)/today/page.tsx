@@ -38,7 +38,7 @@ function renderReady(edition: Edition) {
   const stories = presented.stories;
   const minutes = stories.reduce((sum, story) => sum + (story.readingMinutes ?? 0), 0);
   return (
-    <div className="relative">
+    <div>
       {renderGlow()}
       <p className={`${ui.eyebrow} relative`}>Today&apos;s paper · {presented.dateLabel}</p>
       <h1 className="relative mt-3 font-serif text-3xl font-bold leading-tight sm:text-5xl">Today&apos;s paper is ready.</h1>
@@ -88,7 +88,7 @@ function sourceOf(stories: PresentedStory[], articleHash: string): string {
 
 function renderNotReady() {
   return (
-    <div className="relative">
+    <div>
       {renderGlow()}
       <p className={`${ui.eyebrow} relative`}>Today&apos;s paper</p>
       <h1 className="relative mt-3 font-serif text-3xl font-bold leading-tight sm:text-5xl">Today&apos;s paper hasn&apos;t been made yet.</h1>

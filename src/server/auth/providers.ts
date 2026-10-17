@@ -1,8 +1,6 @@
 import { getPublicSupabaseEnv } from "@/server/env";
 
-const settingsSchemaKeys = ["google"] as const;
-
-export type ProviderFlags = Record<(typeof settingsSchemaKeys)[number], boolean>;
+export type ProviderFlags = { google: boolean };
 
 export async function enabledProviders(): Promise<ProviderFlags> {
   const env = getPublicSupabaseEnv();

@@ -2,6 +2,82 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
+## First-run flow, dark redesign and specific interests (2026-10-17). VERIFIED on production except where noted
+- **Flow:** overview `/` → `/signin` (step 1 of 3) → `/onboarding` (named stepper: "What you follow", "Review and create") → first paper → `/today`.
+- **Design:**
+  - Dark theme tokens on every page.
+  - Overview modelled on the structure of readwise.io/read: rotating hero word, real product captures of a Dayline paper, phone and PDF, a sources grid, alternating split sections and a closing call to action.
+  - The captures in `public/overview/` come from a real production paper of 17 October 2026, captured with Playwright, and are labelled as such.
+- **Motion:**
+  - Scroll-triggered reveals for lists, grids and sections.
+  - A product shot that tilts in.
+  - A reading-progress bar.
+  - A public navbar that tightens on scroll, with animated link underlines.
+  - A live countdown to the next paper.
+  - Everything respects reduced motion.
+- **Today page:** shows the saved paper's Today in three with sources, the six headlines linking into the paper, the countdown, and the reader's topics and interests.
+- **Specific interests (final Phase 3 core):**
+  - Migration `0009_reader_interests.sql` (applied): topics allowed 1 to 7 (the three-topic cap is removed everywhere), plus `profiles.interests text[]` (at most 5). Old rows get `{}`.
+  - `src/domain/interests.ts`: normalization, dedupe and bounds; whole-word matching with careful aliases and simple plurals. "mars" does not match "Marshall"; "ai" does not match "paint".
+  - Ranking: an interest match makes a story eligible even outside the chosen topics, adds a bounded +0.15, and seeds one story per interest when a fresh match exists. The freshness, duplicate and source caps are unchanged.
+  - Story cards show "Matches your interest in X" only with evidence. When nothing matches, the edition says "No fresh story mentioned X today" and fills from the other topics.
+  - Saving interests never rewrites today's saved paper.
+  - Onboarding has "Search or add an interest" with suggestions and removable chips, and step 2 reviews removable topics and interests.
+- **Verified:**
+  - `npm test` 69 of 69, including fixtures showing different interests choose different stories from the same pool.
+  - Production guest flow with 4 topics plus "ai agents" and "cricket": the profile saved, the paper was created, and the no-match notice appeared truthfully. That run's sources were partial (Dawn, which carried today's only AI-agents story, was not in the paper). The same profile ranked against the live pool locally put that Dawn story first.
+- **Accounts added on top of Phase 2:**
+  - Email and password sign-in and "Create account" (sign-up needs the confirmation email).
+  - "Continue with Google", rendered only when `/auth/v1/settings` reports Google enabled. It uses `linkIdentity` for guests, so their papers are kept.
+  - Google is **not enabled** in the project yet; the button appears automatically once it is.
+
+## Final Phase 2: recoverable reader accounts (Supabase email OTP). VERIFIED on production (except real inbox delivery)
+- **Provider:** email via Supabase Auth (one-time code or link; password added later, see above). Google: see setup below.
+- **Code:**
+  - `src/domain/auth/return-path.ts`: `safeReturnPath` allows only `/today`, `/archive`, `/onboarding` and `/edition/…`. Rejects external, `//`, backslash and unknown paths.
+  - `src/server/auth/email-otp.ts`: `signInWithOtp` (creates the account if new), guest upgrade via `updateUser({ email })` so the anonymous user id is kept, `verifyOtp` (`email` / `email_change`), and error mapping (expired or invalid, rate limited, email already has an account, address not allowed, delivery failure).
+  - `src/app/auth-actions.ts` and `features/auth/SignInForm.tsx`: email → code steps, "Send a new code", "Use a different email", and the conflict step.
+  - `/auth/confirm`: handles `token_hash` + `type` and PKCE `code`. Errors go to `/signin?error=link_expired`.
+  - Sign out sits in the app header (with the account email). Guests see "Save to email".
+- **Routing:**
+  - Middleware sends signed-out visits to `/today`, `/archive` and `/edition/…` to `/signin?next=…&reason=signin|expired`. `/`, `/signin` and `/onboarding` stay public.
+  - After sign-in: no profile → `/onboarding`; profile → the safe `next` or `/today`.
+  - Expired-session copy says signing in restores topics and papers; it never asks the reader to choose topics again.
+- **Guest upgrade:**
+  - `/signin` for an anonymous reader offers "Save this paper to your email". The same user id keeps profile, feedback, reading events and editions; no rows are rewritten.
+  - If the email already has an account, Dayline shows the conflict explicitly. It offers "Sign in to that account" (this browser switches account; the guest's rows are kept, not merged or deleted) or "Keep reading as a guest".
+  - **Deferred:** merging a guest's history into an existing account. This needs an ownership-verified merge design and is not built.
+- **Supabase dashboard setup required (field names only, no secrets):**
+  - Authentication → URL Configuration:
+    - Site URL `https://dayline-swart.vercel.app`.
+    - Redirect URLs: `https://dayline-swart.vercel.app/auth/confirm**` and `http://localhost:3000/auth/confirm**`.
+  - Authentication → Emails → Templates, for the code step to work:
+    - "Magic Link" and "Confirm signup" must include `{{ .Token }}`.
+    - "Change Email Address" (used by the guest upgrade) must include `{{ .Token }}`.
+    - The default `{{ .ConfirmationURL }}` link still works in the same browser through `/auth/confirm?code=…`.
+  - Authentication → Emails → SMTP Settings: custom SMTP (host, port, username, password, sender email, sender name) for real delivery. The built-in mailer hit its hourly send limit after two emails during verification.
+  - Authentication → Rate Limits → "Rate limit for sending emails": raise it after custom SMTP is configured.
+  - Google: in Google Cloud, create an OAuth client (Web). Authorized redirect URI = the Supabase "Callback URL" shown under Authentication → Sign In / Providers → Google; JavaScript origins = the production URL and `http://localhost:3000`. In Supabase, enable Google with that Client ID and Client Secret, and turn on "Allow manual linking" so guests can link Google.
+- **Verification (`npm run check:auth`, Playwright against production):**
+  - Passing:
+    - The public overview is open.
+    - Signed-out `/archive` → `/signin?next=/archive`, with an explanation.
+    - External return paths are dropped.
+    - An invalid link → `/signin?error=link_expired` with no loop.
+    - A wrong password is refused with a clear message.
+    - Password sign-in for a new account → `/onboarding`.
+    - The edition is owned by the permanent account.
+    - Refresh keeps the session.
+    - A used link cannot be replayed.
+    - Sign-out works and the paper then needs sign-in.
+    - A second browser on the same account sees the same archive, with return to `/archive`.
+    - Guest path; two-reader isolation (page and PDF).
+    - Guest upgrade conflict shown, with the guest session kept.
+    - Guest upgrade (one earlier run): same user id, `is_anonymous` false, archive survived.
+  - **What stands in for the inbox:** the test reads Supabase-issued tokens (admin `generateLink`, and the `email_change` token hash from `auth.users`) instead of an inbox. Sign-in itself always goes through the app's own routes; no admin bypass.
+  - **Not verified:** real inbox delivery and the 6-digit code step, which needs `{{ .Token }}` in the templates. The upgrade step can hit the built-in mailer's hourly limit; the latest run did.
+  - The local `next start` never completes server-action redirects in this environment (the committed code behaves the same), so browser checks run against production.
+
 ## Final Phase 1: public overview and reader entry (DAYLINE_FINAL_PHASES.md). DONE, with sign-in pending Phase 2
 - **Routes:** route groups keep every URL. `(public)` holds `/` and `/signin` with a public header; `(app)` holds `/today`, `/onboarding`, `/edition/[id]`, `/edition/[id]/preview` and `/archive` with the app header and navigation. PDF and API routes are unchanged.
 - **Overview `/`:**
@@ -79,7 +155,7 @@ Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: htt
   - Owner-only RLS: select, insert (the edition must belong to the reader) and delete (Undo).
   - `feedback_events.source_id`, so More/Less also teach source preference.
 - **Learning** (`src/domain/personalization/behavior.ts`, pure):
-  - Topic shift: open +0.05, skip −0.1, capped at ±0.25 per topic before the normal 0.25–2.0 clamp.
+  - Topic shift: open +0.05, skip −0.1, capped at ±0.25 per topic before the normal 0.25-2.0 clamp.
   - Source affinity: More +0.05, Less −0.05, open +0.02, skip −0.04, capped at ±0.1 on the score.
   - A skipped article (by hash or URL) gets a −1 penalty, so it returns only when nothing else can fill the slot.
   - Reasons show "You often read <Source>".
@@ -100,11 +176,11 @@ Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: htt
 - **Policy:** each source has an explicit `aiExcerptSummary` flag. It's on for NPR, Ars, BBC, Dawn, Geo and ScienceDaily, and off for CISA, HN and GDACS (never AI-processed). NASA keeps full-text summaries (`brief-v2-openrouter`).
 - **Excerpt summaries** (`summarizeExcerpt`, `excerpt-v2`):
   - Input: headline, the publisher's feed excerpt trimmed to 900 characters at a word boundary, source, publish time and URL. Never full text, never scraped.
-  - Output: strict schema, 12–60 words, 0–2 takeaways. Excerpts under 120 characters aren't sent.
+  - Output: strict schema, 12-60 words, 0-2 takeaways. Excerpts under 120 characters aren't sent.
   - Only the edition's selected stories are summarised. The cache key is (hash, model, prompt version). One retry on invalid or truncated output, then the labelled publisher excerpt.
 - **Today in three** (`buildTodayInThree`, `today3-v2`):
   - One call per new edition, using only stories with body text.
-  - Strict JSON `{items:[{story,sentence}]}` with at most 3 items. Validation drops unknown story numbers, repeats, sentences outside 5–35 words, and sentences under 50% word overlap with that story's headline and text. It never pads.
+  - Strict JSON `{items:[{story,sentence}]}` with at most 3 items. Validation drops unknown story numbers, repeats, sentences outside 5-35 words, and sentences under 50% word overlap with that story's headline and text. It never pads.
   - Stored on the immutable edition (migration 0007 `editions.today_in_three`, applied) and shown first in the Signal Brief, linking to "Story n".
   - Failure means an empty list; generation never blocks.
 - **Topic balance** (fix found during verification): source-native importance let Internet Pulse crowd out a reader's Pakistan topic. Ranking now reserves the best story for each chosen topic first (strongest weight first, within caps), then fills by score. Live: all 5 multi-topic mixes cover every chosen topic.
@@ -114,12 +190,12 @@ Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: htt
   - Live generation: reader A 3 cache hits, 4 calls, 3 highlights; reader B 6 calls, 3 highlights; 0 failures.
   - Journey PASSED; PDF parity 5 of 5; typecheck, lint and build pass.
 - **Limits:**
-  - A cold-cache paper now takes about 13–25 s (up to 6 summaries plus 1 call).
+  - A cold-cache paper now takes about 13-25 s (up to 6 summaries plus 1 call).
   - Highlight grounding is a word-overlap check, not semantic verification.
   - Internet Pulse sources still rank highly because only they have native importance signals; topic seeding keeps every chosen topic present.
 
 ## Content quality 1: coverage and ranking (feat: improve edition coverage and ranking)
-- **Near-duplicates** (`src/domain/articles/similarity.ts`): titles are normalized by removing punctuation, stop words, date words, years, 1–2 digit numbers and boilerplate (live, updates, Show HN…). Same story = word overlap ≥ 0.7, or ≥ 0.8 containment for titles of 4+ words. Fresh articles are clustered; the highest-scoring matching member represents the cluster, and `sourceCount` = distinct sources in the cluster.
+- **Near-duplicates** (`src/domain/articles/similarity.ts`): titles are normalized by removing punctuation, stop words, date words, years, 1-2 digit numbers and boilerplate (live, updates, Show HN…). Same story = word overlap ≥ 0.7, or ≥ 0.8 containment for titles of 4+ words. Fresh articles are clustered; the highest-scoring matching member represents the cluster, and `sourceCount` = distinct sources in the cluster.
 - **Importance:** max(coverage, source signal).
   - Coverage: (sources − 1) / 2, capped at 1.
   - Source signals set by the adapters: HN max(points/500, comments/300); GDACS Red 1, Orange 0.6, Green 0.2; CISA 1 if ransomware use is known, else 0.75.
@@ -154,14 +230,14 @@ Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: htt
 - Method: `POST /v2/search` with `sources:["news"]`, `limit:10`, `safe:true`, `highlights:false`. No Agent, Scrape or Crawl. Key never printed.
 - Run A (query + " latest developments", which deviated from the exact-query instruction): scholarships 0 results; climate 0 results; cybersecurity 10 results, none within 96 h. Credits: 0 + 0 + 2.
 - Run B (exact queries):
-  - Each query: HTTP 200, 2.6–3.0 s, 2 credits, 10 results, 0 duplicates, all URLs valid.
+  - Each query: HTTP 200, 2.6-3.0 s, 2 credits, 10 results, 0 duplicates, all URLs valid.
   - Response shape: `{success, data:{news:[{title,url,snippet,date,imageUrl,position}]}, creditsUsed, id}`; dates are relative ("5 days ago") or absolute ("Jul 8, 2026").
   - Scholarships: relevant Pakistani outlets (tribune.com.pk, dawn.com, app.com.pk, thenews.pk), plus an off-target UAE item and an aggregator (globalsouthopportunities.com). Newest "1 week ago"; most from 2025 to Aug 2026. **0 within 96 h.**
   - Climate tech: relevant (arabnews.pk, dialogue.earth, digitalpakistan.pk), but newest "4 weeks ago", with items back to 2024. **0 within 96 h.**
   - Open-source security: highly relevant (helpnetsecurity.com ×5, cybersecuritynews.com, anthropic.com, nvidia, microsoft). Newest "5 days ago" (120 h). **0 within 96 h.**
 - Total credits used: 8 (6 requests; empty searches cost 0).
 - Conclusion: Firecrawl news search returns relevant, reputable but mostly **weeks-to-months-old** results for niche interests. It would rarely add fresh stories to a daily paper. A 7-day window would pass only the security query (4 items).
-- Options if revisited: a weekly "curiosity digest" with a 7–14 day window, or dated query terms. Both need a product decision.
+- Options if revisited: a weekly "curiosity digest" with a 7-14 day window, or dated query terms. Both need a product decision.
 
 ## Phase 3: automatic daily generation. VERIFIED on production (deployment 339f8be)
 - **Endpoint:** `POST /api/internal/daily-editions` checks `Bearer CRON_SECRET` in constant time. A missing or wrong token, or an unset server secret, gets 401. The response is counts only: `{localDate, examined, created, reused, failed, durationMs}`.
@@ -216,7 +292,7 @@ Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: htt
   - The source's topics are applied to all of its items; there is no per-item tagging.
 
 ## Phase 2: feedback learning and preview. VERIFIED locally and on production (deployment 6793a10)
-- Policy (`domain/personalization/weights.ts`): each selected topic starts at 1.0; More adds 0.25 and Less subtracts 0.25 per story topic; weights are clamped to 0.25–2.0. Weights are re-derived from all stored signals, so repeats and retries can't compound. `profiles.topic_weights` caches the result.
+- Policy (`domain/personalization/weights.ts`): each selected topic starts at 1.0; More adds 0.25 and Less subtracts 0.25 per story topic; weights are clamped to 0.25-2.0. Weights are re-derived from all stored signals, so repeats and retries can't compound. `profiles.topic_weights` caches the result.
 - `feedback_events`: one current signal per user + edition + story, enforced by a unique key. The story's topics are copied from the owned edition snapshot. RLS lets readers read their own rows only, and inserts and updates must reference an edition the reader owns.
 - Ranking: `scoreItem` = 0.75 × (strongest matched weight ÷ 2.0) + 0.25 × freshness. The source cap, age filter and deterministic tie-break are unchanged. Reasons say "(boosted/reduced by your feedback)".
 - Preview at `/edition/[id]/preview`: today's saved stories reordered with current weights and labelled "Preview based on today's available stories." It isn't stored, archived or downloadable as a PDF, and it makes no model calls.
@@ -238,7 +314,7 @@ Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: htt
 |---|---|
 | `npm run db:migrate` | pass (0001 applied; 0002 and 0003 applied by hand in the SQL editor, then recorded after checking the schema) |
 | `npm run check:db` | pass (write, read, delete) |
-| `npm run check:ai` | pass on 5 of 5 runs. OpenRouter `google/gemini-3.8-flash`, strict JSON Schema used, Zod validation passed, summary 80–85 words, 3 takeaways, 7–10 s per run. One run needed its single retry after truncated JSON. The summary was checked by hand against the NASA source: no unsupported claims. |
+| `npm run check:ai` | pass on 5 of 5 runs. OpenRouter `google/gemini-3.8-flash`, strict JSON Schema used, Zod validation passed, summary 80-85 words, 3 takeaways, 7-10 s per run. One run needed its single retry after truncated JSON. The summary was checked by hand against the NASA source: no unsupported claims. |
 | `npm run check:feeds` | pass in Phase 0 (6 of 6). During `check:flow` NASA failed once, and generation carried on without it. |
 | `npm run check:flow` | 6 of 6 pass: concurrent and repeated generation give one edition; reuse works; two profiles get different leads; RLS isolation holds; no session means no access; exactly one row per reader per day. |
 | `npm test` | 13 of 13 (ranking, body policy, web/PDF equality, summary schema, entity decoding) |

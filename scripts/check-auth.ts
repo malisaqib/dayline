@@ -101,6 +101,7 @@ async function permanentAccount(browser: Browser, email: string): Promise<{ id: 
   check((await sessionUser(page))?.id === id, "edition made under the permanent account");
   await page.reload();
   check(new URL(page.url()).pathname === `/edition/${editionId}`, "refresh keeps the signed-in session");
+  await confirm(page, link, "magiclink", "/today");
   check((await confirm(page, link, "magiclink", "/today")).startsWith("/signin?error=link_expired"), "a used link cannot be replayed");
 
   await page.goto(`${BASE_URL}/today`);
@@ -139,8 +140,12 @@ async function guestUpgrade(browser: Browser, sql: postgres.Sql, takenEmail: str
     return;
   }
 
+  await page.goto(`${BASE_URL}/edition/${otherEditionId}`);
+  const hidden = await page.getByRole("heading", { name: "Paper not found" }).waitFor({ timeout: 15_000 }).then(() => true, () => false);
+  check(hidden && (await page.locator("article h2 a").count()) === 0, "a second reader cannot open the first reader's paper");
+
   await page.goto(`${BASE_URL}/signin`);
-  check(await page.getByRole("heading", { name: "Save this paper to your email" }).isVisible(), "guest sees the upgrade offer");
+  check(await page.getByRole("heading", { name: "Save this paper to your account" }).isVisible(), "guest sees the upgrade offer");
   await page.getByLabel("Email address").fill(takenEmail);
   await page.getByRole("button", { name: "Save my paper to this email" }).click();
   await page.getByText("already has a Dayline account").waitFor();
@@ -166,7 +171,9 @@ async function guestUpgrade(browser: Browser, sql: postgres.Sql, takenEmail: str
   check(upgraded?.id === guest.id && upgraded.anonymous === false && upgraded.email === email, "upgrade keeps the same user id and makes it permanent");
   check((await page.locator(`a[href="/edition/${guestEdition}"]`).count()) === 1, `guest archive survives the upgrade (${new URL(page.url()).pathname})`);
   await page.goto(`${BASE_URL}/edition/${otherEditionId}`);
-  check((await page.getByRole("heading", { name: "Paper not found" }).count()) === 1, "upgraded reader cannot open another reader's paper");
+  const notFound = await page.getByRole("heading", { name: "Paper not found" }).waitFor({ timeout: 15_000 }).then(() => true, () => false);
+  const leaked = await page.locator("article h2 a").count();
+  check(notFound && leaked === 0, `upgraded reader cannot open another reader's paper (not found shown: ${notFound}, stories visible: ${leaked})`);
   const pdf = await context.request.get(`${BASE_URL}/api/editions/${otherEditionId}/pdf`);
   check(pdf.status() === 404, "nor download its PDF");
   await context.close();
