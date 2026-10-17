@@ -63,7 +63,8 @@ export const SOURCES: FeedSource[] = [
     kind: "rss",
     url: "https://www.dawn.com/feeds/home",
     topics: ["pakistan"],
-    enabled: true,
+    // Disabled: returns HTTP 403 to Vercel's servers (verified via /api/health?sources=1 on 2026-10-17).
+    enabled: false,
     usage: EXCERPT_UNVERIFIED,
     reuseNote: "Feed includes long article text; republication rights unclear. Short excerpt plus link only until checked.",
   },

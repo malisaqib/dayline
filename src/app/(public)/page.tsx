@@ -15,7 +15,7 @@ const ROTATING = ["your topics", "Pakistan", "cybersecurity", "space", "the worl
 
 const SOURCES = [
   { topic: "world", title: "World", text: "International coverage from BBC News and NPR, plus official GDACS alerts when they matter." },
-  { topic: "pakistan", title: "Pakistan", text: "National news from Dawn and Geo News." },
+  { topic: "pakistan", title: "Pakistan", text: "National news from Geo News." },
   { topic: "technology", title: "Technology", text: "Ars Technica, plus what Hacker News is discussing that morning." },
   { topic: "science", title: "Science", text: "New research from ScienceDaily and NASA, summarised in plain language." },
   { topic: "space", title: "Space", text: "Missions, launches and discoveries straight from NASA." },
@@ -121,7 +121,7 @@ function renderSources() {
           </RevealCell>
         ))}
         <RevealCell className="flex flex-col justify-between rounded-2xl border border-dashed border-ink/15 p-6">
-          <p className="text-xl font-semibold text-ink">Ten sources, seven topics.</p>
+          <p className="text-xl font-semibold text-ink">Nine sources, seven topics.</p>
           <a href="#how" className="mt-4 inline-flex min-h-11 items-center gap-2 font-semibold text-glow">
             How Dayline picks stories <span aria-hidden="true">→</span>
           </a>
