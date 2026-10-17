@@ -2,6 +2,25 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
+## Final check before the Loom (2026-10-17, deployment `93111f2`). PASSED
+- **Code:** typecheck, lint, `npm test` 87 of 87, build.
+- **Live integrations:**
+  - `check:feeds`: all 10 enabled sources pass.
+  - `check:db` passes.
+  - `check:ai`: strict JSON, evidence validation and 3 grounded highlights.
+  - `check:flow`: 18 of 18 (duplicate generation, distinct profiles, RLS).
+- **Production:**
+  - `check:auth` passes.
+  - `check:journey` passes, including PDF, feedback, preview, skip/undo and isolation.
+  - `check:scheduled`: 401 for bad tokens; one run creates the missing paper and a second run creates none.
+  - Every page at 390px has 0px overflow and no page errors. A real paper showed 3 interest-matched stories.
+- **Fixed during the check:**
+  - Dawn (HTTP 403 from Vercel) switched off, so papers no longer report a failed source.
+  - The overview now names only the 9 sources that are switched on.
+  - The PDF is restyled to the Dayline design: embedded Playfair and Geist fonts, "D" mark, coral accent, Today in three card, top-story badge, topic chips, a "Why" line per story, and two flowing columns.
+  - `docs/architecture.md`, `docs/demo-script.md` (the Loom script) and the README are updated for the current product.
+- **For the Loom:** turn off Supabase "Confirm email" so the demo sign-up signs in straight away.
+
 ## Final phases 3 to 7 (2026-10-17). Pushed; verified on production (commit `97e6375`)
 - **Production checks:**
   - `check:auth` passes:
