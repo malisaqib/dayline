@@ -4,11 +4,13 @@
   --paper: #f8f4ec;
   --card: #fffdf8;
   --ink: #1d2433;
-  --muted: #5a6070;
+  --muted: #566074;
   --accent: #c13b1f;
   --accent-strong: #9e2f17;
   --accent-soft: #fbe9e3;
   --rule: #e2d8c7;
+  --elevation-card: 0 1px 2px rgb(29 36 51 / 0.05), 0 4px 16px -8px rgb(29 36 51 / 0.12);
+  --elevation-raised: 0 2px 4px rgb(29 36 51 / 0.06), 0 12px 32px -12px rgb(29 36 51 / 0.2);
 }
 
 @theme inline {
@@ -20,6 +22,9 @@
   --color-accent-strong: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
   --color-rule: var(--rule);
+  --shadow-card: var(--elevation-card);
+  --shadow-raised: var(--elevation-raised);
+  --radius-card: 0.875rem;
   --font-serif: var(--font-serif-display), Georgia, "Times New Roman", serif;
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
 }
