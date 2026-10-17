@@ -28,7 +28,7 @@ function productionDeps(admin: SupabaseClient): DailyJobDeps {
   return {
     listUserIds: (after, limit) => listProfileUserIds(admin, after, limit),
     // Ids come from our own profiles table, never from the caller; every read is filtered by that id.
-    generate: (userId, options) => getOrCreateDailyEdition(admin, { id: userId, isAnonymous: true }, options),
+    generate: (userId, options) => getOrCreateDailyEdition(admin, { id: userId, isAnonymous: true, email: null }, options),
     loadPool: fetchArticlePool,
   };
 }

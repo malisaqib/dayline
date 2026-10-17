@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { EDITION_TIMEZONE, formatEditionDate, localEditionDate } from "@/domain/editions/edition";
+import { AccountControls } from "./AccountControls";
 import { NavLinks } from "./NavLinks";
 
 export function SiteHeader() {
@@ -13,9 +14,12 @@ export function SiteHeader() {
             {today} · {EDITION_TIMEZONE}
           </span>
         </Link>
-        <nav aria-label="Main">
-          <NavLinks />
-        </nav>
+        <div className="flex flex-wrap items-center gap-x-2">
+          <nav aria-label="Main">
+            <NavLinks />
+          </nav>
+          <AccountControls />
+        </div>
       </div>
     </header>
   );

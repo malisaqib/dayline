@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type Reader = { id: string; isAnonymous: boolean };
+export type Reader = { id: string; isAnonymous: boolean; email: string | null };
 
 /** Verifies the session with the Supabase Auth server (getUser), not just the cookie contents. */
 export async function getVerifiedReader(db: SupabaseClient): Promise<Reader | null> {
@@ -8,7 +8,7 @@ export async function getVerifiedReader(db: SupabaseClient): Promise<Reader | nu
   if (error || !data.user) {
     return null;
   }
-  return { id: data.user.id, isAnonymous: data.user.is_anonymous ?? false };
+  return { id: data.user.id, isAnonymous: data.user.is_anonymous ?? false, email: data.user.email || null };
 }
 
 /** Returns the current reader, creating an anonymous session (stored in cookies) if there is none. */
@@ -21,5 +21,5 @@ export async function ensureReader(db: SupabaseClient): Promise<Reader> {
   if (error || !data.user) {
     throw new Error(`anonymous sign-in failed: ${error?.message ?? "no user returned"}`);
   }
-  return { id: data.user.id, isAnonymous: true };
+  return { id: data.user.id, isAnonymous: true, email: null };
 }

@@ -16,6 +16,7 @@
     "check:flow": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/check-flow.ts",
     "check:journey": "tsx --tsconfig tsconfig.json scripts/check-journey.ts",
     "check:daily": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/check-daily.ts",
+    "check:auth": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/check-auth.ts",
     "check:scheduled": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/check-scheduled.ts",
     "cron:setup": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/setup-cron.ts"
   },

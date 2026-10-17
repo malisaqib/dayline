@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isPrivatePath } from "@/domain/auth/return-path";
 
-// Refreshes the Supabase session cookie on each request so anonymous sessions survive reloads.
 export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -10,6 +10,7 @@ export async function middleware(request: NextRequest) {
   }
 
   let response = NextResponse.next({ request });
+  const hadSession = request.cookies.getAll().some((cookie) => cookie.name.startsWith("sb-"));
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll: () => request.cookies.getAll(),
@@ -21,8 +22,17 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
-  return response;
+  const { data } = await supabase.auth.getUser();
+  if (data.user || !isPrivatePath(request.nextUrl.pathname)) {
+    return response;
+  }
+
+  const target = new URL("/signin", request.url);
+  target.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+  target.searchParams.set("reason", hadSession ? "expired" : "signin");
+  const redirect = NextResponse.redirect(target);
+  response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+  return redirect;
 }
 
 export const config = {

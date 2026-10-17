@@ -31,7 +31,7 @@ async function generateAndOpen(fromOnboarding = false): Promise<ActionState> {
   const db = await createReaderSupabase();
   const reader = await getVerifiedReader(db);
   if (!reader) {
-    return { error: "Your session expired. Please choose your topics again." };
+    return { error: "Your session ended. Sign in again to restore your topics and papers." };
   }
   let path: string;
   try {
@@ -83,7 +83,7 @@ export async function submitFeedback(input: unknown): Promise<FeedbackActionResu
   const db = await createReaderSupabase();
   const reader = await getVerifiedReader(db);
   if (!reader) {
-    return { ok: false, error: "Your session expired. Reload the page and try again." };
+    return { ok: false, error: "Your session ended. Sign in again to continue; your topics and papers are kept." };
   }
   try {
     const result = await recordFeedback(db, reader, parsed.data);
@@ -107,7 +107,7 @@ async function runReadingAction(input: unknown, undo: boolean): Promise<ReadingA
   const db = await createReaderSupabase();
   const reader = await getVerifiedReader(db);
   if (!reader) {
-    return { ok: false, error: "Your session expired. Reload the page and try again." };
+    return { ok: false, error: "Your session ended. Sign in again to continue; your topics and papers are kept." };
   }
   try {
     const result = undo ? await undoSkip(db, reader, parsed.data) : await recordReading(db, reader, parsed.data);
