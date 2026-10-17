@@ -129,7 +129,7 @@ export function SignalBrief({ brief, dateLabel }: { brief: Brief; dateLabel: str
           </h2>
           <p className="text-sm font-semibold">Today in five minutes</p>
           <p className={ui.meta}>
-            {brief.storyCount} stories · about {brief.readingMinutes} min · {dateLabel}
+            {brief.storyCount} stories · about {brief.readingMinutes} min (estimate) · {dateLabel}
           </p>
         </div>
         <div className="w-full sm:w-64">

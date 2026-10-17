@@ -1,7 +1,7 @@
 import { isNearDuplicateTitle } from "@/domain/articles/similarity";
 import { WEIGHT_POLICY, type TopicWeights } from "@/domain/personalization/weights";
 import { topicLabel, type TopicId } from "@/domain/topics";
-import type { PresentedStory } from "./presentation";
+import { estimatedReadingMinutes, type PresentedStory } from "./presentation";
 import type { Highlight } from "./today-in-three";
 
 const MAX_PULSE_ITEMS = 3;
@@ -77,7 +77,7 @@ export function buildSignalBrief(stories: PresentedStory[], readerTopics: TopicI
     .map((story, index) => ({ position: index + 1, story }))
     .filter(({ story }) => story.kicker.length > 0 && !shown.some((headline) => isNearDuplicateTitle(headline, story.headline)))
     .slice(0, MAX_PULSE_ITEMS);
-  const readingMinutes = Math.max(1, stories.reduce((total, story) => total + (story.readingMinutes ?? 0), 0));
+  const readingMinutes = estimatedReadingMinutes(stories);
 
   return {
     storyCount: stories.length,

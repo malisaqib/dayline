@@ -11,6 +11,8 @@ export const MAX_AGE_HOURS = 96;
 export const MAX_STORIES_PER_SOURCE = 2;
 export const MAX_STORIES_PER_SOURCE_RELAXED = 3;
 export const INTEREST_BOOST = 0.15;
+export const THIN_TEXT_PENALTY = 0.05;
+const THIN_TEXT_CHARS = 40;
 const SOURCES_FOR_FULL_COVERAGE_SCORE = 3;
 
 export type RankableArticle = ArticleSnapshot & { topics: TopicId[] };
@@ -105,6 +107,17 @@ function personalAdjustment(item: ScoreInput, personal: PersonalSignals): { delt
   return { delta: affinity - penalty, reasons };
 }
 
+export function calibratedImportance(native: number, sourceCount: number): number {
+  return Math.max(native, coverageImportance(sourceCount));
+}
+
+function thinTextPenalty(article: RankableArticle): number {
+  if (article.text.trim().length < THIN_TEXT_CHARS) {
+    return THIN_TEXT_PENALTY;
+  }
+  return 0;
+}
+
 function topicStrength(matchedTopics: TopicId[], weights: TopicWeights, interestOnly: boolean): number {
   if (matchedTopics.length === 0 && interestOnly) {
     return WEIGHT_POLICY.baseline;
@@ -133,7 +146,7 @@ export function scoreItem(item: ScoreInput, weights: TopicWeights, now: Date, pe
   const strongest = topicStrength(matchedTopics, weights, interests.length > 0);
   const hours = ageHours(item.publishedAt, now);
   const sourceCount = item.sourceCount ?? 1;
-  const importance = Math.max(item.importance ?? 0, coverageImportance(sourceCount));
+  const importance = calibratedImportance(item.importance ?? 0, sourceCount);
   const adjustment = personalAdjustment(item, personal);
   const score =
     RANKING_WEIGHTS.topic * (strongest / WEIGHT_POLICY.max) +
@@ -181,8 +194,8 @@ function bestOfCluster(cluster: Cluster, weights: TopicWeights, now: Date, perso
     .map((article) => {
       const matchedInterests = matchInterests(`${article.title} ${article.text}`, interests);
       const scored = scoreItem({ ...article, sourceCount, articleHash: article.contentHash, matchedInterests }, weights, now, personal);
-      const importance = Math.max(article.importance ?? 0, coverageImportance(sourceCount));
-      return { article, ...scored, matchedInterests, sourceCount, importance };
+      const importance = calibratedImportance(article.importance ?? 0, sourceCount);
+      return { article, ...scored, score: scored.score - thinTextPenalty(article), matchedInterests, sourceCount, importance };
     })
     .filter((r) => r.matchedTopics.length > 0 || r.matchedInterests.length > 0)
     .sort((a, b) => b.score - a.score || a.article.contentHash.localeCompare(b.article.contentHash));

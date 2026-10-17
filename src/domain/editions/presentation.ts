@@ -19,6 +19,7 @@ export type PresentedStory = {
   topicLabels: string[];
   topics: TopicId[];
   readingMinutes: number | null;
+  words: number;
   reasons: string[];
   sourceName: string;
   sourceUrl: string;
@@ -32,12 +33,20 @@ const SHORT_BODY_LABELS: Record<BodyKind, string> = {
   headline_only: "Headline only",
 };
 
+function visibleWords(story: StorySnapshot): number {
+  return [story.title, story.body, ...story.takeaways].join(" ").split(/\s+/).filter(Boolean).length;
+}
+
 function readingMinutes(story: StorySnapshot): number | null {
   if (story.bodyKind === "headline_only") {
     return null;
   }
-  const words = [story.body, ...story.takeaways].join(" ").split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.ceil(words / WORDS_PER_MINUTE));
+  return Math.max(1, Math.ceil(visibleWords(story) / WORDS_PER_MINUTE));
+}
+
+export function estimatedReadingMinutes(stories: Pick<PresentedStory, "words">[]): number {
+  const total = stories.reduce((sum, story) => sum + story.words, 0);
+  return Math.max(1, Math.ceil(total / WORDS_PER_MINUTE));
 }
 
 function formatPublishedTime(iso: string | null): string {
@@ -74,6 +83,7 @@ function presentStory(story: StorySnapshot): PresentedStory {
     topicLabels: story.topics.map(topicLabel),
     topics: story.topics,
     readingMinutes: readingMinutes(story),
+    words: visibleWords(story),
     reasons: story.reasons,
     sourceName: story.sourceName,
     sourceUrl: story.url,

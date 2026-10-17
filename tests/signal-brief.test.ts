@@ -4,7 +4,7 @@ import type { PresentedStory } from "@/domain/editions/presentation";
 import { buildSignalBrief, firstSentence } from "@/domain/editions/signal-brief";
 import type { TopicId } from "@/domain/topics";
 
-function story(id: string, topics: TopicId[], options: { body?: string; kicker?: string; minutes?: number | null } = {}): PresentedStory {
+function story(id: string, topics: TopicId[], options: { body?: string; kicker?: string; minutes?: number | null; words?: number } = {}): PresentedStory {
   return {
     id,
     headline: `Fixture report ${id.repeat(3)} development`,
@@ -17,6 +17,7 @@ function story(id: string, topics: TopicId[], options: { body?: string; kicker?:
     topicLabels: [],
     topics,
     readingMinutes: options.minutes === undefined ? 1 : options.minutes,
+    words: options.words === undefined ? 150 : options.words,
     reasons: [],
     sourceName: "Source",
     sourceUrl: `https://example.org/${id}`,
@@ -70,8 +71,9 @@ describe("signal brief", () => {
     assert.deepEqual(brief?.todayInThree.map((i) => [i.position, i.story.id]), [[3, "c"]]);
   });
 
-  it("sums reading time and counts headline-only stories as zero", () => {
-    assert.equal(buildSignalBrief(STORIES, [], {})?.readingMinutes, 4);
+  it("estimates reading time from total visible words with one final rounding", () => {
+    const stories = [story("a", ["technology"], { words: 150 }), story("b", ["space"], { words: 150 }), story("c", ["science"], { words: 110 })];
+    assert.equal(buildSignalBrief(stories, [], {})?.readingMinutes, 3, "410 words at 200 wpm rounds up once to 3, not 1+1+1");
   });
 
   it("never invents a summary: headline-only stories have no sentence and long sentences are only trimmed", () => {

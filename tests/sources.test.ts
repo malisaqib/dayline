@@ -228,3 +228,12 @@ describe("story similarity", () => {
     assert.equal(ranked.length, 6);
   });
 });
+
+describe("importance calibration", () => {
+  it("does not let popularity points crowd out fresher editorial reporting on the same topic", () => {
+    const at = (h: number) => new Date(NOW.getTime() - h * 3_600_000).toISOString();
+    const editorial: RankableArticle = { fetchedAt: NOW.toISOString(), text: "A reported story with enough text to read in the paper today.", coverage: "excerpt", labels: [], topics: ["technology"], sourceId: "ars", sourceName: "Ars", title: "Chipmaker opens new plant", url: "https://e.example/1", publishedAt: at(2), contentHash: "7".repeat(64) };
+    const popular: RankableArticle = { ...editorial, sourceId: "hacker_news", sourceName: "Hacker News", title: "Show HN: my weekend project", url: "https://hn.example/1", publishedAt: at(10), importance: 0.35, text: "", coverage: "none", contentHash: "8".repeat(64) };
+    assert.equal(rankArticles([popular, editorial], deriveTopicWeights(["technology"], []), NOW, 1)[0].article.url, "https://e.example/1");
+  });
+});

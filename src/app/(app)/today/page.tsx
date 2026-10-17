@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Edition } from "@/domain/editions/edition";
-import { presentEdition, type PresentedStory } from "@/domain/editions/presentation";
+import { estimatedReadingMinutes, presentEdition, type PresentedStory } from "@/domain/editions/presentation";
 import { describeWeight, WEIGHT_POLICY } from "@/domain/personalization/weights";
 import { topicLabel } from "@/domain/topics";
 import { TopicIcon } from "@/features/onboarding/TopicIcon";
@@ -36,14 +36,14 @@ function renderGlow() {
 function renderReady(edition: Edition) {
   const presented = presentEdition(edition);
   const stories = presented.stories;
-  const minutes = stories.reduce((sum, story) => sum + (story.readingMinutes ?? 0), 0);
+  const minutes = estimatedReadingMinutes(stories);
   return (
     <div>
       {renderGlow()}
       <p className={`${ui.eyebrow} relative`}>Today&apos;s paper · {presented.dateLabel}</p>
       <h1 className="relative mt-3 font-serif text-3xl font-bold leading-tight sm:text-5xl">Today&apos;s paper is ready.</h1>
       <p className="relative mt-3 text-muted">
-        {stories.length} stories · about {Math.max(1, minutes)} min · saved for today and will not change.
+        {stories.length} stories · about {minutes} min to read (estimate) · saved for today and will not change.
       </p>
       {renderTodayInThree(edition, stories)}
       <div className="relative mt-7 flex flex-wrap gap-3">
