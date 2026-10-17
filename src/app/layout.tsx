@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Playfair_Display } from "next/font/google";
 import { MotionRoot } from "@/features/shell/MotionRoot";
-import { SiteHeader } from "@/features/shell/SiteHeader";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -19,15 +18,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <a href="#content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-30 focus:bg-card focus:px-3 focus:py-2">
           Skip to content
         </a>
-        <MotionRoot>
-          <SiteHeader />
-          <main id="content" className="mx-auto w-full max-w-6xl flex-1 px-4 pb-16 pt-6 sm:px-6 sm:pt-8">
-            {children}
-          </main>
-        </MotionRoot>
+        <MotionRoot>{children}</MotionRoot>
         <footer className="border-t border-rule">
           <p className="mx-auto max-w-6xl px-4 py-4 text-xs text-muted sm:px-6">
-            Dayline links every story to its original publisher. Papers are ready at 06:00 Asia/Karachi.
+            Dayline links every story to its original publisher. New papers are prepared at 06:00 Pakistan time (PKT).
           </p>
         </footer>
       </body>

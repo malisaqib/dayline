@@ -29,11 +29,11 @@ function renderError(state: ActionState) {
   );
 }
 
-export function TodayForm({ className = ui.primaryButton }: { className?: string }) {
+export function TodayForm({ className = ui.primaryButton, label = "Open today's paper" }: { className?: string; label?: string }) {
   const [state, action] = useActionState(openTodaysEdition, INITIAL);
   return (
     <form action={action} className="flex flex-col items-start gap-3">
-      <PendingButton label="Open today's paper" className={className} />
+      <PendingButton label={label} className={className} />
       <GenerationProgress message="Gathering stories and preparing your paper…" />
       {renderError(state)}
     </form>

@@ -11,7 +11,7 @@ export default function EditionNotFound() {
         <Link href="/archive" className={ui.primaryButton}>
           Go to your archive
         </Link>
-        <Link href="/" className={ui.secondaryButton}>
+        <Link href="/today" className={ui.secondaryButton}>
           Today&apos;s paper
         </Link>
       </div>

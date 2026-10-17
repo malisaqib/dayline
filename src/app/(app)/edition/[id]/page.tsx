@@ -20,7 +20,7 @@ function renderNotices(params: SearchParams) {
     notices.push(
       <div key="welcome" role="status" className="animate-toast rounded-xl border border-accent/30 bg-accent-soft px-4 py-3">
         <p className="font-semibold text-accent-strong">Your paper is ready.</p>
-        <p className="text-sm">Start with the Signal Brief below. A new paper arrives every morning at 06:00, and More, Less or Skip on any story shapes the next one.</p>
+        <p className="text-sm">Start with the Signal Brief below. A new paper is prepared every morning at 06:00 Pakistan time, and More, Less or Skip on any story shapes the next one.</p>
       </div>,
     );
   }

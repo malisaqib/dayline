@@ -61,8 +61,8 @@ async function main() {
     const context = await browser.newContext({ acceptDownloads: true });
     await context.addCookies([...jar].map(([name, value]) => ({ name, value, url: BASE_URL })));
     const page = await context.newPage();
-    await page.goto(BASE_URL);
-    await page.getByRole("button", { name: "Open today's paper" }).click();
+    await page.goto(`${BASE_URL}/today`);
+    await page.getByRole("link", { name: "Open today's paper" }).click();
     await page.waitForURL(/\/edition\//, { timeout: 60_000 });
     check(page.url().endsWith(scheduledId), "'Open today's paper' opens the scheduled edition");
     await page.goto(`${BASE_URL}/archive`);

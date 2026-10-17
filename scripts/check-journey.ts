@@ -54,10 +54,10 @@ async function readerJourney(browser: Browser): Promise<{ editionId: string; sto
   const afterReload = await readStories(page);
   check(JSON.stringify(afterReload) === JSON.stringify(stories), "edition and session survive reload (same stories, same order)");
 
-  await page.goto(BASE_URL);
-  await page.getByRole("button", { name: "Open today's paper" }).click();
+  await page.goto(`${BASE_URL}/today`);
+  await page.getByRole("link", { name: "Open today's paper" }).click();
   await page.waitForURL(/\/edition\//, { timeout: GENERATION_TIMEOUT_MS });
-  check(new URL(page.url()).pathname.endsWith(editionId), "home 'Open today's paper' returns the same daily edition");
+  check(new URL(page.url()).pathname.endsWith(editionId), "/today 'Open today's paper' returns the same daily edition");
 
   await page.goto(`${BASE_URL}/archive`);
   const archiveLinks = await page.locator(`a[href="/edition/${editionId}"]`).count();

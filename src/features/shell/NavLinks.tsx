@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const LINKS = [
-  { href: "/", label: "Today", match: (path: string) => path === "/" || path.startsWith("/edition/") },
+  { href: "/today", label: "Today", match: (path: string) => path.startsWith("/today") || path.startsWith("/edition/") },
   { href: "/archive", label: "Archive", match: (path: string) => path.startsWith("/archive") },
   { href: "/onboarding", label: "Topics", match: (path: string) => path.startsWith("/onboarding") },
 ];
