@@ -14,16 +14,16 @@ Dayline learns what a reader cares about, gathers relevant stories from trusted 
 
 ### Reader flow
 
-1. **Onboarding:** pick 1–3 topics (World, Pakistan, Technology, Science, Space, Cybersecurity, Disaster alerts). The reader gets an anonymous Supabase session; there is no sign-up form.
+1. **Account and onboarding:** sign up with email and password (with confirm password, show password and password reset). Then, in two steps, pick any of 7 topics (World, Pakistan, Technology, Science, Space, Cybersecurity, Disaster alerts), add up to 5 specific interests such as "AI agents", and review before creating the paper.
 2. **Source collection:** one shared pool is fetched from allowlisted feeds and APIs. A source that fails is skipped; the edition still generates.
-3. **Ranking:** a pure, deterministic score combines the reader's topic weights (75%) with freshness (25%). The rules: at most 2 stories per source, nothing older than 96 hours, and duplicate URLs and headlines removed. Each story says *why* it was chosen ("Matches your Space interest (boosted by your feedback) · published 3h ago").
-4. **Gemini summaries:** only for sources cleared for AI processing (currently NASA). The summary is 60–100 words with 2–3 takeaways, grounded only in the supplied text. It comes from OpenRouter `google/gemini-3.8-flash` as strict JSON, validated with Zod and cached by content hash, model and prompt version. Other stories show the publisher's own excerpt or headline, labelled as such.
+3. **Ranking:** a pure, deterministic score: 0.6 topic weight + 0.2 freshness + 0.2 importance (multi-source coverage or calibrated official signals), plus a bounded boost when a story mentions one of the reader's interests as whole words. The rules: at most 2 stories per source, nothing older than 96 hours, near-duplicates removed, and stories from the last three papers pushed down. Each story says *why* it was chosen ("Matches your Space interest (boosted by your feedback) · published 3h ago").
+4. **Gemini summaries:** only for sources whose usage policy allows it (enforced in every model path, including Today in three). Every summary sentence and highlight is checked against the original snapshot: changed numbers, invented or dropped denials, and allegations stated as fact are rejected, and the publisher's excerpt or own sentence is used instead. The summary is 60–100 words with 2–3 takeaways, grounded only in the supplied text. It comes from OpenRouter `google/gemini-3.8-flash` as strict JSON, validated with Zod and cached by content hash, model and prompt version. Other stories show the publisher's own excerpt or headline, labelled as such.
 5. **Saved edition:** up to 6 stories frozen as an immutable snapshot. There is one edition per reader per day (Asia/Karachi).
 6. **Web, archive and PDF:** all three render the same snapshot through one presentation function, so stories, text and order are identical.
 
 ### Feedback learning
 
-Every story has **More like this** and **Less like this**. Each signal is stored once per reader, edition and story. Topic weights are **recomputed from all stored signals**: baseline 1.0, ±0.25 per signal, clamped to 0.25–2.0. Double clicks and retries therefore can't compound. Today's paper never changes. **Preview next edition** reorders today's saved stories with the new weights, clearly labelled "Preview based on today's available stories." It makes no AI calls and isn't archived. The next real paper uses the new weights.
+Every story has **More like this**, **Less like this** and **Skip this story** (with Undo); opening the original counts as a weak signal. Signals carry timestamps and lose half their effect every 14 days, each article counts once even across papers, and weights are clamped after every signal so a topic can recover. Skips are forgotten after 30 days. Double clicks and retries therefore can't compound. Today's paper never changes. **Preview next edition** reorders today's saved stories with the new weights, clearly labelled "Preview based on today's available stories." It makes no AI calls and isn't archived. The next real paper uses the new weights.
 
 ### Automatic daily generation
 
@@ -47,7 +47,7 @@ Being able to fetch a feed doesn't mean we may reuse it. Each source in `src/ser
 |---|---|---|---|
 | NASA | AI summary or excerpt | yes | US government work |
 | CISA KEV | official fields | no | US government work |
-| NPR, Ars Technica, BBC, Dawn, Geo News, ScienceDaily | publisher's feed excerpt (≤600 chars) | no | unverified, prototype assumption |
+| NPR, Ars Technica, BBC, Geo News, ScienceDaily | publisher's feed excerpt (≤600 chars) | no | unverified, prototype assumption |
 | Hacker News | headline + link only | no | official API |
 | GDACS | official alert description | no | unverified |
 
@@ -114,7 +114,7 @@ All of the above have passed locally and against production. Evidence is in [PRO
 
 ## Known limitations
 
-See [docs/limitations.md](docs/limitations.md). In brief: Dawn blocks Vercel; Gemini sometimes falls back to excerpts; reuse rights for most feeds are unverified; Firecrawl was evaluated and rejected; topics are assigned per source, not per article.
+See [docs/limitations.md](docs/limitations.md). In brief: Dawn and APP block Vercel and are switched off; Gemini sometimes falls back to excerpts; reuse rights for most feeds are unverified; Firecrawl was evaluated and rejected; topics are assigned per source, not per article.
 
 ## Status
 
