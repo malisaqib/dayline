@@ -6,6 +6,8 @@ export const TOPICS = [
   { id: "technology", label: "Technology" },
   { id: "science", label: "Science" },
   { id: "space", label: "Space" },
+  { id: "security", label: "Cybersecurity" },
+  { id: "disasters", label: "Disaster alerts" },
 ] as const;
 
 export type TopicId = (typeof TOPICS)[number]["id"];

@@ -1,9 +1,13 @@
 import type { SourceUsage } from "@/domain/sources/usage";
 import type { TopicId } from "@/domain/topics";
 
+/** Which adapter fetches the source; "rss" covers ordinary RSS/Atom feeds. */
+export type SourceKind = "rss" | "cisa_kev" | "hacker_news" | "gdacs";
+
 export type FeedSource = {
   id: string;
   name: string;
+  kind: SourceKind;
   url: string;
   topics: TopicId[];
   enabled: boolean;
@@ -13,6 +17,9 @@ export type FeedSource = {
 };
 
 const EXCERPT_UNVERIFIED: SourceUsage = { display: "excerpt", aiProcessing: false, basis: "unverified" };
+// Internet Pulse sources are shown from their own structured fields and never sent to the model.
+const OFFICIAL_STRUCTURED: SourceUsage = { display: "excerpt", aiProcessing: false, basis: "public_domain" };
+const HEADLINE_LINK: SourceUsage = { display: "headline_only", aiProcessing: false, basis: "unverified" };
 
 /**
  * Fetchability was checked in Phase 0. Usage is deliberately conservative: only
@@ -23,6 +30,7 @@ export const SOURCES: FeedSource[] = [
   {
     id: "nasa",
     name: "NASA",
+    kind: "rss",
     url: "https://www.nasa.gov/news-release/feed/",
     topics: ["space", "science"],
     enabled: true,
@@ -32,6 +40,7 @@ export const SOURCES: FeedSource[] = [
   {
     id: "npr",
     name: "NPR News",
+    kind: "rss",
     url: "https://feeds.npr.org/1001/rss.xml",
     topics: ["world"],
     enabled: true,
@@ -41,6 +50,7 @@ export const SOURCES: FeedSource[] = [
   {
     id: "ars",
     name: "Ars Technica",
+    kind: "rss",
     url: "https://feeds.arstechnica.com/arstechnica/index",
     topics: ["technology"],
     enabled: true,
@@ -50,6 +60,7 @@ export const SOURCES: FeedSource[] = [
   {
     id: "dawn",
     name: "Dawn",
+    kind: "rss",
     url: "https://www.dawn.com/feeds/home",
     topics: ["pakistan"],
     enabled: true,
@@ -60,6 +71,7 @@ export const SOURCES: FeedSource[] = [
     // Dawn returns HTTP 403 to Vercel's servers, so Pakistan coverage also needs the feeds below.
     id: "geo",
     name: "Geo News",
+    kind: "rss",
     url: "https://www.geo.tv/rss/1/1",
     topics: ["pakistan"],
     enabled: true,
@@ -69,6 +81,7 @@ export const SOURCES: FeedSource[] = [
   {
     id: "app",
     name: "Associated Press of Pakistan",
+    kind: "rss",
     url: "https://www.app.com.pk/feed/",
     topics: ["pakistan"],
     // Disabled: returns HTTP 403 to Vercel's servers (verified via /api/health?sources=1).
@@ -79,6 +92,7 @@ export const SOURCES: FeedSource[] = [
   {
     id: "bbc",
     name: "BBC News",
+    kind: "rss",
     url: "https://feeds.bbci.co.uk/news/rss.xml",
     topics: ["world"],
     enabled: true,
@@ -88,11 +102,42 @@ export const SOURCES: FeedSource[] = [
   {
     id: "sciencedaily",
     name: "ScienceDaily",
+    kind: "rss",
     url: "https://www.sciencedaily.com/rss/all.xml",
     topics: ["science"],
     enabled: true,
     usage: EXCERPT_UNVERIFIED,
     reuseNote: "Releases come from institutions; ScienceDaily terms on reuse of its summaries unresolved.",
+  },
+  {
+    id: "cisa_kev",
+    name: "CISA Known Exploited Vulnerabilities",
+    kind: "cisa_kev",
+    url: "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
+    topics: ["security", "technology"],
+    enabled: true,
+    usage: OFFICIAL_STRUCTURED,
+    reuseNote: "US government work (CISA). Shown from official structured fields with attribution; no AI processing.",
+  },
+  {
+    id: "hacker_news",
+    name: "Hacker News",
+    kind: "hacker_news",
+    url: "https://hacker-news.firebaseio.com/v0/topstories.json",
+    topics: ["technology"],
+    enabled: true,
+    usage: HEADLINE_LINK,
+    reuseNote: "Official HN API. Headline, link, points and comments only; linked articles are not fetched or summarised.",
+  },
+  {
+    id: "gdacs",
+    name: "GDACS",
+    kind: "gdacs",
+    url: "https://www.gdacs.org/xml/rss.xml",
+    topics: ["disasters", "world"],
+    enabled: true,
+    usage: { display: "excerpt", aiProcessing: false, basis: "unverified" },
+    reuseNote: "Global Disaster Alert and Coordination System (UN/EC). Official alert description and fields with attribution; terms not reviewed; no AI processing.",
   },
 ];
 

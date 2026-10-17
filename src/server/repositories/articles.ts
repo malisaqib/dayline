@@ -16,6 +16,7 @@ export async function insertArticleSnapshots(db: SupabaseClient, articles: Artic
     fetched_at: a.fetchedAt,
     text: a.text,
     coverage: a.coverage,
+    labels: a.labels,
   }));
   const { error } = await db.from("articles").upsert(rows, { onConflict: "content_hash", ignoreDuplicates: true });
   if (error) {

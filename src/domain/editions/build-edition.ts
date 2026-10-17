@@ -54,6 +54,7 @@ export function buildEditionStories(ranked: RankedArticle[], bodies: Map<string,
       bodyKind: body.kind,
       takeaways: body.takeaways,
       coverage: article.coverage,
+      labels: article.labels,
       summaryModel: body.model,
       summaryPromptVersion: body.promptVersion,
     };

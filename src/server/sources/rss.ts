@@ -1,25 +1,19 @@
-import { createHash } from "node:crypto";
 import { XMLParser } from "fast-xml-parser";
-import { articleSnapshotSchema, classifyCoverage, type ArticleSnapshot } from "@/domain/articles/article";
+import type { ArticleSnapshot } from "@/domain/articles/article";
 import { htmlToText } from "@/shared/text";
 import type { FeedSource } from "./catalog";
+import { buildSnapshot, fetchWithTimeout, toIsoDate, type SourceFetchResult } from "./snapshot";
 
 const FETCH_TIMEOUT_MS = 8000;
 const MAX_FEED_BYTES = 2_000_000;
-const MAX_TEXT_CHARS = 6000;
-const USER_AGENT = "DaylineBot/0.1 (hackathon prototype)";
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_", textNodeName: "#text" });
 
 type RawEntry = Record<string, unknown>;
 
-export type FeedFetchResult = {
-  source: FeedSource;
-  articles: ArticleSnapshot[];
-  rejected: number;
-};
+export type FeedFetchResult = SourceFetchResult;
 
-function asText(value: unknown): string {
+export function asText(value: unknown): string {
   if (typeof value === "string" || typeof value === "number") {
     return String(value);
   }
@@ -39,44 +33,25 @@ function entryLink(entry: RawEntry): string {
   return asText(link);
 }
 
-function toIsoDate(raw: string): string | null {
-  const time = Date.parse(raw);
-  return Number.isNaN(time) ? null : new Date(time).toISOString();
-}
-
 function toSnapshot(source: FeedSource, entry: RawEntry, fetchedAt: string): ArticleSnapshot | null {
   const fullText = htmlToText(asText(entry["content:encoded"]) || asText(entry.content));
   const summaryText = htmlToText(asText(entry.description) || asText(entry.summary));
   const useFull = fullText.length > summaryText.length;
-  const text = (useFull ? fullText : summaryText).slice(0, MAX_TEXT_CHARS);
-  const title = htmlToText(asText(entry.title));
-  const url = entryLink(entry).trim();
-
-  const candidate = {
-    sourceId: source.id,
-    sourceName: source.name,
-    title,
-    url,
-    publishedAt: toIsoDate(asText(entry.pubDate) || asText(entry.published) || asText(entry.updated) || asText(entry["dc:date"])),
+  return buildSnapshot(
+    source,
+    {
+      title: htmlToText(asText(entry.title)),
+      url: entryLink(entry),
+      publishedAt: toIsoDate(asText(entry.pubDate) || asText(entry.published) || asText(entry.updated) || asText(entry["dc:date"])),
+      text: useFull ? fullText : summaryText,
+      fromFullContentField: useFull,
+    },
     fetchedAt,
-    text,
-    coverage: classifyCoverage(text, useFull),
-    contentHash: createHash("sha256").update(`${url}\n${title}\n${text}`).digest("hex"),
-  };
-
-  const parsed = articleSnapshotSchema.safeParse(candidate);
-  return parsed.success ? parsed.data : null;
+  );
 }
 
 export async function fetchFeed(source: FeedSource): Promise<FeedFetchResult> {
-  const response = await fetch(source.url, {
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    headers: { "User-Agent": USER_AGENT },
-  });
-  if (!response.ok) {
-    throw new Error(`${source.id}: HTTP ${response.status}`);
-  }
-
+  const response = await fetchWithTimeout(source, source.url, FETCH_TIMEOUT_MS);
   const body = await response.text();
   if (body.length > MAX_FEED_BYTES) {
     throw new Error(`${source.id}: feed exceeds ${MAX_FEED_BYTES} bytes`);

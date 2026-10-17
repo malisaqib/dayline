@@ -26,6 +26,7 @@ function story(n: number, topics: TopicId[], hoursOld: number): StorySnapshot {
     bodyKind: "publisher_excerpt",
     takeaways: [],
     coverage: "excerpt",
+    labels: [],
     summaryModel: null,
     summaryPromptVersion: null,
   };
@@ -89,6 +90,7 @@ describe("future ranking", () => {
     fetchedAt: NOW.toISOString(),
     text: "Fixture text long enough to be shown as an excerpt.",
     coverage: "excerpt",
+    labels: [],
     contentHash: hash(n),
     topics,
   });

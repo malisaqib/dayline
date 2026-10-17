@@ -24,6 +24,7 @@ function article(id: number, sourceId: string, topics: TopicId[], hoursOld: numb
     fetchedAt: NOW.toISOString(),
     text,
     coverage: "excerpt",
+    labels: [],
     contentHash: id.toString(16).padStart(64, "0"),
     topics,
   };

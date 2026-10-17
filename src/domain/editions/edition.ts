@@ -26,6 +26,7 @@ export const storySnapshotSchema = z.object({
   // Added with the OpenRouter summaries; defaults keep earlier saved editions readable.
   takeaways: z.array(z.string()).default([]),
   coverage: z.enum(["full", "excerpt", "none"]).default("excerpt"),
+  labels: z.array(z.string()).default([]),
   summaryModel: z.string().nullable(),
   summaryPromptVersion: z.string().nullable(),
 });

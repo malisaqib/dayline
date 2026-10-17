@@ -6,6 +6,7 @@ type StoryFooter = (story: PresentedStory) => ReactNode;
 function StoryArticle({ story, lead, footer }: { story: PresentedStory; lead: boolean; footer?: StoryFooter }) {
   return (
     <article className={lead ? "border-b border-rule pb-8" : "break-inside-avoid pb-6"}>
+      {story.kicker && <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-accent">{story.kicker}</p>}
       <h2 className={`font-serif font-bold leading-tight ${lead ? "text-3xl sm:text-4xl" : "text-xl"}`}>
         <a href={story.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
           {story.headline}

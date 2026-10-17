@@ -8,6 +8,8 @@ export type PresentedStory = {
   /** Article content hash; identifies the story for feedback. */
   id: string;
   headline: string;
+  /** Source-supplied kicker, e.g. "Actively exploited vulnerability · CVE-2025-1234". Empty for ordinary news. */
+  kicker: string;
   body: string;
   takeaways: string[];
   meta: string;
@@ -34,6 +36,7 @@ function presentStory(story: StorySnapshot): PresentedStory {
   return {
     id: story.articleHash,
     headline: story.title,
+    kicker: story.labels.join(" · "),
     body: story.body,
     takeaways: story.takeaways,
     meta: `${bodyKindLabel(story.bodyKind, story.coverage)} · published ${formatPublished(story.publishedAt)}`,

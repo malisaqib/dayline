@@ -26,16 +26,16 @@ export function buildSamplePrintEdition(now = new Date()): PrintEdition {
     lead: {
       headline: "Sample lead story: a placeholder headline long enough to wrap across two lines of the front page",
       body: `${FILLER} ${FILLER} ${FILLER}`,
-      takeaways: [],
+      kicker: "", takeaways: [],
       meta: "Placeholder text",
       sourceName: "NASA (link only)",
       sourceUrl: "https://www.nasa.gov/news/",
     },
     stories: [
-      { headline: "Sample story one", body: `${FILLER} ${FILLER}`, takeaways: [], meta: "Placeholder text", sourceName: "NPR (link only)", sourceUrl: "https://www.npr.org/" },
-      { headline: "Sample story two with a longer placeholder headline", body: FILLER, takeaways: [], meta: "Placeholder text", sourceName: "Ars Technica (link only)", sourceUrl: "https://arstechnica.com/" },
-      { headline: "Sample story three", body: `${FILLER} ${FILLER}`, takeaways: [], meta: "Placeholder text", sourceName: "Dawn (link only)", sourceUrl: "https://www.dawn.com/" },
-      { headline: "Sample story four", body: FILLER, takeaways: [], meta: "Placeholder text", sourceName: "ScienceDaily (link only)", sourceUrl: "https://www.sciencedaily.com/" },
+      { headline: "Sample story one", body: `${FILLER} ${FILLER}`, kicker: "", takeaways: [], meta: "Placeholder text", sourceName: "NPR (link only)", sourceUrl: "https://www.npr.org/" },
+      { headline: "Sample story two with a longer placeholder headline", body: FILLER, kicker: "", takeaways: [], meta: "Placeholder text", sourceName: "Ars Technica (link only)", sourceUrl: "https://arstechnica.com/" },
+      { headline: "Sample story three", body: `${FILLER} ${FILLER}`, kicker: "", takeaways: [], meta: "Placeholder text", sourceName: "Dawn (link only)", sourceUrl: "https://www.dawn.com/" },
+      { headline: "Sample story four", body: FILLER, kicker: "", takeaways: [], meta: "Placeholder text", sourceName: "ScienceDaily (link only)", sourceUrl: "https://www.sciencedaily.com/" },
     ],
   };
 }

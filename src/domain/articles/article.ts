@@ -14,6 +14,8 @@ export const articleSnapshotSchema = z.object({
   fetchedAt: z.iso.datetime(),
   text: z.string(),
   coverage: z.enum(["full", "excerpt", "none"]),
+  /** Compact source-supplied metadata shown as a kicker, e.g. "Actively exploited vulnerability". */
+  labels: z.array(z.string().max(120)).max(6).default([]),
   contentHash: z.string().length(64),
 });
 

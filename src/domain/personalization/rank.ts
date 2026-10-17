@@ -60,12 +60,18 @@ export function scoreItem(item: { topics: TopicId[]; publishedAt: string | null 
   return { score, matchedTopics, reasons: [describeMatch(matchedTopics, weights), describeAge(hours)] };
 }
 
+/** Lowercase letters and digits only, so the same story from two feeds collapses to one. */
+export function normalizeTitle(title: string): string {
+  return title.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
+
 /**
  * Deterministic ranking: only topic-matched, recent articles; highest score first,
  * ties broken by content hash; at most MAX_STORIES_PER_SOURCE per publisher.
  */
 export function rankArticles(articles: RankableArticle[], weights: TopicWeights, now: Date, limit: number): RankedArticle[] {
   const seenUrls = new Set<string>();
+  const seenTitles = new Set<string>();
   const candidates = articles
     .filter((a) => {
       const hours = ageHours(a.publishedAt, now);
@@ -80,9 +86,11 @@ export function rankArticles(articles: RankableArticle[], weights: TopicWeights,
   for (const candidate of candidates) {
     const { sourceId, url } = candidate.article;
     const used = perSource.get(sourceId) ?? 0;
-    if (used >= MAX_STORIES_PER_SOURCE || seenUrls.has(url)) {
+    const title = normalizeTitle(candidate.article.title);
+    if (used >= MAX_STORIES_PER_SOURCE || seenUrls.has(url) || seenTitles.has(title)) {
       continue;
     }
+    seenTitles.add(title);
     perSource.set(sourceId, used + 1);
     seenUrls.add(url);
     picked.push(candidate);

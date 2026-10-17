@@ -5,6 +5,7 @@ Font.registerHyphenationCallback((word) => [word]);
 
 export type PrintStory = {
   headline: string;
+  kicker: string;
   body: string;
   takeaways: string[];
   /** Provenance line, e.g. "Publisher's excerpt · 17 Oct 2026". */
@@ -66,6 +67,7 @@ const styles = StyleSheet.create({
   body: { fontSize: 10, lineHeight: 1.45, textAlign: "justify" },
   source: { fontFamily: "Helvetica", fontSize: 7.5, marginTop: 4, color: ACCENT },
   meta: { fontFamily: "Helvetica", fontSize: 7, marginTop: 3, color: MUTED },
+  kicker: { fontFamily: "Helvetica-Bold", fontSize: 7, letterSpacing: 0.5, color: ACCENT, marginBottom: 2 },
   takeaway: { fontSize: 9.5, lineHeight: 1.35, marginTop: 2, paddingLeft: 8 },
   footer: { position: "absolute", bottom: 16, left: 36, right: 36, fontFamily: "Helvetica", fontSize: 7, textAlign: "center", color: MUTED },
 });
@@ -98,6 +100,7 @@ function Takeaways({ items }: { items: string[] }) {
 function StoryBlock({ story }: { story: PrintStory }) {
   return (
     <View style={styles.story} wrap={false}>
+      {story.kicker && <Text style={styles.kicker}>{story.kicker.toUpperCase()}</Text>}
       <Text style={styles.headline}>{story.headline}</Text>
       {story.body && <Text style={styles.body}>{story.body}</Text>}
       <Takeaways items={story.takeaways} />
@@ -130,6 +133,7 @@ export function EditionDocument({ edition }: { edition: PrintEdition }) {
           <Text>{edition.timezone}</Text>
         </View>
 
+        {edition.lead.kicker && <Text style={styles.kicker}>{edition.lead.kicker.toUpperCase()}</Text>}
         <Text style={styles.leadHeadline}>{edition.lead.headline}</Text>
         {edition.lead.body && <Text style={styles.leadBody}>{edition.lead.body}</Text>}
         <Takeaways items={edition.lead.takeaways} />
