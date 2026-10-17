@@ -3,6 +3,7 @@ import { areSameStory, titleTokens } from "@/domain/articles/similarity";
 import { interestReason, matchInterests } from "@/domain/interests";
 import { topicLabel, type TopicId } from "@/domain/topics";
 import { BEHAVIOR_POLICY, EMPTY_PERSONAL_SIGNALS, type PersonalSignals } from "./behavior";
+import { LEARNING_POLICY } from "./learning";
 import { describeWeight, WEIGHT_POLICY, type TopicWeights } from "./weights";
 
 export const RANKING_WEIGHTS = { topic: 0.6, freshness: 0.2, importance: 0.2 } as const;
@@ -100,11 +101,15 @@ function personalAdjustment(item: ScoreInput, personal: PersonalSignals): { delt
     reasons.push(`You often read ${item.sourceName}`);
   }
   const skipped = [item.articleHash, item.url].some((key) => key !== undefined && personal.skipped.has(key));
+  const repeated = !skipped && [item.articleHash, item.url].some((key) => key !== undefined && personal.recent.has(key));
   const penalty = skipped ? BEHAVIOR_POLICY.skippedPenalty : 0;
   if (skipped) {
     reasons.push("You skipped this story before; shown only because few alternatives were available");
   }
-  return { delta: affinity - penalty, reasons };
+  if (repeated) {
+    reasons.push("Also in one of your recent papers; shown again because few new stories matched");
+  }
+  return { delta: affinity - penalty - (repeated ? LEARNING_POLICY.repeatPenalty : 0), reasons };
 }
 
 export function calibratedImportance(native: number, sourceCount: number): number {

@@ -24,6 +24,7 @@ export type StoredSignal = {
   topics: TopicId[];
   signal: FeedbackSignal;
   sourceId?: string | null;
+  at?: string | null;
 };
 
 export const topicWeightsSchema = z.partialRecord(topicIdSchema, z.number());

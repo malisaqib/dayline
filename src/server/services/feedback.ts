@@ -2,13 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import {
   applySignal,
-  deriveTopicWeights,
   describeWeightChanges,
   feedbackSignalSchema,
   type TopicWeights,
   type WeightChange,
 } from "@/domain/personalization/weights";
-import { behaviorTopicShift, readingKindSchema, type ReadingEvent } from "@/domain/personalization/behavior";
+import { readingKindSchema, type ReadingEvent } from "@/domain/personalization/behavior";
+import { learnedWeights } from "@/domain/personalization/learning";
 import type { TopicId } from "@/domain/topics";
 import type { Reader } from "@/server/auth/session";
 import { findEditionById } from "@/server/repositories/editions";
@@ -56,7 +56,7 @@ export async function recordFeedback(readerDb: SupabaseClient, reader: Reader, i
 
   const signals = applySignal(await listSignals(readerDb, reader.id), signal);
   const events = await listReadingEvents(readerDb, reader.id);
-  const weights = deriveTopicWeights(profile.topics, signals, behaviorTopicShift(events));
+  const weights = learnedWeights(profile.topics, signals, events, new Date());
   await saveTopicWeights(readerDb, reader.id, weights);
   return { weights, changes: describeWeightChanges(profile.weights, weights) };
 }
@@ -84,7 +84,7 @@ async function recomputeWeights(readerDb: SupabaseClient, reader: Reader): Promi
     throw new FeedbackError("Choose your topics before giving feedback.");
   }
   const [signals, events] = await Promise.all([listSignals(readerDb, reader.id), listReadingEvents(readerDb, reader.id)]);
-  const weights = deriveTopicWeights(profile.topics, signals, behaviorTopicShift(events));
+  const weights = learnedWeights(profile.topics, signals, events, new Date());
   await saveTopicWeights(readerDb, reader.id, weights);
   return { weights, changes: describeWeightChanges(profile.weights, weights) };
 }
@@ -112,5 +112,5 @@ export async function undoSkip(readerDb: SupabaseClient, reader: Reader, input: 
 /** Weights for a new topic selection, keeping the reader's existing feedback. */
 export async function weightsForTopics(readerDb: SupabaseClient, reader: Reader, topics: TopicId[]): Promise<TopicWeights> {
   const [signals, events] = await Promise.all([listSignals(readerDb, reader.id), listReadingEvents(readerDb, reader.id)]);
-  return deriveTopicWeights(topics, signals, behaviorTopicShift(events));
+  return learnedWeights(topics, signals, events, new Date());
 }

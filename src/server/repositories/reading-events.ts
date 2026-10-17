@@ -3,9 +3,9 @@ import { readingKindSchema, type ReadingEvent } from "@/domain/personalization/b
 import { topicIdSchema } from "@/domain/topics";
 
 const MAX_EVENTS = 1000;
-const COLUMNS = "edition_id, article_hash, article_url, source_id, topics, kind";
+const COLUMNS = "edition_id, article_hash, article_url, source_id, topics, kind, created_at";
 
-type Row = { edition_id: string; article_hash: string; article_url: string; source_id: string; topics: unknown; kind: unknown };
+type Row = { edition_id: string; article_hash: string; article_url: string; source_id: string; topics: unknown; kind: unknown; created_at?: string | null };
 
 function toEvent(row: Row): ReadingEvent | null {
   const topics = topicIdSchema.array().safeParse(row.topics);
@@ -13,7 +13,7 @@ function toEvent(row: Row): ReadingEvent | null {
   if (!topics.success || !kind.success) {
     return null;
   }
-  return { editionId: row.edition_id, articleHash: row.article_hash, articleUrl: row.article_url, sourceId: row.source_id, topics: topics.data, kind: kind.data };
+  return { editionId: row.edition_id, articleHash: row.article_hash, articleUrl: row.article_url, sourceId: row.source_id, topics: topics.data, kind: kind.data, at: row.created_at ?? null };
 }
 
 export async function insertReadingEvent(db: SupabaseClient, userId: string, event: ReadingEvent): Promise<void> {

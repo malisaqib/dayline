@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { TopicId } from "@/domain/topics";
+import { recentSkips } from "./learning";
 import type { StoredSignal } from "./weights";
 
 export const readingKindSchema = z.enum(["open", "skip"]);
@@ -12,6 +13,7 @@ export type ReadingEvent = {
   sourceId: string;
   topics: TopicId[];
   kind: ReadingKind;
+  at?: string | null;
 };
 
 export const BEHAVIOR_POLICY = {
@@ -23,9 +25,9 @@ export const BEHAVIOR_POLICY = {
   skippedPenalty: 1,
 } as const;
 
-export type PersonalSignals = { sourceAffinity: Record<string, number>; skipped: Set<string> };
+export type PersonalSignals = { sourceAffinity: Record<string, number>; skipped: Set<string>; recent: Set<string> };
 
-export const EMPTY_PERSONAL_SIGNALS: PersonalSignals = { sourceAffinity: {}, skipped: new Set() };
+export const EMPTY_PERSONAL_SIGNALS: PersonalSignals = { sourceAffinity: {}, skipped: new Set(), recent: new Set() };
 
 function bounded(value: number, limit: number): number {
   return Math.max(-limit, Math.min(limit, value));
@@ -74,6 +76,11 @@ export function skippedKeys(events: ReadingEvent[]): Set<string> {
   return keys;
 }
 
-export function personalSignals(signals: (StoredSignal & { sourceId?: string | null })[], events: ReadingEvent[]): PersonalSignals {
-  return { sourceAffinity: deriveSourceAffinity(signals, events), skipped: skippedKeys(events) };
+export function personalSignals(
+  signals: (StoredSignal & { sourceId?: string | null })[],
+  events: ReadingEvent[],
+  now: Date = new Date(),
+  recent: Set<string> = new Set(),
+): PersonalSignals {
+  return { sourceAffinity: deriveSourceAffinity(signals, events), skipped: recentSkips(events, now), recent };
 }

@@ -18,8 +18,9 @@ import { buildTodayInThree, highlightSources, TodayInThreeUnavailableError } fro
 import type { Reader } from "@/server/auth/session";
 import { getSupabaseAdmin } from "@/server/db/supabase-admin";
 import { insertArticleSnapshots } from "@/server/repositories/articles";
-import { findEditionByDate, insertEditionIfAbsent } from "@/server/repositories/editions";
+import { findEditionByDate, insertEditionIfAbsent, recentStoryKeys } from "@/server/repositories/editions";
 import { personalSignals } from "@/domain/personalization/behavior";
+import { learnedWeights, LEARNING_POLICY } from "@/domain/personalization/learning";
 import { listSignals } from "@/server/repositories/feedback";
 import { findProfile } from "@/server/repositories/profiles";
 import { listReadingEvents } from "@/server/repositories/reading-events";
@@ -162,8 +163,14 @@ export async function getOrCreateDailyEdition(
     throw new GenerationError("no_articles", "No news sources could be reached. Try again in a few minutes.");
   }
 
-  const [signals, events] = await Promise.all([listSignals(readerDb, reader.id), listReadingEvents(readerDb, reader.id)]);
-  const ranked = rankArticles(pool.articles, profile.weights, now, MAX_EDITION_STORIES, personalSignals(signals, events), profile.interests);
+  const since = localEditionDate(new Date(now.getTime() - LEARNING_POLICY.repeatWindowDays * 86_400_000));
+  const [signals, events, recent] = await Promise.all([
+    listSignals(readerDb, reader.id),
+    listReadingEvents(readerDb, reader.id),
+    recentStoryKeys(readerDb, reader.id, since, localDate),
+  ]);
+  const weights = learnedWeights(profile.topics, signals, events, now);
+  const ranked = rankArticles(pool.articles, weights, now, MAX_EDITION_STORIES, personalSignals(signals, events, now, recent), profile.interests);
   if (ranked.length === 0) {
     throw new GenerationError("no_matches", "No recent stories match your topics yet. Try adding another topic.");
   }
@@ -191,7 +198,7 @@ export async function getOrCreateDailyEdition(
     localDate,
     timezone: EDITION_TIMEZONE,
     sourcesFetchedAt: pool.fetchedAt,
-    profile: { topics: profile.topics, weights: profile.weights, interests: profile.interests },
+    profile: { topics: profile.topics, weights, interests: profile.interests },
     stories,
     todayInThree: await resolveTodayInThree(stories, chosen, stats),
   });

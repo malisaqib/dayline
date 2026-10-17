@@ -61,6 +61,25 @@ export async function findEditionByDate(db: SupabaseClient, userId: string, loca
   return data ? toEdition(data) : null;
 }
 
+export async function recentStoryKeys(db: SupabaseClient, userId: string, sinceDate: string, beforeDate: string): Promise<Set<string>> {
+  const { data, error } = await db.from("editions").select("stories").eq("user_id", userId).gte("local_date", sinceDate).lt("local_date", beforeDate);
+  if (error) {
+    throw new Error(`load recent editions: ${error.message}`);
+  }
+  const keys = new Set<string>();
+  for (const row of data as { stories: { articleHash?: string; url?: string }[] }[]) {
+    for (const story of row.stories) {
+      if (story.articleHash) {
+        keys.add(story.articleHash);
+      }
+      if (story.url) {
+        keys.add(story.url);
+      }
+    }
+  }
+  return keys;
+}
+
 /** Reader-scoped archive page, newest first. */
 export async function listEditions(db: SupabaseClient, page = 0): Promise<EditionSummary[]> {
   const from = page * ARCHIVE_PAGE_SIZE;

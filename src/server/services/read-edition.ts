@@ -5,6 +5,7 @@ import { getVerifiedReader } from "@/server/auth/session";
 import { createReaderSupabase } from "@/server/db/supabase-server";
 import { findEditionById } from "@/server/repositories/editions";
 import { personalSignals, type PersonalSignals } from "@/domain/personalization/behavior";
+import { learnedWeights } from "@/domain/personalization/learning";
 import { listSignals, signalsForEdition } from "@/server/repositories/feedback";
 import { listReadingEvents, readingForEdition } from "@/server/repositories/reading-events";
 import { findProfile, type Profile } from "@/server/repositories/profiles";
@@ -50,5 +51,7 @@ export async function readOwnEditionWithContext(rawId: string): Promise<EditionC
     listSignals(db, reader.id),
     listReadingEvents(db, reader.id),
   ]);
-  return { edition, profile, signals, reading, personal: personalSignals(history, events) };
+  const now = new Date();
+  const learned = profile ? { ...profile, weights: learnedWeights(profile.topics, history, events, now) } : null;
+  return { edition, profile: learned, signals, reading, personal: personalSignals(history, events, now) };
 }

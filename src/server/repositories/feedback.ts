@@ -27,7 +27,7 @@ export async function upsertFeedback(db: SupabaseClient, userId: string, signal:
   }
 }
 
-type FeedbackRow = { edition_id: string; article_hash: string; topics: unknown; signal: unknown; source_id?: string | null };
+type FeedbackRow = { edition_id: string; article_hash: string; topics: unknown; signal: unknown; source_id?: string | null; updated_at?: string | null };
 
 function toSignal(row: FeedbackRow): StoredSignal | null {
   const topics = topicIdSchema.array().safeParse(row.topics);
@@ -35,13 +35,13 @@ function toSignal(row: FeedbackRow): StoredSignal | null {
   if (!topics.success || !signal.success) {
     return null;
   }
-  return { editionId: row.edition_id, articleHash: row.article_hash, topics: topics.data, signal: signal.data, sourceId: row.source_id ?? null };
+  return { editionId: row.edition_id, articleHash: row.article_hash, topics: topics.data, signal: signal.data, sourceId: row.source_id ?? null, at: row.updated_at ?? null };
 }
 
 export async function listSignals(db: SupabaseClient, userId: string): Promise<StoredSignal[]> {
   const { data, error } = await db
     .from("feedback_events")
-    .select("edition_id, article_hash, topics, signal, source_id")
+    .select("edition_id, article_hash, topics, signal, source_id, updated_at")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false })
     .limit(MAX_SIGNALS);
