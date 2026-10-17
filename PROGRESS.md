@@ -2,6 +2,45 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
+## Experience redesign with Motion and Aceternity patterns. VERIFIED (deployment d27ccff)
+- **Dependency:** only `motion` (free, `motion/react`). Aceternity patterns were adapted from the official registry sources, not installed wholesale:
+  - CardSpotlight: pointer-following radial mask only; dropped its three.js `CanvasRevealEffect` dependency.
+  - Spotlight: SVG with a faint vermilion fill, animated with Motion.
+  - BentoGrid: layout pattern only; dropped the `@tabler/icons-react` dependency.
+- **System:**
+  - Tokens for paper, ink, vermilion, muted blue-grey, card and raised shadows, card radius.
+  - Shared Motion variants (`fadeUp`, `fade`, `stagger`, `collapse`) on one curve and duration scale.
+  - `MotionRoot` (reducedMotion="user") plus a `template.tsx` page entrance. Entrances are instant under prefers-reduced-motion.
+- **Shell:** masthead with date and timezone on every size, Today / Archive / Topics with `aria-current`, skip link, landmarks.
+- **Onboarding:**
+  - Hero "Your five-minute morning paper." over a subtle spotlight.
+  - Spotlight topic cards with icons and descriptions; "Your paper will cover:" summary; step 1 of 2 / 2 of 2.
+  - An honest generation panel: "Gathering stories and preparing your paper…", an indeterminate bar, what Dayline does, and a typical duration. It never claims steps are complete.
+  - "Your paper is ready." on arrival. Errors offer Try again.
+  - No keyword or reading-time inputs: the backend doesn't support them.
+- **Edition:**
+  - Bento Signal Brief: Today in five minutes, Today in three (now with the source named), Top signal, Your focus, Internet pulse, reading progress. Staggered.
+  - Story cards stagger in. "Why you're seeing this" is a Motion disclosure (button with `aria-expanded`).
+  - Feedback confirmations animate, with copy such as "Technology will appear less often." Skip cross-fades with a layout transition; the progress bar animates.
+- **Learning card:** explains topic and source learning, ends "Your current paper is saved and will not change."
+- **Preview:** "Preview only" banner with "This shows how your next paper may look. Your saved paper is unchanged."
+- **Archive:** cards use the shared Motion stagger.
+- **Verified:**
+  - Locally: typecheck, lint, `npm test` 61 of 61, build, journey PASSED, PDF parity 5 of 5, `check:scheduled` PASSED.
+  - Production: journey PASSED, PDF parity 5 of 5, `check:scheduled` PASSED (91 readers; 0 created on rerun).
+  - Keyboard-only onboarding reaches the edition. Download PDF, Archive, Edit topics, Read the top signal, Read original, Why you're seeing this, More, Less and Skip are all reachable by Tab; 0 of 40 focused elements lacked a visible focus ring.
+  - Reduced motion: content fully visible immediately. Slow network (1.5 s latency): the loading skeleton shows, then the edition.
+  - 0px horizontal overflow at 390px on all four pages.
+  - Rendering made no AI calls: generation was logged only for newly created readers.
+- **Limits:**
+  - Story-card headline links are inline text (WCAG-exempt), about 27px tall; each card also has a 44px "Read original article" button.
+  - The scheduled run now takes about 30 s for 91 readers (limit 300 s).
+- **Commits:**
+  - `669a61a`: system and shell.
+  - `7ffbc35`: onboarding. This commit did not type-check; `bedba32` fixed it immediately.
+  - `d5f9fe1`: edition.
+  - `d27ccff`: archive, preview and accessibility.
+
 ## Content quality: final verification (deployment 7a5dec9)
 - **Local:**
   - `npm test` 61 of 61; typecheck, lint and build pass.
