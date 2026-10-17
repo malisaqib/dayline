@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { XMLParser } from "fast-xml-parser";
 import { articleSnapshotSchema, classifyCoverage, type ArticleSnapshot } from "@/domain/articles/article";
+import { htmlToText } from "@/shared/text";
 import type { FeedSource } from "./catalog";
 
 const FETCH_TIMEOUT_MS = 8000;
@@ -26,21 +27,6 @@ function asText(value: unknown): string {
     return String((value as RawEntry)["#text"]);
   }
   return "";
-}
-
-// Feed HTML is untrusted: reduce it to plain text before it reaches storage or a model.
-function htmlToText(html: string): string {
-  return html
-    .replace(/<(script|style)[\s\S]*?<\/\1>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&#8217;|&rsquo;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 function entryLink(entry: RawEntry): string {
