@@ -9,7 +9,12 @@ export function SiteHeader() {
     <header className="sticky top-0 z-20 border-b border-rule bg-paper/80 backdrop-blur-sm">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 py-2 sm:px-6">
         <Link href="/today" className="flex min-h-11 flex-col justify-center sm:flex-row sm:items-baseline sm:gap-3" aria-label="Dayline, today's paper">
-          <span className="font-serif text-2xl font-bold leading-none tracking-wide">Dayline</span>
+          <span className="flex items-center gap-2">
+            <span className="grid size-8 place-items-center rounded-md bg-ink font-serif text-lg font-bold text-paper" aria-hidden="true">
+              D
+            </span>
+            <span className="font-serif text-2xl font-bold leading-none tracking-wide">Dayline</span>
+          </span>
           <span className="text-[12px] text-muted sm:text-[13px]">
             {today} · {EDITION_TIMEZONE}
           </span>

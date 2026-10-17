@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { TopicIcon } from "@/features/onboarding/TopicIcon";
-import { BriefMockup, EditionMockup, LearningMockup, PdfMockup, SourceMockup } from "@/features/overview/Mockups";
+import { BriefMockup, LearningMockup, SourceMockup } from "@/features/overview/Mockups";
+import { PdfShot, ProductShot } from "@/features/overview/ProductShot";
 import { RotatingWord } from "@/features/overview/RotatingWord";
 import { InView, Reveal, RevealCell, RevealGroup } from "@/features/shared/Reveal";
 
@@ -45,7 +46,7 @@ const SECTIONS: { eyebrow: string; title: string; text: string; visual: ReactNod
     eyebrow: "Web and PDF",
     title: "Read it online, or keep it as a newspaper",
     text: "The same paper is available as a newspaper-style PDF to download, print or read offline. Every past paper waits in your archive.",
-    visual: <PdfMockup />,
+    visual: <PdfShot />,
   },
 ];
 
@@ -83,12 +84,12 @@ function renderHero() {
       </Reveal>
       <Reveal className="relative mx-auto mt-16 max-w-5xl">
         <div id="sample" className="scroll-mt-24">
-          <EditionMockup />
+          <ProductShot />
         </div>
-        <p className="mt-3 text-center text-xs text-night-muted">
-          Sample layout with placeholder text, not a real paper.{" "}
+        <p className="mt-14 text-center text-xs text-night-muted">
+          A real Dayline paper, generated on 17 October 2026 for a test reader following Technology, Space and Cybersecurity.{" "}
           <a href="/api/pdf/sample" className="font-semibold text-glow underline-offset-4 hover:underline">
-            Download the sample PDF
+            Download a sample PDF layout
           </a>
         </p>
       </Reveal>
