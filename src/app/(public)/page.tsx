@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 const BENEFITS = [
   {
     title: "Only what you follow",
-    text: "Pick your topics once. Each morning Dayline ranks fresh stories for them and keeps the paper to about six, with at most two from any one source.",
+    text: "Pick your topics once. Each morning Dayline ranks fresh stories for them and keeps the paper to about six, usually no more than two from any one source.",
   },
   {
     title: "Every story traceable",

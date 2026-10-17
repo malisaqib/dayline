@@ -2,6 +2,24 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
+## Final Phase 1: public overview and reader entry (DAYLINE_FINAL_PHASES.md). DONE, with sign-in pending Phase 2
+- **Routes:** route groups keep every URL. `(public)` holds `/` and `/signin` with a public header; `(app)` holds `/today`, `/onboarding`, `/edition/[id]`, `/edition/[id]/preview` and `/archive` with the app header and navigation. PDF and API routes are unchanged.
+- **Overview `/`:**
+  - "Your interests. One morning paper.", three benefits, how it works, "Create my paper" → `/signin`.
+  - "See a sample" jumps to a product preview labelled "Sample layout: placeholder text, not a real paper", plus the existing labelled sample PDF. No reader data, pricing, testimonials or statistics.
+  - The header shows "Sign in" to visitors and "Open my paper" to readers.
+- **`/today`:** reads the reader's actual state (`readReaderEntry`).
+  - Visitor → `/signin`; no topics → `/onboarding`.
+  - If today's edition exists: "Today's paper is ready." with an "Open today's paper" link. If not: "Today's paper hasn't been made yet." with "Create today's paper".
+  - This replaces the old home copy that claimed readiness from the profile alone.
+- **Schedule:** shown as "06:00 Pakistan time (PKT)".
+- **PENDING (Phase 2):** durable sign-in. `/signin` honestly says email sign-in is not available yet and offers "Continue without an account" (the existing browser-only anonymous session), warning that clearing browser data loses access. Nothing fakes a login.
+- **Checks:**
+  - Local: typecheck, lint, `npm test` 61 of 61, build.
+  - Production (`d7ad4b7`), 17 of 17: `/` public; headline; Sign in for visitors; sample labelled; no app navigation on the overview; Create my paper → /signin → Continue → /onboarding; /today redirects visitors; sample PDF 200; 0px overflow at 390px on `/` and `/signin`; Open my paper for readers; /today "hasn't been made yet" + Create today's paper → edition → /today "ready" → Open today's paper.
+  - The journey and scheduled scripts now enter via `/today`.
+- **Note:** a plugin hook now blocks starting a local server, so browser checks for this phase ran against production.
+
 ## Experience redesign with Motion and Aceternity patterns. VERIFIED (deployment d27ccff)
 - **Dependency:** only `motion` (free, `motion/react`). Aceternity patterns were adapted from the official registry sources, not installed wholesale:
   - CardSpotlight: pointer-following radial mask only; dropped its three.js `CanvasRevealEffect` dependency.
