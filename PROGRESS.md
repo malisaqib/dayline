@@ -1,54 +1,44 @@
 # Progress
 
-## Phase 1: persisted newspaper flow (2026-10-17). Code complete; live verification BLOCKED on credentials
+Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
-### Built
-- Migration `0002_newspaper_core.sql`:
-  - `profiles` (RLS: owner only).
-  - `articles`: immutable, keyed by content hash, update trigger rejects changes.
-  - `article_summaries`: cache keyed by content_hash + model + prompt_version, immutable.
-  - `editions`: `unique (user_id, local_date)`, RLS owner select, immutable, frozen `stories` JSON.
-  - Shared tables have RLS with no policies, so only the secret key can write them.
-- Anonymous session: `@supabase/ssr` cookies plus a middleware refresh. `ensureReader` signs in anonymously on onboarding. Every read verifies the reader with `auth.getUser()`.
-- Onboarding `/onboarding`: 1–3 topics, limited to topics an enabled source covers.
-- Pure ranking (`domain/personalization/rank.ts`): 75% topic match and 25% freshness (24 h half-life). Stories older than 96 h are dropped, at most 2 per source, ties broken by hash. Each story stores "Why this story" reasons.
-- Generation (`server/services/getOrCreateDailyEdition`):
-  - Returns the existing edition for (reader, Asia/Karachi date) if there is one.
-  - Otherwise: fetch the shared pool once → rank top 6 → save article snapshots → AI summaries for permitted sources (cached, at most 3 in parallel; on failure, fall back to the publisher excerpt) → insert with ON CONFLICT DO NOTHING → re-read through the reader's own client.
-- Source usage policy: kept separate from whether a feed can be fetched. Only NASA (public domain) is sent to the model. The others show the publisher's excerpt, cut to 600 characters at a word boundary, with a label. Every story is labelled `ai_summary`, `publisher_excerpt` or `headline_only`.
-- `/edition/[id]`, `/archive` (30 per page, empty state), and `/api/editions/[id]/pdf`. These use the reader's client, so another reader's edition, a bad id and a missing session all return the same 404.
-- Web and PDF both render `presentEdition()`. The PDF renderer only gained a provenance line under each story.
-- Loading, error, empty and not-found states, plus pending buttons on generation.
+## Phase 1: persisted newspaper flow. PASSES LOCALLY; production blocked on Vercel config
 
-### Verified (actual results)
-- `npm run typecheck`, `npm run lint` and `npm run build` pass. There are 7 routes plus middleware.
-- `npm test` passes 6 of 6 domain tests: ranking is deterministic and topic-only; the per-source cap and stale-story filter work; two profiles get different leads; a non-permitted source never gets an AI summary; headline-only fallback works; web and PDF get identical stories in the same order.
-- Phase 0 checks still apply: 6 of 6 feeds are live and the sample PDF renders.
+### Local verification (2026-10-17, against live Supabase and OpenRouter)
+| Check | Result |
+|---|---|
+| `npm run db:migrate` | pass (0001 applied; 0002 and 0003 applied by hand in the SQL editor, then recorded after checking the schema) |
+| `npm run check:db` | pass (write, read, delete) |
+| `npm run check:ai` | pass on 5 of 5 runs. OpenRouter `google/gemini-3.8-flash`, strict JSON Schema used, Zod validation passed, summary 80–85 words, 3 takeaways, 7–10 s per run. One run needed its single retry after truncated JSON. The summary was checked by hand against the NASA source: no unsupported claims. |
+| `npm run check:feeds` | pass in Phase 0 (6 of 6). During `check:flow` NASA failed once, and generation carried on without it. |
+| `npm run check:flow` | 6 of 6 pass: concurrent and repeated generation give one edition; reuse works; two profiles get different leads; RLS isolation holds; no session means no access; exactly one row per reader per day. |
+| `npm test` | 13 of 13 (ranking, body policy, web/PDF equality, summary schema, entity decoding) |
+| `typecheck`, `lint`, `build` | pass |
+| `BASE_URL=http://localhost:3100 npm run check:journey` | pass: onboarding → edition → reload → home "Open today's paper" (same id) → archive → reopen → PDF download → source links (HTTP 200) → second reader gets 404 / "Paper not found" |
+| `python -I scripts/inspect_pdf.py tmp/journey/localhost_3100` | pass: 4 of 4 headlines in web order, links identical, no text outside margins on 2 pages. Visual check: AI summaries labelled "AI summary of the full article text", the others "Publisher's excerpt", no broken characters. |
 
-### Live verification attempt (commit 9dacd89)
-- Renamed the secret key variable to `SUPABASE_SECRET_KEY` (an `sb_secret_` key, checked by format).
-- Passed: `npm test` (6 of 6), `typecheck`, `lint`, `build`. The secret key works (admin `listUsers` returns ok). The URL and publishable key have the right format.
-- The user applied migrations 0001 and 0002 by hand in the SQL editor. Verified: all 5 tables respond. `npm run check:db` passed (write, read back, delete). The article immutability trigger works: an update was rejected with "articles rows are immutable".
-- BLOCKED, the user must fix these:
-  1. (Minor) `SUPABASE_DB_URL` is still the project URL, so `npm run db:migrate` can't run. It isn't recorded which migrations were applied by hand. Future migrations need either the session pooler string or another SQL editor paste.
-  2. `ANTHROPIC_API_KEY` is empty, so `check:ai` can't run. Without it, generation falls back to publisher excerpts, which is labelled honestly.
-  3. Anonymous sign-ins are disabled ("Anonymous sign-ins are disabled"). Fix: Authentication → Sign In / Providers → Anonymous: on.
-  4. The Vercel command-line tool isn't logged in here, so Vercel env var names can't be checked and nothing can be redeployed from this machine. Fix: run `npx vercel login` and `npx vercel link`, or check the env vars and redeploy in the dashboard.
-- Not yet run: `check:flow`, the local browser journey, and the deployed journey.
+### Fixes made during verification
+- `0e9913e`: browser journey script; the PDF no longer splits words with hyphens.
+- `1e9a3a8`: decode `&#039;` and double-encoded entities in feed text.
+- `5f523dc`: switched from Anthropic to OpenRouter (Gemini). Grounded prompt, strict schema, takeaways stored in snapshots.
+- `4e15c5b`: PDF lays out stories in rows of two, so reading order holds when stories spill onto page 2.
+- `1e1e11e`: `/api/health` reports which config groups are valid (true/false only, never values).
 
-### Exact next actions
-1. User: create `.env.local` from `.env.example`. Enable Supabase anonymous sign-ins (Authentication > Sign In / Providers > Anonymous). Choose `ANTHROPIC_MODEL`; the default is `claude-opus-5-5`.
-2. `npm run db:migrate && npm run check:db && npm run check:ai && npm run check:flow`
-3. `npm run build && npm start`. In a browser: onboard → read the edition → reload → archive → download the PDF and open it to check layout and links.
-4. Deploy to Vercel with the same env vars, then repeat step 3 on the live site.
+### Production (https://dayline-swart.vercel.app/): BLOCKED
+- `/api/health` reports `supabasePublic` invalid: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are missing or wrong on Vercel. `supabaseSecret` and `openRouter` are valid.
+- Effect: `/` and `/onboarding` render the error page, and the edition PDF route returns 500. The sample PDF `/api/pdf/sample` returns 200.
+- Fix (user): in Vercel → Settings → Environment Variables (Production), add both names exactly as in `.env.example`, then **Redeploy**. `NEXT_PUBLIC_` values are baked in at build time, so a redeploy is required.
+- Then: `curl https://dayline-swart.vercel.app/api/health` should return `"ok":true`. Then run `BASE_URL=https://dayline-swart.vercel.app npm run check:journey` and `python -I scripts/inspect_pdf.py tmp/journey/dayline-swart.vercel.app`.
 
-### Known limits
-- Topics come from the source (no per-article tagging). ScienceDaily and NASA overlap on science.
-- The PDF is rendered when requested from the saved snapshot; it isn't stored. Content can't drift because the snapshot is immutable.
-- Reuse permissions for NPR, Ars, Dawn, BBC and ScienceDaily are unverified (see `catalog.ts`).
+### Known risks
+- Gemini sometimes returns invalid JSON even with a strict schema. There is one retry, then a fallback to the publisher excerpt.
+- AI summaries only cover NASA (the only source with a known reuse basis). Other sources show the publisher's excerpt. Reuse terms for the other sources are unverified (`catalog.ts`).
+- NASA APOD feed text contains site navigation; the AI summary handles it, but the raw excerpt would look messy.
+- The edition page for an invalid id shows "Paper not found" but returns HTTP 200, because streaming starts before notFound runs.
+- PDFs are rendered on request from the saved snapshot and not stored.
 
-## Phase 0 (done)
-Next.js shell, RSS adapter, sample PDF, integration check scripts. Repo: https://github.com/malisaqib/dayline
+## Next milestone (after production passes)
+Feedback learning: more/less like this per story, then stored topic weights, then ranking uses those weights for the next edition, plus a labelled preview. Then scheduled daily generation.
 
 ## Deferred
-Feedback learning, scheduling, "Since your last read", elaborate styling.
+Scheduling, "Since your last read", elaborate styling.
