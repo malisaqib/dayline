@@ -2,6 +2,44 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
+## Final phases 3 to 7 (2026-10-17). Committed locally; NOT yet pushed or verified on production
+Production still runs commit `c164967`. Everything below passes `typecheck`, `lint`, `npm test` (87 of 87) and `build`, but browser checks on production wait for a push.
+
+- **Accounts (change requested by the user):**
+  - Email and password only. Google, email codes and guest ("try without an account") use were removed.
+  - `/onboarding`, `/today`, `/archive` and `/edition/…` require a signed-in, non-anonymous account. Old anonymous sessions are treated as signed out.
+  - The overview keeps the public sample: real paper captures plus `/api/pdf/sample`.
+  - `/signin?mode=create` opens "Create account"; `/signin` opens "Sign in".
+  - **Dashboard setting needed:** Authentication → Sign In / Providers → Email → turn off "Confirm email". Otherwise every sign-up sends an email, and the built-in mailer's ~2 per hour limit blocks it.
+- **Phase 3 (onboarding):** done except the optional reading-budget choice, which is not shown because nothing supports it. Old-profile and old-edition compatibility are tested.
+- **Phase 5 (content quality):**
+  - Today in three only sends text from sources whose policy allows AI. CISA, Hacker News and GDACS text is excluded, and a test checks the actual model payload.
+  - `src/domain/articles/evidence.ts` rejects a claim that changes a number, invents or drops a denial, or states an allegation as fact. It compares each claim with the closest source sentence. This is not a fact checker.
+  - Today in three falls back to the publisher's own complete sentence (labelled "quoted") or omits the item, and never pads.
+  - Summaries are checked against the original snapshot: a failing sentence rejects the summary (the story falls back to the publisher's excerpt), and failing takeaways are dropped.
+  - Cache versions bumped: `brief-v3-evidence`, `excerpt-v3-evidence`, `today3-v3`. Existing editions are not rewritten.
+  - Hacker News popularity is capped at 0.35 and CISA importance lowered (0.4, or 0.7 for ransomware). GDACS severity is kept, so a Red alert still beats a Green one.
+  - Items with almost no text get −0.05.
+  - Reading time is one estimate from all visible words, rounded once, and labelled "(estimate)".
+  - **Live sample (check:ai, 1 article, 1 excerpt, 3 highlights):** numbers, dates and names matched the source. One overreach was found: the NASA summary attributes SLS and HLS to Cash's portfolio, where the source says they are Marshall's role. This is a sample, not a reliability claim.
+- **Phase 6 (learning across days):**
+  - `src/domain/personalization/learning.ts`: signals carry timestamps and lose half their effect every 14 days.
+  - Each article counts once even across papers. Explicit More/Less (±0.25) count far more than opens (+0.05).
+  - Weights are clamped after each signal in time order, so saturation recovers.
+  - Skips are bounded and forgotten after 30 days.
+  - Weights are recomputed at generation and preview, and the snapshot stores the weights used.
+  - Stories from the last 3 days' papers get −0.3 and are labelled when shown again.
+  - Deterministic tests use an injected clock over 3 simulated days. Not built: the "Reset learned preferences" button.
+- **Phase 7 (PDF):** the saved Today in three, with story numbers and source links, is in the PDF through the shared `presentEdition`. A parity test covers web and PDF highlights, and an older edition without highlights still prints. **Not visually inspected yet:** `@react-pdf` won't load outside Next.js here, so this waits for a push.
+- **Phase 4 (workspace):**
+  - Desktop has a 232px sidebar: Today's paper, Past papers, My interests, account and sign-out. Mobile has a menu drawer that closes on Escape, moves focus into the drawer and restores it when closed.
+  - "In this paper" has topic filters with real counts. They only change the view. When a filter is on, the download reads "Download full paper" with a "Show all stories" button, and "Story N" links clear the filter and focus the story.
+  - The toolbar shows the story count and estimated minutes. The page ends with "You've reached the end of today's paper". Progress reads "stories reached".
+  - "Why this story?" and "Was this relevant?" are in place. The skip row says the saved paper and PDF still include the story.
+  - The focus panel is omitted when it would repeat the top story.
+- **Mistake during this session:** a `git checkout -- .` discarded the uncommitted Phase 7 edits. They were reapplied from the session and committed as `1470e9d`.
+- **Checks updated for no-guest mode:** `check:auth`, `check:journey` and `check:scheduled` now sign real test accounts in with email and password, created by admin and deleted afterwards.
+
 ## First-run flow, dark redesign and specific interests (2026-10-17). VERIFIED on production except where noted
 - **Flow:** overview `/` → `/signin` (step 1 of 3) → `/onboarding` (named stepper: "What you follow", "Review and create") → first paper → `/today`.
 - **Design:**
