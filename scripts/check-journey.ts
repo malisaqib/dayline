@@ -160,7 +160,7 @@ async function behaviourJourney(page: Page, context: BrowserContext, editionId: 
 
   await last.getByRole("button", { name: "Skip this story" }).click();
   await page.getByText("This story was skipped.").waitFor({ timeout: 30_000 });
-  check((await page.getByText("Your current paper is unchanged.", { exact: false }).count()) >= 1, "skip explains that today's paper is unchanged");
+  check((await page.getByText("the saved paper and PDF still include it", { exact: false }).count()) >= 1, "skip explains that the saved paper and PDF still include the story");
   check((await page.locator("article").count()) === total - 1, "skipped story is removed from the reading view");
 
   await page.reload();
