@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { PREVIEW_LABEL, previewStories } from "@/domain/editions/preview";
 import { presentEdition, type PresentedStory } from "@/domain/editions/presentation";
 import { FeedbackControls } from "@/features/feedback/FeedbackControls";
+import { storyWrapper } from "@/features/feedback/story-wrapper";
 import { PreferencesPanel } from "@/features/feedback/PreferencesPanel";
 import { EditionView } from "@/features/newspaper/EditionView";
 import { ui } from "@/features/shared/ui";
@@ -30,7 +31,7 @@ export default async function PreviewPage({ params }: { params: Promise<{ id: st
     notFound();
   }
   const { edition, profile, signals } = context;
-  const presented = presentEdition({ ...edition, stories: previewStories(edition.stories, profile.weights, new Date()) });
+  const presented = presentEdition({ ...edition, stories: previewStories(edition.stories, profile.weights, new Date(), context.personal) });
   const footer = (story: PresentedStory) => (
     <FeedbackControls editionId={edition.id} articleHash={story.id} topicLabels={story.topicLabels} initial={signals[story.id] ?? null} />
   );
@@ -46,6 +47,7 @@ export default async function PreviewPage({ params }: { params: Promise<{ id: st
       }
       notices={renderBanner(edition.id)}
       storyFooter={footer}
+      storyWrapper={storyWrapper(context.edition.id, context.reading)}
       rail={<PreferencesPanel topics={profile.topics} weights={profile.weights} previewHref={null} />}
     />
   );

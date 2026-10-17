@@ -23,6 +23,7 @@ export type StoredSignal = {
   articleHash: string;
   topics: TopicId[];
   signal: FeedbackSignal;
+  sourceId?: string | null;
 };
 
 export const topicWeightsSchema = z.partialRecord(topicIdSchema, z.number());
@@ -32,7 +33,7 @@ function clamp(value: number): number {
 }
 
 /** Baseline for each selected topic plus ±step per signal touching it, clamped once at the end. Order-independent. */
-export function deriveTopicWeights(selectedTopics: TopicId[], signals: StoredSignal[]): TopicWeights {
+export function deriveTopicWeights(selectedTopics: TopicId[], signals: StoredSignal[], behaviorShift: Partial<Record<TopicId, number>> = {}): TopicWeights {
   const weights: TopicWeights = {};
   for (const topic of selectedTopics) {
     weights[topic] = WEIGHT_POLICY.baseline;
@@ -46,7 +47,7 @@ export function deriveTopicWeights(selectedTopics: TopicId[], signals: StoredSig
     }
   }
   for (const topic of selectedTopics) {
-    weights[topic] = clamp(weights[topic] ?? WEIGHT_POLICY.baseline);
+    weights[topic] = clamp((weights[topic] ?? WEIGHT_POLICY.baseline) + (behaviorShift[topic] ?? 0));
   }
   return weights;
 }

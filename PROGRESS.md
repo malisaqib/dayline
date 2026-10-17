@@ -2,6 +2,29 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
+## Content quality 3: skip and behavioural learning (feat: learn from skips and reading behavior)
+- **Migration 0008 (applied):**
+  - `reading_events`: one row per reader + edition + story + kind (`open` or `skip`). It stores the URL, source and topics copied from the owned snapshot.
+  - Owner-only RLS: select, insert (the edition must belong to the reader) and delete (Undo).
+  - `feedback_events.source_id`, so More/Less also teach source preference.
+- **Learning** (`src/domain/personalization/behavior.ts`, pure):
+  - Topic shift: open +0.05, skip −0.1, capped at ±0.25 per topic before the normal 0.25–2.0 clamp.
+  - Source affinity: More +0.05, Less −0.05, open +0.02, skip −0.04, capped at ±0.1 on the score.
+  - A skipped article (by hash or URL) gets a −1 penalty, so it returns only when nothing else can fill the slot.
+  - Reasons show "You often read <Source>".
+  - More/Less behaviour is unchanged (once per story; switching replaces).
+- **UI:**
+  - "Train your paper" now has More / Less / **Skip this story**. Skip collapses the card to "This story was skipped. Your current paper is unchanged…" with Undo; it persists across reloads. Works on the edition and the preview.
+  - "Read original article" (and the headline link) records an open once per story.
+  - The learning card updates instantly from the action result.
+- **Generation and preview:** both use the reader's personal signals (source affinity and skipped stories).
+- **Verified:**
+  - `npm test` 61 of 61 (open/skip effects, bounds, source affinity reordering, skipped excluded but still fills a sparse paper).
+  - `check:flow` 19 of 19 (open recorded once, skip stored, Undo removes it, service and RLS (42501) reject skips on another reader's edition).
+  - Journey PASSED with Read original, Skip, reload, Undo, More/Less. PDF parity 5 of 5.
+  - 0px overflow at 390px, after fixing the button group's `shrink-0`.
+- **Limits:** opens are recorded on click, not on actual reading. Source affinity only affects sources the reader has interacted with.
+
 ## Content quality 2: grounded summaries and Today in three (feat: add grounded summaries and today in three)
 - **Policy:** each source has an explicit `aiExcerptSummary` flag. It's on for NPR, Ars, BBC, Dawn, Geo and ScienceDaily, and off for CISA, HN and GDACS (never AI-processed). NASA keeps full-text summaries (`brief-v2-openrouter`).
 - **Excerpt summaries** (`summarizeExcerpt`, `excerpt-v2`):

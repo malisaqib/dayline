@@ -5,6 +5,9 @@ import { ReadingProgress } from "./ReadingProgress";
 import { StoryCard } from "./StoryCard";
 
 type StoryFooter = (story: PresentedStory) => ReactNode;
+type StoryWrapper = (story: PresentedStory, card: ReactNode) => ReactNode;
+
+const keepCard: StoryWrapper = (_story, card) => card;
 
 type EditionViewProps = {
   edition: PresentedEdition;
@@ -13,6 +16,7 @@ type EditionViewProps = {
   notices?: ReactNode;
   brief?: ReactNode;
   storyFooter: StoryFooter;
+  storyWrapper?: StoryWrapper;
   rail?: ReactNode;
 };
 
@@ -46,7 +50,7 @@ function renderIndex(stories: PresentedStory[]) {
   );
 }
 
-export function EditionView({ edition, eyebrow, actions, notices, brief, storyFooter, rail }: EditionViewProps) {
+export function EditionView({ edition, eyebrow, actions, notices, brief, storyFooter, storyWrapper = keepCard, rail }: EditionViewProps) {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] lg:gap-8">
       <div className="min-w-0 space-y-4">
@@ -65,7 +69,7 @@ export function EditionView({ edition, eyebrow, actions, notices, brief, storyFo
         <ol className="space-y-4" aria-label="Stories">
           {edition.stories.map((story, index) => (
             <li key={story.id}>
-              <StoryCard story={story} position={index + 1} footer={storyFooter(story)} />
+              {storyWrapper(story, <StoryCard story={story} position={index + 1} footer={storyFooter(story)} />)}
             </li>
           ))}
         </ol>

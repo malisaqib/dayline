@@ -4,7 +4,9 @@ import type { FeedbackSignal } from "@/domain/personalization/weights";
 import { getVerifiedReader } from "@/server/auth/session";
 import { createReaderSupabase } from "@/server/db/supabase-server";
 import { findEditionById } from "@/server/repositories/editions";
-import { signalsForEdition } from "@/server/repositories/feedback";
+import { personalSignals, type PersonalSignals } from "@/domain/personalization/behavior";
+import { listSignals, signalsForEdition } from "@/server/repositories/feedback";
+import { listReadingEvents, readingForEdition } from "@/server/repositories/reading-events";
 import { findProfile, type Profile } from "@/server/repositories/profiles";
 
 const editionIdSchema = z.uuid();
@@ -18,7 +20,13 @@ export async function readOwnEdition(rawId: string): Promise<Edition | null> {
   return (await readOwnEditionWithContext(rawId))?.edition ?? null;
 }
 
-export type EditionContext = { edition: Edition; profile: Profile | null; signals: Record<string, FeedbackSignal> };
+export type EditionContext = {
+  edition: Edition;
+  profile: Profile | null;
+  signals: Record<string, FeedbackSignal>;
+  reading: { skipped: string[]; opened: string[] };
+  personal: PersonalSignals;
+};
 
 /** The edition plus the reader's current profile weights and their signals on this edition. */
 export async function readOwnEditionWithContext(rawId: string): Promise<EditionContext | null> {
@@ -35,6 +43,12 @@ export async function readOwnEditionWithContext(rawId: string): Promise<EditionC
   if (!edition) {
     return null;
   }
-  const [profile, signals] = await Promise.all([findProfile(db, reader.id), signalsForEdition(db, edition.id)]);
-  return { edition, profile, signals };
+  const [profile, signals, reading, history, events] = await Promise.all([
+    findProfile(db, reader.id),
+    signalsForEdition(db, edition.id),
+    readingForEdition(db, edition.id),
+    listSignals(db, reader.id),
+    listReadingEvents(db, reader.id),
+  ]);
+  return { edition, profile, signals, reading, personal: personalSignals(history, events) };
 }

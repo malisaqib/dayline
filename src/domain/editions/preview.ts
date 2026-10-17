@@ -1,4 +1,5 @@
 import { scoreItem } from "@/domain/personalization/rank";
+import { EMPTY_PERSONAL_SIGNALS, type PersonalSignals } from "@/domain/personalization/behavior";
 import type { TopicWeights } from "@/domain/personalization/weights";
 import type { StorySnapshot } from "./edition";
 
@@ -10,9 +11,9 @@ export const PREVIEW_LABEL = "Preview based on today’s available stories.";
  * takeaways are reused as stored, so a preview needs no model calls.
  * Ties keep the original edition order.
  */
-export function previewStories(stories: readonly StorySnapshot[], weights: TopicWeights, now: Date): StorySnapshot[] {
+export function previewStories(stories: readonly StorySnapshot[], weights: TopicWeights, now: Date, personal: PersonalSignals = EMPTY_PERSONAL_SIGNALS): StorySnapshot[] {
   return stories
-    .map((story, position) => ({ story, position, scored: scoreItem(story, weights, now) }))
+    .map((story, position) => ({ story, position, scored: scoreItem({ ...story, url: story.url }, weights, now, personal) }))
     .sort((a, b) => b.scored.score - a.scored.score || a.position - b.position)
     .map(({ story, scored }) => ({ ...story, reasons: scored.reasons }));
 }

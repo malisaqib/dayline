@@ -19,7 +19,10 @@ import type { Reader } from "@/server/auth/session";
 import { getSupabaseAdmin } from "@/server/db/supabase-admin";
 import { insertArticleSnapshots } from "@/server/repositories/articles";
 import { findEditionByDate, insertEditionIfAbsent } from "@/server/repositories/editions";
+import { personalSignals } from "@/domain/personalization/behavior";
+import { listSignals } from "@/server/repositories/feedback";
 import { findProfile } from "@/server/repositories/profiles";
+import { listReadingEvents } from "@/server/repositories/reading-events";
 import { findCachedSummaries, insertSummary, type SummaryKey } from "@/server/repositories/summaries";
 import { usageFor } from "@/server/sources/catalog";
 import { fetchArticlePool, type ArticlePool } from "@/server/sources/pool";
@@ -159,7 +162,8 @@ export async function getOrCreateDailyEdition(
     throw new GenerationError("no_articles", "No news sources could be reached. Try again in a few minutes.");
   }
 
-  const ranked = rankArticles(pool.articles, profile.weights, now, MAX_EDITION_STORIES);
+  const [signals, events] = await Promise.all([listSignals(readerDb, reader.id), listReadingEvents(readerDb, reader.id)]);
+  const ranked = rankArticles(pool.articles, profile.weights, now, MAX_EDITION_STORIES, personalSignals(signals, events));
   if (ranked.length === 0) {
     throw new GenerationError("no_matches", "No recent stories match your topics yet. Try adding another topic.");
   }

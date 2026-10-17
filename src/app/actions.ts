@@ -7,7 +7,7 @@ import { ensureReader, getVerifiedReader } from "@/server/auth/session";
 import { createReaderSupabase } from "@/server/db/supabase-server";
 import { saveProfile } from "@/server/repositories/profiles";
 import { supportedTopicIds } from "@/server/sources/catalog";
-import { FeedbackError, feedbackInputSchema, recordFeedback, weightsForTopics } from "@/server/services/feedback";
+import { FeedbackError, feedbackInputSchema, readingInputSchema, recordFeedback, recordReading, undoSkip, weightsForTopics } from "@/server/services/feedback";
 import { GenerationError, getOrCreateDailyEdition, type GenerationResult } from "@/server/services/generate-edition";
 
 export type ActionState = { error: string | null };
@@ -95,4 +95,36 @@ export async function submitFeedback(input: unknown): Promise<FeedbackActionResu
     console.error("[feedback] failed", error);
     return { ok: false, error: "We couldn't save that. Please try again." };
   }
+}
+
+export type ReadingActionResult = { ok: true; weights: TopicWeights } | { ok: false; error: string };
+
+async function runReadingAction(input: unknown, undo: boolean): Promise<ReadingActionResult> {
+  const parsed = readingInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "That action could not be read." };
+  }
+  const db = await createReaderSupabase();
+  const reader = await getVerifiedReader(db);
+  if (!reader) {
+    return { ok: false, error: "Your session expired. Reload the page and try again." };
+  }
+  try {
+    const result = undo ? await undoSkip(db, reader, parsed.data) : await recordReading(db, reader, parsed.data);
+    return { ok: true, weights: result.weights };
+  } catch (error) {
+    if (error instanceof FeedbackError) {
+      return { ok: false, error: error.message };
+    }
+    console.error("[reading] failed", error);
+    return { ok: false, error: "We could not save that. Please try again." };
+  }
+}
+
+export async function submitReading(input: unknown): Promise<ReadingActionResult> {
+  return runReadingAction(input, false);
+}
+
+export async function undoSkipStory(input: unknown): Promise<ReadingActionResult> {
+  return runReadingAction(input, true);
 }

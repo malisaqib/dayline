@@ -6,7 +6,7 @@ import { getSupabaseAdmin } from "@/server/db/supabase-admin";
 import { getPublicSupabaseEnv } from "@/server/env";
 import { findEditionById } from "@/server/repositories/editions";
 import { findProfile } from "@/server/repositories/profiles";
-import { FeedbackError, recordFeedback } from "@/server/services/feedback";
+import { FeedbackError, recordFeedback, recordReading, undoSkip } from "@/server/services/feedback";
 import { saveProfile } from "@/server/repositories/profiles";
 import { getOrCreateDailyEdition } from "@/server/services/generate-edition";
 
@@ -81,6 +81,33 @@ async function main() {
       signal: "more",
     });
     check(direct.error !== null, `RLS blocks a direct insert against another reader's edition (${direct.error?.code ?? "no error"})`);
+
+    const reading = a1.edition.stories[a1.edition.stories.length - 1];
+    const readingInput = { editionId: a1.edition.id, articleHash: reading.articleHash };
+    await recordReading(a.db, a.reader, { ...readingInput, kind: "open" });
+    await recordReading(a.db, a.reader, { ...readingInput, kind: "open" });
+    const countKind = async (kind: string) =>
+      (await getSupabaseAdmin().from("reading_events").select("id", { count: "exact", head: true }).eq("user_id", a.reader.id).eq("kind", kind)).count;
+    check((await countKind("open")) === 1, "Read original recorded once per story");
+    await recordReading(a.db, a.reader, { ...readingInput, kind: "skip" });
+    check((await countKind("skip")) === 1, "skip stored for the reader");
+    await undoSkip(a.db, a.reader, readingInput);
+    check((await countKind("skip")) === 0, "undo removes the skip");
+    const crossSkip = await recordReading(a.db, a.reader, { editionId: bResult.edition.id, articleHash: bResult.edition.stories[0].articleHash, kind: "skip" }).then(
+      () => "accepted",
+      (e) => (e instanceof FeedbackError ? "rejected" : `error ${e}`),
+    );
+    check(crossSkip === "rejected", "service rejects a skip on another reader's edition");
+    const directSkip = await a.db.from("reading_events").insert({
+      user_id: a.reader.id,
+      edition_id: bResult.edition.id,
+      article_hash: bResult.edition.stories[0].articleHash,
+      article_url: bResult.edition.stories[0].url,
+      source_id: bResult.edition.stories[0].sourceId,
+      topics: ["world"],
+      kind: "skip",
+    });
+    check(directSkip.error !== null, `RLS blocks a direct skip against another reader's edition (${directSkip.error?.code ?? "no error"})`);
 
     for (const story of a1.edition.stories) {
       console.log(`  A [${story.bodyKind}] ${story.sourceName}: ${story.title.slice(0, 70)}`);

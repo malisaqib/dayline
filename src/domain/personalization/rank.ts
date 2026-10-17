@@ -1,6 +1,7 @@
 import type { ArticleSnapshot } from "@/domain/articles/article";
 import { areSameStory, titleTokens } from "@/domain/articles/similarity";
 import { topicLabel, type TopicId } from "@/domain/topics";
+import { BEHAVIOR_POLICY, EMPTY_PERSONAL_SIGNALS, type PersonalSignals } from "./behavior";
 import { describeWeight, WEIGHT_POLICY, type TopicWeights } from "./weights";
 
 export const RANKING_WEIGHTS = { topic: 0.6, freshness: 0.2, importance: 0.2 } as const;
@@ -23,7 +24,18 @@ export type RankedArticle = {
 
 export type ScoredItem = { score: number; matchedTopics: TopicId[]; reasons: string[] };
 
-export type ScoreInput = { topics: TopicId[]; publishedAt: string | null; importance?: number; sourceCount?: number };
+export type ScoreInput = {
+  topics: TopicId[];
+  publishedAt: string | null;
+  importance?: number;
+  sourceCount?: number;
+  sourceId?: string;
+  sourceName?: string;
+  url?: string;
+  articleHash?: string;
+};
+
+const AFFINITY_REASON_THRESHOLD = 0.04;
 
 const HOUR_MS = 3_600_000;
 const RELAXED_REASON = "Included to fill your paper: few other sources covered your topics today";
@@ -75,19 +87,37 @@ export function coverageImportance(sourceCount: number): number {
   return Math.min(1, Math.max(0, sourceCount - 1) / (SOURCES_FOR_FULL_COVERAGE_SCORE - 1));
 }
 
-export function scoreItem(item: ScoreInput, weights: TopicWeights, now: Date): ScoredItem {
+function personalAdjustment(item: ScoreInput, personal: PersonalSignals): { delta: number; reasons: string[] } {
+  const reasons: string[] = [];
+  const affinity = item.sourceId ? (personal.sourceAffinity[item.sourceId] ?? 0) : 0;
+  if (affinity >= AFFINITY_REASON_THRESHOLD && item.sourceName) {
+    reasons.push(`You often read ${item.sourceName}`);
+  }
+  const skipped = [item.articleHash, item.url].some((key) => key !== undefined && personal.skipped.has(key));
+  const penalty = skipped ? BEHAVIOR_POLICY.skippedPenalty : 0;
+  if (skipped) {
+    reasons.push("You skipped this story before; shown only because few alternatives were available");
+  }
+  return { delta: affinity - penalty, reasons };
+}
+
+export function scoreItem(item: ScoreInput, weights: TopicWeights, now: Date, personal: PersonalSignals = EMPTY_PERSONAL_SIGNALS): ScoredItem {
   const matchedTopics = item.topics.filter((t) => weights[t] !== undefined);
   const strongest = Math.max(0, ...matchedTopics.map((t) => weights[t] ?? 0));
   const hours = ageHours(item.publishedAt, now);
   const sourceCount = item.sourceCount ?? 1;
   const importance = Math.max(item.importance ?? 0, coverageImportance(sourceCount));
+  const adjustment = personalAdjustment(item, personal);
   const score =
-    RANKING_WEIGHTS.topic * (strongest / WEIGHT_POLICY.max) + RANKING_WEIGHTS.freshness * freshnessScore(hours) + RANKING_WEIGHTS.importance * importance;
+    RANKING_WEIGHTS.topic * (strongest / WEIGHT_POLICY.max) +
+    RANKING_WEIGHTS.freshness * freshnessScore(hours) +
+    RANKING_WEIGHTS.importance * importance +
+    adjustment.delta;
   const reasons = [describeMatch(matchedTopics, weights), describeAge(hours)];
   if (sourceCount > 1) {
     reasons.push(`Covered by ${sourceCount} sources`);
   }
-  return { score, matchedTopics, reasons };
+  return { score, matchedTopics, reasons: [...reasons, ...adjustment.reasons] };
 }
 
 export function normalizeTitle(title: string): string {
@@ -117,11 +147,11 @@ function isFresh(article: RankableArticle, now: Date): boolean {
   return hours !== null && hours <= MAX_AGE_HOURS;
 }
 
-function bestOfCluster(cluster: Cluster, weights: TopicWeights, now: Date): RankedArticle | null {
+function bestOfCluster(cluster: Cluster, weights: TopicWeights, now: Date, personal: PersonalSignals): RankedArticle | null {
   const sourceCount = cluster.sources.size;
   const ranked = cluster.members
     .map((article) => {
-      const scored = scoreItem({ ...article, sourceCount }, weights, now);
+      const scored = scoreItem({ ...article, sourceCount, articleHash: article.contentHash }, weights, now, personal);
       const importance = Math.max(article.importance ?? 0, coverageImportance(sourceCount));
       return { article, ...scored, sourceCount, importance };
     })
@@ -165,10 +195,16 @@ function seedEachTopic(candidates: RankedArticle[], picked: RankedArticle[], wei
   }
 }
 
-export function rankArticles(articles: RankableArticle[], weights: TopicWeights, now: Date, limit: number): RankedArticle[] {
+export function rankArticles(
+  articles: RankableArticle[],
+  weights: TopicWeights,
+  now: Date,
+  limit: number,
+  personal: PersonalSignals = EMPTY_PERSONAL_SIGNALS,
+): RankedArticle[] {
   const clusters = clusterArticles(articles.filter((a) => isFresh(a, now)));
   const candidates = clusters
-    .map((cluster) => bestOfCluster(cluster, weights, now))
+    .map((cluster) => bestOfCluster(cluster, weights, now, personal))
     .filter((r): r is RankedArticle => r !== null)
     .sort((a, b) => b.score - a.score || a.article.contentHash.localeCompare(b.article.contentHash));
 

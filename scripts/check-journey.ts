@@ -1,5 +1,5 @@
 import { mkdir, writeFile } from "node:fs/promises";
-import { chromium, type Browser, type Page } from "playwright";
+import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
 
 /*
  * Browser journey against a running app (local or deployed):
@@ -79,6 +79,8 @@ async function readerJourney(browser: Browser): Promise<{ editionId: string; sto
   await (await after).saveAs(`${OUT_DIR}/edition-after-feedback.pdf`);
   check(true, "PDF downloaded again after feedback (compare with inspect_pdf.py)");
 
+  await behaviourJourney(page, context, editionId, stories.length);
+
   for (const story of stories) {
     const response = await context.request.get(story.href, { maxRedirects: 5, failOnStatusCode: false, timeout: 15_000 }).catch(() => null);
     const status = response?.status() ?? 0;
@@ -126,6 +128,29 @@ async function feedbackJourney(page: Page, editionId: string, stories: Story[]):
 
   await page.goto(`${BASE_URL}/archive`);
   check((await page.locator('a[href^="/edition/"]').count()) === 1, "archive still lists only the saved edition (preview not archived)");
+}
+
+async function behaviourJourney(page: Page, context: BrowserContext, editionId: string, total: number): Promise<void> {
+  await page.goto(`${BASE_URL}/edition/${editionId}`);
+  await readStories(page);
+  const last = page.locator("article").last();
+  const popup = context.waitForEvent("page");
+  await last.getByRole("link", { name: /Read original article/ }).click();
+  await (await popup).close();
+  check(true, "Read original opens the publisher in a new tab");
+
+  await last.getByRole("button", { name: "Skip this story" }).click();
+  await page.getByText("This story was skipped.").waitFor({ timeout: 30_000 });
+  check((await page.getByText("Your current paper is unchanged.", { exact: false }).count()) >= 1, "skip explains that today's paper is unchanged");
+  check((await page.locator("article").count()) === total - 1, "skipped story is removed from the reading view");
+
+  await page.reload();
+  await page.getByText("This story was skipped.").waitFor({ timeout: 30_000 });
+  check(true, "skip persists after reload");
+
+  await page.getByRole("button", { name: "Undo" }).click();
+  await page.locator("article").nth(total - 1).waitFor({ timeout: 30_000 });
+  check((await page.locator("article").count()) === total, "undo restores the story");
 }
 
 async function isolationCheck(browser: Browser, editionId: string): Promise<void> {

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { PresentedStory } from "@/domain/editions/presentation";
+import { TrackedLink } from "@/features/feedback/TrackedLink";
 import { ExternalIcon } from "@/features/shared/ExternalIcon";
 import { staggerStyle, ui } from "@/features/shared/ui";
 
@@ -137,9 +138,9 @@ export function StoryCard({ story, position, footer }: StoryCardProps) {
       </div>
       {renderKicker(story)}
       <h2 className={`mt-3 font-serif font-bold leading-snug ${headlineSize}`}>
-        <a href={story.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-accent-strong hover:underline">
+        <TrackedLink href={story.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-accent-strong hover:underline">
           {story.headline}
-        </a>
+        </TrackedLink>
       </h2>
       {renderBody(story, isLead)}
       {renderTakeaways(story)}
@@ -148,11 +149,11 @@ export function StoryCard({ story, position, footer }: StoryCardProps) {
           <span className={badgeClass(story)}>{story.bodyLabel}</span>
           {renderReadingTime(story.readingMinutes)}
         </div>
-        <a href={story.sourceUrl} target="_blank" rel="noopener noreferrer" className={ui.secondaryButton}>
+        <TrackedLink href={story.sourceUrl} target="_blank" rel="noopener noreferrer" className={ui.secondaryButton}>
           Read original article
           <ExternalIcon />
           <span className="sr-only">(opens {story.sourceName} in a new tab)</span>
-        </a>
+        </TrackedLink>
       </div>
       {renderWhy(story)}
       {footer}

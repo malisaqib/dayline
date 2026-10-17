@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { submitFeedback, type FeedbackActionResult } from "@/app/actions";
 import { WEIGHTS_EVENT } from "./LearningChips";
+import { useStoryActions } from "./StoryShell";
 
 type Signal = "more" | "less";
 
@@ -17,6 +18,9 @@ const BUTTONS: { signal: Signal; label: string }[] = [
 
 const BUTTON =
   "inline-flex min-h-11 items-center gap-2 rounded-md border px-4 text-sm font-semibold transition-colors duration-[185ms] disabled:cursor-wait disabled:opacity-60 border-ink/20 bg-card text-ink hover:border-ink/50 aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-paper";
+
+const SKIP_BUTTON =
+  "inline-flex min-h-11 items-center rounded-md px-4 text-sm font-semibold text-muted underline-offset-4 transition-colors duration-[185ms] hover:text-ink hover:underline disabled:cursor-wait disabled:opacity-60";
 
 function joinLabels(labels: string[]): string {
   if (labels.length <= 1) {
@@ -40,6 +44,17 @@ function describeResult(result: Success, signal: Signal, topicLabels: string[]):
   }
   const level = signal === "more" ? "highest" : "lowest";
   return `Saved. ${joinLabels(topicLabels)} is already at its ${level} level.`;
+}
+
+function renderSkip(story: ReturnType<typeof useStoryActions>) {
+  if (!story) {
+    return null;
+  }
+  return (
+    <button type="button" onClick={story.skip} disabled={story.pending} className={SKIP_BUTTON}>
+      Skip this story
+    </button>
+  );
 }
 
 function renderCheck(selected: boolean) {
@@ -78,6 +93,7 @@ export function FeedbackControls({ editionId, articleHash, topicLabels, initial 
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const story = useStoryActions();
 
   async function send(signal: Signal) {
     if (pending || signal === selected) {
@@ -112,7 +128,10 @@ export function FeedbackControls({ editionId, articleHash, topicLabels, initial 
           <h3 className="text-sm font-semibold">Train your paper</h3>
           <p className="text-[13px] text-muted">These choices affect future papers. Today&apos;s paper stays unchanged.</p>
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2">{buttons}</div>
+        <div className="flex flex-wrap gap-2 sm:shrink-0">
+          {buttons}
+          {renderSkip(story)}
+        </div>
       </div>
       <div aria-live="polite" className="mt-2 empty:mt-0">
         {renderStatus(pending, message, error, editionId)}

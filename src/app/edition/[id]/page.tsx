@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { presentEdition, type PresentedEdition, type PresentedStory } from "@/domain/editions/presentation";
 import { buildSignalBrief } from "@/domain/editions/signal-brief";
 import { FeedbackControls } from "@/features/feedback/FeedbackControls";
+import { storyWrapper } from "@/features/feedback/story-wrapper";
 import { PreferencesPanel } from "@/features/feedback/PreferencesPanel";
 import { EditionView } from "@/features/newspaper/EditionView";
 import { SignalBrief } from "@/features/newspaper/SignalBrief";
@@ -87,6 +88,7 @@ export default async function EditionPage({ params, searchParams }: { params: Pr
       notices={renderNotices(query)}
       brief={renderBrief(presented, context)}
       storyFooter={footer}
+      storyWrapper={storyWrapper(context.edition.id, context.reading)}
       rail={renderRail(context)}
     />
   );
