@@ -2,6 +2,37 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
+## Internet Pulse sources. VERIFIED locally and on production (deployment c8a6765)
+- **CISA KEV** (`src/server/sources/cisa-kev.ts`): official JSON. Keeps entries added within the 96 h age limit (at most 8), validated with Zod; malformed entries are counted as rejected. Uses official fields only (name, CVE, vendor/product, description, first sentence of the required action, due date). Links to the CISA catalog search for the CVE. Topics: Cybersecurity and Technology.
+- **Hacker News** (`hacker-news.ts`): top 20 ids, item details fetched 5 at a time (6 s timeout per item). Drops job, dead, deleted, text-only and stale items, and keeps 8 by points adjusted for age. Shown as headline and original link only, labelled with points and comments; linked pages are not fetched. Topic: Technology.
+- **GDACS** (`gdacs.ts`): official RSS. Orange/Red alerts come first; Green alerts are used only as a fallback (at most 3). Labels carry event type, country, alert level and severity. Spaces before punctuation are tidied. Topics: Disaster alerts and World.
+- Shared changes:
+  - New topics: Cybersecurity and Disaster alerts.
+  - `labels` on article and story snapshots, shown as a kicker identically on web and PDF (migration 0005, applied).
+  - Canonical URLs (tracking parameters removed).
+  - Ranking also drops duplicate normalized titles.
+  - The adapter dispatcher in `pool.ts` lets each source fail independently.
+- **No AI:** all three sources have `aiProcessing: false` (tested). The production generation log showed `modelCalls: 0`.
+- **Reachability:**
+
+  | Source | Local | Vercel |
+  |---|---|---|
+  | CISA KEV | 7 items | 7 items |
+  | Hacker News | 8 items | 8 items |
+  | GDACS | 4 items | 4 items |
+  | Dawn | works | still HTTP 403; generation continues without it |
+
+- **Checks:**
+  - `npm test`: 31 of 31 (KEV parsing and malformed data, HN filtering and bounds, GDACS fields, fallback and punctuation, independent failure, no AI, source cap, title de-duplication).
+  - `typecheck`, `lint`, `build` and `check:feeds` pass.
+  - `JOURNEY_TOPICS=security,disasters,technology npm run check:journey`: PASSED locally and on production. The editions contained CISA, GDACS and Hacker News stories, and the PDF matched the web in order, links and margins.
+- **Commits:** `c52bebe` (sources), `c8a6765` (GDACS tidy and journey options).
+- **Limitations:**
+  - CISA links go to the catalog search page, not a per-CVE page.
+  - Hacker News destination links are third-party: some block automated checks (WARN) and one (llmspeed.dev) refused connections from this machine.
+  - GDACS reuse terms have not been reviewed.
+  - The source's topics are applied to all of its items; there is no per-item tagging.
+
 ## Phase 2: feedback learning and preview. VERIFIED locally and on production (deployment 6793a10)
 - Policy (`domain/personalization/weights.ts`): each selected topic starts at 1.0; More adds 0.25 and Less subtracts 0.25 per story topic; weights are clamped to 0.25–2.0. Weights are re-derived from all stored signals, so repeats and retries can't compound. `profiles.topic_weights` caches the result.
 - `feedback_events`: one current signal per user + edition + story, enforced by a unique key. The story's topics are copied from the owned edition snapshot. RLS lets readers read their own rows only, and inserts and updates must reference an edition the reader owns.
@@ -66,7 +97,7 @@ Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: htt
 - PDFs are rendered on request from the saved snapshot and not stored.
 
 ## Next milestone
-Internet Pulse sources (CISA KEV, Hacker News, GDACS), then scheduled daily generation.
+Scheduled daily generation (Supabase Cron calling an authenticated endpoint), then the submission package (architecture diagram, README, Loom).
 
 ## Deferred
 Scheduling, "Since your last read", elaborate styling.
