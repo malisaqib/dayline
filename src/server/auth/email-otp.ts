@@ -15,7 +15,7 @@ export function describeAuthError(error: unknown): AuthFailure {
     return { kind: "expired", message: "That code or link is wrong or has expired. Request a new one." };
   }
   if (code === "over_email_send_rate_limit" || code === "over_request_rate_limit" || status === 429) {
-    return { kind: "rate_limited", message: "Please wait a minute before requesting another code." };
+    return { kind: "rate_limited", message: "Too many sign-in emails were requested. Please wait a few minutes and try again." };
   }
   if (code === "email_exists" || code === "user_already_exists" || code === "identity_already_exists") {
     return { kind: "email_taken", message: "This email already has a Dayline account." };

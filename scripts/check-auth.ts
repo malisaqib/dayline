@@ -142,7 +142,7 @@ async function guestUpgrade(browser: Browser, sql: postgres.Sql, takenEmail: str
   await page.getByLabel("Email address").fill(email);
   await page.getByRole("button", { name: "Save my paper to this email" }).click();
   const sent = page.getByText("We sent an email to");
-  const failed = page.getByRole("alert");
+  const failed = page.locator("form p[role=alert]");
   await Promise.race([sent.waitFor(), failed.waitFor()]);
   if (!(await sent.isVisible())) {
     check(false, `upgrade email request failed: ${await failed.textContent()}`);
