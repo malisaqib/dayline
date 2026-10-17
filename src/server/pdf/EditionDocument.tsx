@@ -6,6 +6,7 @@ Font.registerHyphenationCallback((word) => [word]);
 export type PrintStory = {
   headline: string;
   body: string;
+  takeaways: string[];
   /** Provenance line, e.g. "Publisher's excerpt · 17 Oct 2026". */
   meta: string;
   sourceName: string;
@@ -65,6 +66,7 @@ const styles = StyleSheet.create({
   body: { fontSize: 10, lineHeight: 1.45, textAlign: "justify" },
   source: { fontFamily: "Helvetica", fontSize: 7.5, marginTop: 4, color: ACCENT },
   meta: { fontFamily: "Helvetica", fontSize: 7, marginTop: 3, color: MUTED },
+  takeaway: { fontSize: 9.5, lineHeight: 1.35, marginTop: 2, paddingLeft: 8 },
   footer: { position: "absolute", bottom: 16, left: 36, right: 36, fontFamily: "Helvetica", fontSize: 7, textAlign: "center", color: MUTED },
 });
 
@@ -80,11 +82,25 @@ function SourceLine({ story }: { story: PrintStory }) {
   );
 }
 
+function Takeaways({ items }: { items: string[] }) {
+  return items.length === 0 ? null : (
+    <View style={{ marginTop: 4 }}>
+      {items.map((item) => (
+        <Text key={item} style={styles.takeaway}>
+          {"• "}
+          {item}
+        </Text>
+      ))}
+    </View>
+  );
+}
+
 function StoryBlock({ story }: { story: PrintStory }) {
   return (
     <View style={styles.story} wrap={false}>
       <Text style={styles.headline}>{story.headline}</Text>
       {story.body && <Text style={styles.body}>{story.body}</Text>}
+      <Takeaways items={story.takeaways} />
       <SourceLine story={story} />
     </View>
   );
@@ -112,6 +128,7 @@ export function EditionDocument({ edition }: { edition: PrintEdition }) {
 
         <Text style={styles.leadHeadline}>{edition.lead.headline}</Text>
         {edition.lead.body && <Text style={styles.leadBody}>{edition.lead.body}</Text>}
+        <Takeaways items={edition.lead.takeaways} />
         <SourceLine story={edition.lead} />
 
         <View style={styles.sectionRule} />

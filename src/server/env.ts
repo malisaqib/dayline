@@ -3,7 +3,7 @@ import { z } from "zod";
 /*
  * Two kinds of configuration:
  * - Public: Supabase URL and publishable key. Safe in the browser; RLS protects data.
- * - Secret: Supabase secret key (sb_secret_...), database URL and Anthropic key.
+ * - Secret: Supabase secret key (sb_secret_...), database URL and OpenRouter key.
  *   Server-only; never prefix with NEXT_PUBLIC_.
  */
 const publicSupabaseSchema = z.object({
@@ -15,15 +15,15 @@ const supabaseSecretSchema = z.object({
   SUPABASE_SECRET_KEY: z.string().startsWith("sb_secret_"),
 });
 
-export const DEFAULT_ANTHROPIC_MODEL = "claude-opus-5-5";
+export const DEFAULT_OPENROUTER_MODEL = "google/gemini-3.8-flash";
 
-const anthropicEnvSchema = z.object({
-  ANTHROPIC_API_KEY: z.string().min(20),
+const openRouterEnvSchema = z.object({
+  OPENROUTER_API_KEY: z.string().startsWith("sk-or-"),
   // An empty value in .env.local means "use the default", not an invalid model.
-  ANTHROPIC_MODEL: z
+  OPENROUTER_MODEL: z
     .string()
     .optional()
-    .transform((value) => value?.trim() || DEFAULT_ANTHROPIC_MODEL),
+    .transform((value) => value?.trim() || DEFAULT_OPENROUTER_MODEL),
 });
 
 const databaseEnvSchema = z.object({
@@ -53,9 +53,9 @@ export const getPublicSupabaseEnv = () =>
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
   });
 export const getSupabaseSecretEnv = () => readGroup("Supabase (secret)", supabaseSecretSchema, process.env);
-export const getAnthropicEnv = () => readGroup("Anthropic", anthropicEnvSchema, process.env);
+export const getOpenRouterEnv = () => readGroup("OpenRouter", openRouterEnvSchema, process.env);
 export const getDatabaseEnv = () => readGroup("Database", databaseEnvSchema, process.env);
 
-export function isAnthropicConfigured(): boolean {
-  return anthropicEnvSchema.safeParse(process.env).success;
+export function isAiConfigured(): boolean {
+  return openRouterEnvSchema.safeParse(process.env).success;
 }

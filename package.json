@@ -17,7 +17,6 @@
     "check:journey": "tsx --tsconfig tsconfig.json scripts/check-journey.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.135.0",
     "@react-pdf/renderer": "^4.9.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",

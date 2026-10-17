@@ -9,6 +9,13 @@ function StoryArticle({ story, lead }: { story: PresentedStory; lead: boolean })
         </a>
       </h2>
       {story.body && <p className={`mt-3 leading-relaxed ${lead ? "text-lg" : "text-[15px]"}`}>{story.body}</p>}
+      {story.takeaways.length > 0 && (
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-[15px]">
+          {story.takeaways.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      )}
       <p className="mt-2 text-xs text-ink/60">{story.meta}</p>
       <p className="mt-1 text-xs text-ink/60">Why this story: {story.reasons.join("; ")}</p>
       <a href={story.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-xs font-medium text-accent hover:underline">

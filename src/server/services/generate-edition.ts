@@ -3,10 +3,9 @@ import type { ArticleSnapshot } from "@/domain/articles/article";
 import { buildEditionStories, canSummarize, chooseStoryBody, type CachedSummary, type StoryBody } from "@/domain/editions/build-edition";
 import { EDITION_TIMEZONE, MAX_EDITION_STORIES, localEditionDate, type Edition } from "@/domain/editions/edition";
 import { rankArticles } from "@/domain/personalization/rank";
-import { summarizeArticle, SUMMARY_PROMPT_VERSION, SummaryUnavailableError } from "@/server/ai/summarize";
+import { isSummarizerConfigured, summarizeArticle, summaryModelId, SUMMARY_PROMPT_VERSION, SummaryUnavailableError } from "@/server/ai/summarize";
 import type { Reader } from "@/server/auth/session";
 import { getSupabaseAdmin } from "@/server/db/supabase-admin";
-import { getAnthropicEnv, isAnthropicConfigured } from "@/server/env";
 import { insertArticleSnapshots } from "@/server/repositories/articles";
 import { findEditionByDate, insertEditionIfAbsent } from "@/server/repositories/editions";
 import { findProfile } from "@/server/repositories/profiles";
@@ -49,10 +48,10 @@ async function mapWithConcurrency<T>(items: T[], limit: number, worker: (item: T
 }
 
 async function resolveSummaries(admin: SupabaseClient, articles: ArticleSnapshot[], stats: GenerationStats): Promise<Map<string, CachedSummary>> {
-  if (articles.length === 0 || !isAnthropicConfigured()) {
+  if (articles.length === 0 || !isSummarizerConfigured()) {
     return new Map();
   }
-  const key: SummaryKey = { model: getAnthropicEnv().ANTHROPIC_MODEL, promptVersion: SUMMARY_PROMPT_VERSION };
+  const key: SummaryKey = { model: summaryModelId(), promptVersion: SUMMARY_PROMPT_VERSION };
   const summaries = await findCachedSummaries(admin, articles.map((a) => a.contentHash), key);
   stats.summaryCacheHits = summaries.size;
 
@@ -61,8 +60,8 @@ async function resolveSummaries(admin: SupabaseClient, articles: ArticleSnapshot
     stats.modelCalls += 1;
     try {
       const result = await summarizeArticle(article);
-      await insertSummary(admin, article.contentHash, key, result.brief, result);
-      summaries.set(article.contentHash, { brief: result.brief, ...key });
+      await insertSummary(admin, article.contentHash, key, { brief: result.summary, takeaways: result.takeaways }, result);
+      summaries.set(article.contentHash, { brief: result.summary, takeaways: result.takeaways, ...key });
     } catch (error) {
       if (!(error instanceof SummaryUnavailableError)) {
         throw error;

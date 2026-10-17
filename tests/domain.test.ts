@@ -58,7 +58,7 @@ describe("rankArticles", () => {
 
 describe("chooseStoryBody", () => {
   const unverified: SourceUsage = { display: "excerpt", aiProcessing: false, basis: "unverified" };
-  const summary = { brief: "A cached brief.", model: "m", promptVersion: "v" };
+  const summary = { brief: "A cached brief.", takeaways: ["A takeaway."], model: "m", promptVersion: "v" };
 
   it("never uses an AI summary for a source not cleared for AI processing", () => {
     assert.equal(chooseStoryBody(POOL[0], unverified, summary).kind, "publisher_excerpt");
@@ -73,7 +73,7 @@ describe("presentEdition", () => {
   it("gives web and PDF the same stories in the same order", () => {
     const ranked = rankArticles(POOL, ["space", "technology", "pakistan"], NOW, 6);
     const bodies = new Map<string, StoryBody>(
-      ranked.map((r) => [r.article.contentHash, { kind: "publisher_excerpt", text: r.article.text, model: null, promptVersion: null }]),
+      ranked.map((r) => [r.article.contentHash, { kind: "publisher_excerpt", text: r.article.text, takeaways: [], model: null, promptVersion: null }]),
     );
     const edition: Edition = {
       id: "00000000-0000-4000-8000-000000000000",

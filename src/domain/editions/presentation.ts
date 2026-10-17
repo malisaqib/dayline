@@ -7,6 +7,7 @@ import { bodyKindLabel, formatEditionDate, type Edition, type StorySnapshot } fr
 export type PresentedStory = {
   headline: string;
   body: string;
+  takeaways: string[];
   meta: string;
   reasons: string[];
   sourceName: string;
@@ -31,7 +32,8 @@ function presentStory(story: StorySnapshot): PresentedStory {
   return {
     headline: story.title,
     body: story.body,
-    meta: `${bodyKindLabel(story.bodyKind)} · published ${formatPublished(story.publishedAt)}`,
+    takeaways: story.takeaways,
+    meta: `${bodyKindLabel(story.bodyKind, story.coverage)} · published ${formatPublished(story.publishedAt)}`,
     reasons: story.reasons,
     sourceName: story.sourceName,
     sourceUrl: story.url,

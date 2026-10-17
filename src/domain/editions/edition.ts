@@ -23,6 +23,9 @@ export const storySnapshotSchema = z.object({
   reasons: z.array(z.string()),
   body: z.string(),
   bodyKind: bodyKindSchema,
+  // Added with the OpenRouter summaries; defaults keep earlier saved editions readable.
+  takeaways: z.array(z.string()).default([]),
+  coverage: z.enum(["full", "excerpt", "none"]).default("excerpt"),
   summaryModel: z.string().nullable(),
   summaryPromptVersion: z.string().nullable(),
 });
@@ -62,10 +65,10 @@ export function formatEditionDate(localDate: string): string {
   }).format(new Date(`${localDate}T00:00:00Z`));
 }
 
-export function bodyKindLabel(kind: BodyKind): string {
+export function bodyKindLabel(kind: BodyKind, coverage: StorySnapshot["coverage"]): string {
   switch (kind) {
     case "ai_summary":
-      return "AI summary of the source text";
+      return coverage === "full" ? "AI summary of the full article text" : "AI summary of the publisher's excerpt";
     case "publisher_excerpt":
       return "Publisher's excerpt";
     case "headline_only":

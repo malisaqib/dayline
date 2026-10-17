@@ -6,9 +6,9 @@ import type { BodyKind, StorySnapshot } from "./edition";
 export const MAX_EXCERPT_DISPLAY_CHARS = 600;
 const MIN_EXCERPT_CHARS = 40;
 
-export type CachedSummary = { brief: string; model: string; promptVersion: string };
+export type CachedSummary = { brief: string; takeaways: string[]; model: string; promptVersion: string };
 
-export type StoryBody = { kind: BodyKind; text: string; model: string | null; promptVersion: string | null };
+export type StoryBody = { kind: BodyKind; text: string; takeaways: string[]; model: string | null; promptVersion: string | null };
 
 export function canSummarize(article: ArticleSnapshot, usage: SourceUsage): boolean {
   return usage.aiProcessing && article.coverage !== "none";
@@ -26,12 +26,12 @@ export function trimExcerpt(text: string, maxChars = MAX_EXCERPT_DISPLAY_CHARS):
 /** Pick the most informative body the source's usage policy allows. Never invents text. */
 export function chooseStoryBody(article: ArticleSnapshot, usage: SourceUsage, summary: CachedSummary | null): StoryBody {
   if (summary && usage.aiProcessing) {
-    return { kind: "ai_summary", text: summary.brief, model: summary.model, promptVersion: summary.promptVersion };
+    return { kind: "ai_summary", text: summary.brief, takeaways: summary.takeaways, model: summary.model, promptVersion: summary.promptVersion };
   }
   if (usage.display === "excerpt" && article.text.length >= MIN_EXCERPT_CHARS) {
-    return { kind: "publisher_excerpt", text: trimExcerpt(article.text), model: null, promptVersion: null };
+    return { kind: "publisher_excerpt", text: trimExcerpt(article.text), takeaways: [], model: null, promptVersion: null };
   }
-  return { kind: "headline_only", text: "", model: null, promptVersion: null };
+  return { kind: "headline_only", text: "", takeaways: [], model: null, promptVersion: null };
 }
 
 export function buildEditionStories(ranked: RankedArticle[], bodies: Map<string, StoryBody>): StorySnapshot[] {
@@ -52,6 +52,8 @@ export function buildEditionStories(ranked: RankedArticle[], bodies: Map<string,
       reasons,
       body: body.text,
       bodyKind: body.kind,
+      takeaways: body.takeaways,
+      coverage: article.coverage,
       summaryModel: body.model,
       summaryPromptVersion: body.promptVersion,
     };
