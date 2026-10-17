@@ -17,3 +17,14 @@ Built for the NaSCon'26 hackathon.
 ## Status
 
 Work in progress. Setup steps and the architecture diagram will be added here.
+
+## Run locally
+
+```bash
+npm install
+cp .env.example .env.local   # fill in values; never commit
+npm run db:migrate           # apply supabase/migrations
+npm run dev                  # http://localhost:3000
+```
+
+Checks: `npm run typecheck`, `npm run lint`, `npm run build`, `npm run check:feeds`, `npm run check:db`, `npm run check:ai`. Sample PDF: `/api/pdf/sample`.

@@ -1,10 +1,25 @@
-node_modules/
-.next/
-out/
-dist/
-.env
-.env*.local
-*.log
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# next.js
+/.next/
+/out/
+/build
+/coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# env files (secrets never committed; .env.example is the template)
+.env*
+!.env.example
+
+# misc
 .DS_Store
+*.pem
+*.log
 .vercel
+
+# local scratch and generated artifacts
 tmp/

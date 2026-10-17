@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #f7f3ea;
+  --ink: #1c1a17;
+  --accent: #9a2b1f;
+  --rule: #bdb5a6;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-accent: var(--accent);
+  --color-rule: var(--rule);
+  --font-serif: var(--font-serif-display), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
