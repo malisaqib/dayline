@@ -10,6 +10,7 @@ describe("safe return paths", () => {
     assert.equal(safeReturnPath("/archive"), "/archive");
     assert.equal(safeReturnPath("/edition/abc?welcome=1"), "/edition/abc?welcome=1");
     assert.equal(safeReturnPath("/onboarding"), "/onboarding");
+    assert.equal(safeReturnPath("/reset-password"), "/reset-password");
   });
 
   it("rejects external, protocol-relative, encoded and unknown destinations", () => {

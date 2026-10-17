@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { safeReturnPath } from "@/domain/auth/return-path";
 import { PasswordForm } from "@/features/auth/PasswordForm";
+import { ResetRequestForm } from "@/features/auth/ResetForms";
 import { SignOutButton } from "@/features/auth/SignOutButton";
 import { InView, Reveal } from "@/features/shared/Reveal";
 import { ui } from "@/features/shared/ui";
@@ -110,6 +111,20 @@ function renderVisitor(next: string, notice: string | null, creating: boolean) {
   );
 }
 
+function renderReset() {
+  return renderShell(
+    <>
+      <p className={ui.eyebrow}>Reset password</p>
+      <h1 className="mt-3 font-serif text-3xl font-bold sm:text-4xl">Forgot your password?</h1>
+      <p className="mt-3 text-muted">Enter your account email and we&apos;ll send a link to set a new one. Your papers and interests stay as they are.</p>
+      <ResetRequestForm />
+      <Link href="/signin" className={`${ui.ghostButton} mt-4 -ml-4`}>
+        ← Back to sign in
+      </Link>
+    </>,
+  );
+}
+
 function renderSignedIn(account: Reader, hasProfile: boolean) {
   const action = hasProfile ? { href: "/today", label: "Open my paper" } : { href: "/onboarding", label: "Choose my topics" };
   return renderShell(
@@ -134,6 +149,9 @@ async function renderSignIn({ searchParams }: { searchParams: SearchParams }) {
   const next = safeReturnPath(first(params.next));
   const notice = pickNotice(params);
   const entry = await readReaderEntry();
+  if (entry.kind === "visitor" && first(params.mode) === "reset") {
+    return renderReset();
+  }
   if (entry.kind === "visitor") {
     return renderVisitor(next ?? "", notice, first(params.mode) === "create");
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { passwordAuth, type PasswordState } from "@/app/auth-actions";
 import { fadeUp } from "@/features/shared/motion";
@@ -64,6 +65,19 @@ function renderTabs(intent: Intent, setIntent: (next: Intent) => void) {
   );
 }
 
+function renderForgot(intent: Intent) {
+  if (intent !== "signin") {
+    return null;
+  }
+  return (
+    <p className="mt-3 text-center text-sm">
+      <Link href="/signin?mode=reset" className="font-semibold text-accent-strong underline-offset-4 hover:underline">
+        Forgot password?
+      </Link>
+    </p>
+  );
+}
+
 export function PasswordForm({ next, initialIntent = "signin" }: { next: string; initialIntent?: Intent }) {
   const [intent, setIntent] = useState<Intent>(initialIntent);
   const [state, action] = useActionState(passwordAuth, { error: null, notice: null, email: "" });
@@ -88,6 +102,7 @@ export function PasswordForm({ next, initialIntent = "signin" }: { next: string;
       </AnimatePresence>
       {renderMessage(state)}
       <PendingButton label={copy.submit} className={`${ui.primaryButton} mt-5 w-full`} />
+      {renderForgot(intent)}
     </form>
   );
 }

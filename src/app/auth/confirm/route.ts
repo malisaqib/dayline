@@ -1,10 +1,10 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
-import { safeReturnPath } from "@/domain/auth/return-path";
+import { RESET_PASSWORD_PATH, safeReturnPath } from "@/domain/auth/return-path";
 import { createReaderSupabase } from "@/server/db/supabase-server";
 import { destinationAfterSignIn } from "@/server/services/account";
 
-const LINK_TYPES = new Set<EmailOtpType>(["email", "magiclink", "signup", "email_change"]);
+const LINK_TYPES = new Set<EmailOtpType>(["email", "magiclink", "signup", "email_change", "recovery"]);
 
 function failed(request: NextRequest): NextResponse {
   return NextResponse.redirect(new URL("/signin?error=link_expired", request.url));
@@ -32,6 +32,9 @@ export async function GET(request: NextRequest) {
     }
   } else {
     return failed(request);
+  }
+  if (type === "recovery" || next === RESET_PASSWORD_PATH) {
+    return NextResponse.redirect(new URL(RESET_PASSWORD_PATH, request.url));
   }
   return NextResponse.redirect(new URL(await destinationAfterSignIn(db, next), request.url));
 }

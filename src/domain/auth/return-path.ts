@@ -1,4 +1,5 @@
-const ALLOWED_EXACT = new Set(["/today", "/archive", "/onboarding"]);
+const ALLOWED_EXACT = new Set(["/today", "/archive", "/onboarding", "/reset-password"]);
+export const RESET_PASSWORD_PATH = "/reset-password";
 const ALLOWED_PREFIX = "/edition/";
 
 export const DEFAULT_RETURN_PATH = "/today";

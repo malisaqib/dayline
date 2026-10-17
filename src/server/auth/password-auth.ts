@@ -56,3 +56,17 @@ export async function createPasswordAccount(db: SupabaseClient, email: string, p
   }
   return { needsConfirmation: !data.session };
 }
+
+export async function sendPasswordReset(db: SupabaseClient, email: string, redirectTo: string): Promise<void> {
+  const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo });
+  if (error) {
+    throw error;
+  }
+}
+
+export async function setNewPassword(db: SupabaseClient, password: string): Promise<void> {
+  const { error } = await db.auth.updateUser({ password });
+  if (error) {
+    throw error;
+  }
+}

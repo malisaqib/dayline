@@ -158,6 +158,46 @@ async function secondReader(browser: Browser, takenEmail: string, otherEditionId
   await context.close();
 }
 
+async function passwordReset(browser: Browser, email: string): Promise<void> {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(`${BASE_URL}/signin`);
+  await page.getByRole("link", { name: "Forgot password?" }).click();
+  await page.waitForURL(/mode=reset/);
+  check(await page.getByRole("heading", { name: "Forgot your password?" }).isVisible(), "Forgot password? opens the reset request form");
+
+  const { data, error } = await getSupabaseAdmin().auth.admin.generateLink({ type: "recovery", email });
+  if (error || !data.properties) {
+    throw new Error(`could not issue a recovery token: ${error?.message}`);
+  }
+  await page.goto(`${BASE_URL}/auth/confirm?token_hash=${data.properties.hashed_token}&type=recovery`);
+  check(new URL(page.url()).pathname === "/reset-password", "recovery link opens Set a new password");
+  const fresh = `pw-${randomBytes(9).toString("hex")}`;
+  await page.getByLabel("New password", { exact: true }).fill(fresh);
+  await page.getByLabel("Repeat new password").fill("does-not-match-1");
+  await page.getByRole("button", { name: "Save new password" }).click();
+  check(await page.getByText("The two passwords don't match.").waitFor({ timeout: 15_000 }).then(() => true, () => false), "mismatched passwords are refused");
+  await page.getByLabel("Repeat new password").fill(fresh);
+  await page.getByRole("button", { name: "Save new password" }).click();
+  await page.waitForURL(/\/(today|onboarding|archive)/);
+  check(true, "saving the new password continues into the paper");
+  await context.close();
+
+  const later = await (await browser.newContext()).newPage();
+  await later.goto(`${BASE_URL}/signin`);
+  await later.getByLabel("Email address").fill(email);
+  await later.getByLabel("Password").fill(fresh);
+  await later.getByRole("button", { name: "Sign in", exact: true }).click();
+  await later.waitForURL(/\/(today|onboarding|archive)/);
+  check(true, "the new password signs in on another browser");
+  await later.context().close();
+
+  const expired = await (await browser.newContext()).newPage();
+  await expired.goto(`${BASE_URL}/reset-password`);
+  check(await expired.getByRole("heading", { name: "This reset link has expired" }).isVisible(), "opening /reset-password without a valid link explains it expired");
+  await expired.context().close();
+}
+
 async function main() {
   const admin = getSupabaseAdmin();
   const sql = postgres(getDatabaseEnv().SUPABASE_DB_URL, { max: 1, onnotice: () => {} });
@@ -167,6 +207,7 @@ async function main() {
     const email = testEmail("account");
     const account = await permanentAccount(browser, email);
     await secondReader(browser, email, account.editionId);
+    await passwordReset(browser, email);
   } catch (error) {
     if (lastPage) {
       console.log(`last page: ${lastPage.url()}`);

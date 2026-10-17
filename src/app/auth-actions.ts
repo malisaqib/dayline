@@ -2,14 +2,17 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { safeReturnPath } from "@/domain/auth/return-path";
+import { RESET_PASSWORD_PATH, safeReturnPath } from "@/domain/auth/return-path";
 import {
   createPasswordAccount,
   describeAuthError,
   emailSchema,
   passwordSchema,
+  sendPasswordReset,
+  setNewPassword,
   signInWithPassword,
 } from "@/server/auth/password-auth";
+import { getVerifiedReader } from "@/server/auth/session";
 import { createReaderSupabase } from "@/server/db/supabase-server";
 import { destinationAfterSignIn } from "@/server/services/account";
 
@@ -56,6 +59,46 @@ export async function passwordAuth(_prev: PasswordState, form: FormData): Promis
     return { error: failure.message, notice: null, email: email.data };
   }
   redirect(await destinationAfterSignIn(db, next));
+}
+
+export type ResetState = { error: string | null; notice: string | null };
+
+export async function requestPasswordReset(_prev: ResetState, form: FormData): Promise<ResetState> {
+  const email = emailSchema.safeParse(String(form.get("email") ?? ""));
+  if (!email.success) {
+    return { error: "Enter a valid email address.", notice: null };
+  }
+  try {
+    await sendPasswordReset(await createReaderSupabase(), email.data, await confirmUrl(RESET_PASSWORD_PATH));
+  } catch (error) {
+    const failure = describeAuthError(error);
+    console.error("[auth] reset request failed", failure.kind);
+    if (failure.kind === "rate_limited" || failure.kind === "delivery" || failure.kind === "not_allowed") {
+      return { error: failure.message, notice: null };
+    }
+  }
+  return { error: null, notice: `If ${email.data} has a Dayline account, we've sent a link to reset the password. Open it on this device.` };
+}
+
+export async function chooseNewPassword(_prev: ResetState, form: FormData): Promise<ResetState> {
+  const password = passwordSchema.safeParse(String(form.get("password") ?? ""));
+  if (!password.success) {
+    return { error: password.error.issues[0]?.message ?? "Check your password.", notice: null };
+  }
+  if (String(form.get("confirm") ?? "") !== password.data) {
+    return { error: "The two passwords don't match.", notice: null };
+  }
+  const db = await createReaderSupabase();
+  const reader = await getVerifiedReader(db);
+  if (!reader || reader.isAnonymous) {
+    return { error: "Your reset link has expired. Request a new one from the sign-in page.", notice: null };
+  }
+  try {
+    await setNewPassword(db, password.data);
+  } catch (error) {
+    return { error: describeAuthError(error).message, notice: null };
+  }
+  redirect(await destinationAfterSignIn(db, null));
 }
 
 export async function signOut(): Promise<void> {
