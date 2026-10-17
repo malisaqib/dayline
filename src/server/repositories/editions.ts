@@ -71,7 +71,8 @@ export async function listEditions(db: SupabaseClient, page = 0): Promise<Editio
   }
   return data.map((row) => {
     const stories = editionStoriesSchema.parse(row.stories);
-    return { id: row.id, localDate: row.local_date, generatedAt: row.generated_at, leadTitle: stories[0].title, storyCount: stories.length };
+    const topics = [...new Set(stories.flatMap((s) => s.topics))];
+    return { id: row.id, localDate: row.local_date, generatedAt: row.generated_at, leadTitle: stories[0].title, storyCount: stories.length, topics };
   });
 }
 

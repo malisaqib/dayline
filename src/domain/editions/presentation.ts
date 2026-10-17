@@ -1,4 +1,5 @@
-import { bodyKindLabel, formatEditionDate, type Edition, type StorySnapshot } from "./edition";
+import { topicLabel } from "@/domain/topics";
+import { bodyKindLabel, formatEditionDate, type BodyKind, type Edition, type StorySnapshot } from "./edition";
 
 /**
  * View data shared by the web page and the PDF. Both renderers consume this one
@@ -13,10 +14,37 @@ export type PresentedStory = {
   body: string;
   takeaways: string[];
   meta: string;
+  bodyLabel: string;
+  publishedLabel: string;
+  topicLabels: string[];
+  readingMinutes: number | null;
   reasons: string[];
   sourceName: string;
   sourceUrl: string;
 };
+
+const WORDS_PER_MINUTE = 200;
+
+const SHORT_BODY_LABELS: Record<BodyKind, string> = {
+  ai_summary: "AI summary",
+  publisher_excerpt: "Publisher's excerpt",
+  headline_only: "Headline only",
+};
+
+function readingMinutes(story: StorySnapshot): number | null {
+  if (story.bodyKind === "headline_only") {
+    return null;
+  }
+  const words = [story.body, ...story.takeaways].join(" ").split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(words / WORDS_PER_MINUTE));
+}
+
+function formatPublishedTime(iso: string | null): string {
+  if (!iso) {
+    return "Date unknown";
+  }
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Karachi" }).format(new Date(iso));
+}
 
 export type PresentedEdition = {
   dateLabel: string;
@@ -40,6 +68,10 @@ function presentStory(story: StorySnapshot): PresentedStory {
     body: story.body,
     takeaways: story.takeaways,
     meta: `${bodyKindLabel(story.bodyKind, story.coverage)} · published ${formatPublished(story.publishedAt)}`,
+    bodyLabel: SHORT_BODY_LABELS[story.bodyKind],
+    publishedLabel: formatPublishedTime(story.publishedAt),
+    topicLabels: story.topics.map(topicLabel),
+    readingMinutes: readingMinutes(story),
     reasons: story.reasons,
     sourceName: story.sourceName,
     sourceUrl: story.url,

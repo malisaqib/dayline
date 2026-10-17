@@ -50,7 +50,7 @@ export type Edition = {
   stories: StorySnapshot[];
 };
 
-export type EditionSummary = Pick<Edition, "id" | "localDate" | "generatedAt"> & { leadTitle: string; storyCount: number };
+export type EditionSummary = Pick<Edition, "id" | "localDate" | "generatedAt"> & { leadTitle: string; storyCount: number; topics: string[] };
 
 /** YYYY-MM-DD for `now` in the edition timezone. */
 export function localEditionDate(now: Date, timezone = EDITION_TIMEZONE): string {

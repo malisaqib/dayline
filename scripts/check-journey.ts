@@ -103,15 +103,16 @@ async function readerJourney(browser: Browser): Promise<{ editionId: string; sto
 async function feedbackJourney(page: Page, editionId: string, stories: Story[]): Promise<void> {
   const lead = page.locator("article").first();
   await lead.getByRole("button", { name: "Less like this" }).click();
-  await lead.getByText(/^Saved/).waitFor({ timeout: 30_000 });
-  const message = await lead.getByText(/^Saved/).innerText();
-  check(/weaker/.test(message), `feedback confirms a weaker preference ("${message.split(".")[0]}")`);
+  const confirmation = lead.getByText(/in future papers|already at its/);
+  await confirmation.waitFor({ timeout: 30_000 });
+  const message = await confirmation.innerText();
+  check(/less often/.test(message), `feedback explains the weaker preference ("${message.split(".")[0]}")`);
 
   await page.reload();
   check(JSON.stringify(await readStories(page)) === JSON.stringify(stories), "saved edition keeps the same stories and order after feedback");
   const pressed = await page.locator("article").first().getByRole("button", { name: "Less like this" }).getAttribute("aria-pressed");
   check(pressed === "true", "the chosen signal is shown as selected after reload");
-  check((await page.getByText("showing less").count()) > 0, "preferences panel shows a topic as 'showing less'");
+  check((await page.locator('[data-weight="less"]').count()) > 0, "learning card shows a topic as 'Less'");
 
   await page.goto(`${BASE_URL}/edition/${editionId}/preview`);
   const preview = await readStories(page);
