@@ -77,7 +77,8 @@ async function routing(browser: Browser): Promise<void> {
 }
 
 async function permanentAccount(browser: Browser, email: string): Promise<{ id: string; editionId: string }> {
-  const created = await getSupabaseAdmin().auth.admin.createUser({ email, email_confirm: true });
+  const password = `pw-${randomBytes(9).toString("hex")}`;
+  const created = await getSupabaseAdmin().auth.admin.createUser({ email, password, email_confirm: true });
   if (!created.data.user) {
     throw new Error(`could not create the test account: ${created.error?.message}`);
   }
@@ -85,8 +86,17 @@ async function permanentAccount(browser: Browser, email: string): Promise<{ id: 
   cleanupIds.push(id);
   const first = await browser.newContext();
   const page = await first.newPage();
+  await page.goto(`${BASE_URL}/signin?next=/archive`);
+  await page.getByLabel("Email address").fill(email);
+  await page.getByLabel("Password").fill("wrong-password-123");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.locator("form p[role=alert]").waitFor();
+  check(/don't match/.test((await page.locator("form p[role=alert]").textContent()) ?? ""), "wrong password is refused with a clear message");
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.waitForURL(/\/onboarding/);
+  check(true, "password sign-in for a new account without topics -> /onboarding");
   const link = await inboxLinkFor(email);
-  check((await confirm(page, link, "magiclink", "/archive")) === "/onboarding", "new account without topics -> /onboarding");
   const editionId = await onboard(page, ["space", "technology"]);
   check((await sessionUser(page))?.id === id, "edition made under the permanent account");
   await page.reload();

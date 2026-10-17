@@ -33,14 +33,45 @@ function cardClass(checked: boolean, locked: boolean): string {
   return locked ? CARD_LOCKED : CARD_OFF;
 }
 
+const STEP_NAMES = ["What you follow", "Review and create"];
+
+function stepClass(index: number, step: number): string {
+  if (index + 1 === step) {
+    return "border-accent bg-accent text-night";
+  }
+  if (index + 1 < step) {
+    return "border-accent text-accent";
+  }
+  return "border-rule text-muted";
+}
+
+function currentStep(index: number, step: number): "step" | undefined {
+  if (index + 1 === step) {
+    return "step";
+  }
+  return undefined;
+}
+
+function nameClass(index: number, step: number): string {
+  if (index + 1 === step) {
+    return "font-semibold";
+  }
+  return "text-muted";
+}
+
 function renderProgress(step: number) {
   const width = `${(step / TOTAL_STEPS) * 100}%`;
   return (
     <div className="mb-6">
-      <p className={ui.meta}>
-        Step {step} of {TOTAL_STEPS}
-      </p>
-      <div className="mt-2 h-1 rounded-full bg-rule" aria-hidden="true">
+      <ol className="flex flex-wrap items-center gap-x-4 gap-y-2" aria-label={`Step ${step} of ${TOTAL_STEPS}`}>
+        {STEP_NAMES.map((name, index) => (
+          <li key={name} className="flex items-center gap-2 text-sm" aria-current={currentStep(index, step)}>
+            <span className={`grid size-7 place-items-center rounded-full border text-xs font-bold transition-colors duration-[300ms] ${stepClass(index, step)}`}>{index + 1}</span>
+            <span className={nameClass(index, step)}>{name}</span>
+          </li>
+        ))}
+      </ol>
+      <div className="mt-3 h-1 rounded-full bg-rule" aria-hidden="true">
         <div className="h-1 rounded-full bg-accent transition-[width] duration-[300ms]" style={{ width }} />
       </div>
     </div>
