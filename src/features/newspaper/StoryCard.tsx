@@ -35,11 +35,57 @@ function renderTakeaways(story: PresentedStory) {
     return null;
   }
   return (
-    <ul className="mt-3 space-y-1.5 border-l-2 border-accent/40 pl-4 text-[15px]">
-      {story.takeaways.map((item) => (
-        <li key={item}>{item}</li>
-      ))}
-    </ul>
+    <div className="mt-3 border-l-2 border-accent/40 pl-4">
+      <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-muted">What happened</h3>
+      <ul className="mt-1 list-disc space-y-1.5 pl-4 text-[15px]">
+        {story.takeaways.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function capitalise(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function whyRows(story: PresentedStory): { label: string; value: string }[] {
+  const [match, recency] = story.reasons;
+  const rows: { label: string; value: string }[] = [];
+  if (match) {
+    rows.push({ label: "Topic", value: match.replace(/ \((boosted|reduced) by your feedback\)/g, "") });
+  }
+  if (recency) {
+    rows.push({ label: "Recency", value: `${capitalise(recency)} when this paper was made` });
+  }
+  rows.push({ label: "Source", value: `${story.sourceName} (${story.bodyLabel.toLowerCase()})` });
+  if (match && /boosted by your feedback/.test(match)) {
+    rows.push({ label: "Personalization", value: "Ranked higher because you asked for more like this topic" });
+  }
+  if (match && /reduced by your feedback/.test(match)) {
+    rows.push({ label: "Personalization", value: "Ranked lower because you asked for less like this topic" });
+  }
+  return rows;
+}
+
+function renderWhy(story: PresentedStory) {
+  return (
+    <details className="group mt-3 border-t border-rule pt-1">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-semibold">
+        <span aria-hidden="true" className="transition-transform duration-[185ms] group-open:rotate-90">
+          ›
+        </span>
+        Why this story?
+      </summary>
+      <ul className="space-y-1 pb-2 pl-5 text-sm">
+        {whyRows(story).map((row) => (
+          <li key={row.label}>
+            <span className="font-semibold">{row.label}:</span> <span className="text-muted">{row.value}</span>
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
 
@@ -98,15 +144,7 @@ export function StoryCard({ story, position, footer }: StoryCardProps) {
           <span className="sr-only">(opens {story.sourceName} in a new tab)</span>
         </a>
       </div>
-      <details className="group mt-3 border-t border-rule pt-1">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-semibold">
-          <span aria-hidden="true" className="transition-transform duration-[185ms] group-open:rotate-90">
-            ›
-          </span>
-          Why you&apos;re seeing this
-        </summary>
-        <p className="pb-1 pl-5 text-sm text-muted">{story.reasons.join(" · ")}</p>
-      </details>
+      {renderWhy(story)}
       {footer}
     </article>
   );

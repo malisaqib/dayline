@@ -2,6 +2,18 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
+## Signal Brief (UI). VERIFIED locally
+- A Signal Brief at the top of the edition page:
+  - "Today in 5 minutes": story count, reading time from saved bodies, date.
+  - "Top signal": the rank-1 story, its first sentence only, source and time, "Read the top signal".
+  - "Your focus": the highest-ranked story for the reader's strongest-weighted topic. It skips the top signal and near-duplicate headlines. Shows "Selected because it matches your <Topic> interest."
+  - "Internet pulse": labelled CISA, HN and GDACS stories not already shown, hidden when there are none.
+  - "Reading progress": stories that have entered the viewport, shown as a progressbar. Also in the sticky desktop rail.
+- Story cards: "Why this story?" lists Topic, Recency, Source and Personalization (only when feedback changed the weight). Takeaways sit under "What happened". "Why it matters" and "What to watch" are omitted because no such field exists; inventing them would misrepresent the data.
+- `buildSignalBrief` (`src/domain/editions/signal-brief.ts`) is pure: no network, no AI, no migration.
+- Fixed on the way: `router.refresh()` inside the feedback transition never committed on the larger page, leaving "Saving…" forever. Feedback now uses an explicit pending flag. The action returns the new weights, and the learning card (`LearningChips`) updates instantly from a browser event, with no refresh needed.
+- Checks: `npm test` 45 of 45 (7 Signal Brief tests). Typecheck, lint and build pass. Local journey PASSED. PDF parity 5 of 5 (PDF code unchanged). Rendering pages made 0 model calls (the server log shows generation only for new readers, `modelCalls:0`). No horizontal overflow at 390px.
+
 ## Phase 4: Firecrawl "Follow your curiosity". NOT BUILT (evaluation threshold failed, 2026-10-17)
 - Threshold: at least 2 of 3 queries must return 3 or more useful results within the 96 h freshness limit. Result: **0 of 3**.
 - Method: `POST /v2/search` with `sources:["news"]`, `limit:10`, `safe:true`, `highlights:false`. No Agent, Scrape or Crawl. Key never printed.

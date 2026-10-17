@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { presentEdition, type PresentedStory } from "@/domain/editions/presentation";
+import { presentEdition, type PresentedEdition, type PresentedStory } from "@/domain/editions/presentation";
+import { buildSignalBrief } from "@/domain/editions/signal-brief";
 import { FeedbackControls } from "@/features/feedback/FeedbackControls";
 import { PreferencesPanel } from "@/features/feedback/PreferencesPanel";
 import { EditionView } from "@/features/newspaper/EditionView";
+import { SignalBrief } from "@/features/newspaper/SignalBrief";
 import { ui } from "@/features/shared/ui";
 import { readOwnEditionWithContext, type EditionContext } from "@/server/services/read-edition";
 
@@ -48,6 +50,16 @@ function renderActions(editionId: string) {
   );
 }
 
+function renderBrief(presented: PresentedEdition, context: EditionContext) {
+  const topics = context.profile ? context.profile.topics : context.edition.profile.topics;
+  const weights = context.profile ? context.profile.weights : {};
+  const brief = buildSignalBrief(presented.stories, topics, weights);
+  if (!brief) {
+    return null;
+  }
+  return <SignalBrief brief={brief} dateLabel={presented.dateLabel} />;
+}
+
 function renderRail(context: EditionContext) {
   if (!context.profile) {
     return null;
@@ -62,16 +74,18 @@ export default async function EditionPage({ params, searchParams }: { params: Pr
     notFound();
   }
   const { edition, signals } = context;
+  const presented = presentEdition(edition);
   const footer = (story: PresentedStory) => (
     <FeedbackControls editionId={edition.id} articleHash={story.id} topicLabels={story.topicLabels} initial={signals[story.id] ?? null} />
   );
 
   return (
     <EditionView
-      edition={presentEdition(edition)}
+      edition={presented}
       eyebrow="Your morning paper"
       actions={renderActions(edition.id)}
       notices={renderNotices(query)}
+      brief={renderBrief(presented, context)}
       storyFooter={footer}
       rail={renderRail(context)}
     />

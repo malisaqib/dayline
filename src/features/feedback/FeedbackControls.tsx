@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { submitFeedback, type FeedbackActionResult } from "@/app/actions";
+import { WEIGHTS_EVENT } from "./LearningChips";
 
 type Signal = "more" | "less";
 
@@ -74,27 +74,25 @@ function renderStatus(pending: boolean, message: string | null, error: string | 
 }
 
 export function FeedbackControls({ editionId, articleHash, topicLabels, initial }: FeedbackControlsProps) {
-  const router = useRouter();
   const [selected, setSelected] = useState<Signal | null>(initial);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
 
-  function send(signal: Signal) {
+  async function send(signal: Signal) {
     if (pending || signal === selected) {
       return;
     }
     setError(null);
-    startTransition(async () => {
-      const result = await submitFeedback({ editionId, articleHash, signal });
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      setSelected(signal);
-      setMessage(describeResult(result, signal, topicLabels));
-      router.refresh();
-    });
+    setPending(true);
+    const result = await submitFeedback({ editionId, articleHash, signal }).finally(() => setPending(false));
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setSelected(signal);
+    setMessage(describeResult(result, signal, topicLabels));
+    window.dispatchEvent(new CustomEvent(WEIGHTS_EVENT, { detail: result.weights }));
   }
 
   const buttons = BUTTONS.map(({ signal, label }) => {

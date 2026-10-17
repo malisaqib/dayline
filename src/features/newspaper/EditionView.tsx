@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { PresentedEdition, PresentedStory } from "@/domain/editions/presentation";
 import { ui } from "@/features/shared/ui";
+import { ReadingProgress } from "./ReadingProgress";
 import { StoryCard } from "./StoryCard";
 
 type StoryFooter = (story: PresentedStory) => ReactNode;
@@ -10,6 +11,7 @@ type EditionViewProps = {
   eyebrow: string;
   actions: ReactNode;
   notices?: ReactNode;
+  brief?: ReactNode;
   storyFooter: StoryFooter;
   rail?: ReactNode;
 };
@@ -25,7 +27,10 @@ function renderIndex(stories: PresentedStory[]) {
   return (
     <nav aria-label="In this paper" className={`${ui.card} hidden p-5 lg:block`}>
       <h2 className="font-serif text-lg font-bold">In this paper</h2>
-      <ol className="mt-3 space-y-2">
+      <div className="mt-3">
+        <ReadingProgress total={stories.length} />
+      </div>
+      <ol className="mt-4 space-y-2">
         {stories.map((story, index) => (
           <li key={story.id} className="flex gap-3 text-sm">
             <span className="w-5 shrink-0 font-serif font-bold text-accent" aria-hidden="true">
@@ -41,7 +46,7 @@ function renderIndex(stories: PresentedStory[]) {
   );
 }
 
-export function EditionView({ edition, eyebrow, actions, notices, storyFooter, rail }: EditionViewProps) {
+export function EditionView({ edition, eyebrow, actions, notices, brief, storyFooter, rail }: EditionViewProps) {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] lg:gap-8">
       <div className="min-w-0 space-y-4">
@@ -56,6 +61,7 @@ export function EditionView({ edition, eyebrow, actions, notices, storyFooter, r
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">{actions}</div>
         </header>
         {notices}
+        {brief}
         <ol className="space-y-4" aria-label="Stories">
           {edition.stories.map((story, index) => (
             <li key={story.id}>

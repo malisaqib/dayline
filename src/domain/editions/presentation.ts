@@ -1,4 +1,4 @@
-import { topicLabel } from "@/domain/topics";
+import { topicLabel, type TopicId } from "@/domain/topics";
 import { bodyKindLabel, formatEditionDate, type BodyKind, type Edition, type StorySnapshot } from "./edition";
 
 /**
@@ -17,6 +17,7 @@ export type PresentedStory = {
   bodyLabel: string;
   publishedLabel: string;
   topicLabels: string[];
+  topics: TopicId[];
   readingMinutes: number | null;
   reasons: string[];
   sourceName: string;
@@ -71,6 +72,7 @@ function presentStory(story: StorySnapshot): PresentedStory {
     bodyLabel: SHORT_BODY_LABELS[story.bodyKind],
     publishedLabel: formatPublishedTime(story.publishedAt),
     topicLabels: story.topics.map(topicLabel),
+    topics: story.topics,
     readingMinutes: readingMinutes(story),
     reasons: story.reasons,
     sourceName: story.sourceName,

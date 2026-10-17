@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import type { TopicWeights } from "@/domain/personalization/weights";
 import { profileTopicsSchema } from "@/domain/topics";
 import { ensureReader, getVerifiedReader } from "@/server/auth/session";
 import { createReaderSupabase } from "@/server/db/supabase-server";
@@ -71,7 +72,7 @@ export async function openTodaysEdition(): Promise<ActionState> {
 }
 
 export type FeedbackActionResult =
-  | { ok: true; changes: { label: string; direction: "stronger" | "weaker" }[] }
+  | { ok: true; changes: { label: string; direction: "stronger" | "weaker" }[]; weights: TopicWeights }
   | { ok: false; error: string };
 
 export async function submitFeedback(input: unknown): Promise<FeedbackActionResult> {
@@ -86,7 +87,7 @@ export async function submitFeedback(input: unknown): Promise<FeedbackActionResu
   }
   try {
     const result = await recordFeedback(db, reader, parsed.data);
-    return { ok: true, changes: result.changes.map(({ label, direction }) => ({ label, direction })) };
+    return { ok: true, changes: result.changes.map(({ label, direction }) => ({ label, direction })), weights: result.weights };
   } catch (error) {
     if (error instanceof FeedbackError) {
       return { ok: false, error: error.message };
