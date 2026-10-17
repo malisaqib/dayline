@@ -6,5 +6,6 @@ export const dynamic = "force-dynamic";
 export function GET() {
   const status = getConfigStatus();
   const ok = Object.values(status).every((group) => group.valid);
-  return Response.json({ ok, config: status }, { status: ok ? 200 : 503, headers: { "Cache-Control": "no-store" } });
+  const deployment = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "local";
+  return Response.json({ ok, deployment, config: status }, { status: ok ? 200 : 503, headers: { "Cache-Control": "no-store" } });
 }

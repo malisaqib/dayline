@@ -56,24 +56,29 @@ export const getSupabaseSecretEnv = () => readGroup("Supabase (secret)", supabas
 export const getOpenRouterEnv = () => readGroup("OpenRouter", openRouterEnvSchema, process.env);
 export const getDatabaseEnv = () => readGroup("Database", databaseEnvSchema, process.env);
 
-type GroupStatus = { valid: boolean; invalidFields: string[] };
+type GroupStatus = { valid: boolean; invalidFields: string[]; missingFields: string[] };
 
-function statusOf(attempt: () => unknown): GroupStatus {
+function statusOf(attempt: () => unknown, values: Record<string, string | undefined>): GroupStatus {
   try {
     attempt();
-    return { valid: true, invalidFields: [] };
+    return { valid: true, invalidFields: [], missingFields: [] };
   } catch (error) {
     const fields = error instanceof MissingConfigError ? (error.message.split(": ")[1]?.split(", ") ?? []) : ["unknown"];
-    return { valid: false, invalidFields: fields };
+    // "missing" = unset or empty; "invalid" = set but failing validation. Values are never reported.
+    const missing = fields.filter((f) => !values[f]);
+    return { valid: false, invalidFields: fields.filter((f) => !missing.includes(f)), missingFields: missing };
   }
 }
 
 /** Runtime config health for /api/health: names of invalid fields only, never values. */
 export function getConfigStatus(): Record<string, GroupStatus> {
   return {
-    supabasePublic: statusOf(getPublicSupabaseEnv),
-    supabaseSecret: statusOf(getSupabaseSecretEnv),
-    openRouter: statusOf(getOpenRouterEnv),
+    supabasePublic: statusOf(getPublicSupabaseEnv, {
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    }),
+    supabaseSecret: statusOf(getSupabaseSecretEnv, process.env),
+    openRouter: statusOf(getOpenRouterEnv, process.env),
   };
 }
 
