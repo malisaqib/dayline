@@ -14,7 +14,9 @@
     "check:ai": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/check-ai.ts",
     "test": "tsx --tsconfig tsconfig.json --test tests/*.test.ts",
     "check:flow": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/check-flow.ts",
-    "check:journey": "tsx --tsconfig tsconfig.json scripts/check-journey.ts"
+    "check:journey": "tsx --tsconfig tsconfig.json scripts/check-journey.ts",
+    "check:daily": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/check-daily.ts",
+    "check:scheduled": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/check-scheduled.ts"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.9.0",

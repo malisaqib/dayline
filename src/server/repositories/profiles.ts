@@ -37,3 +37,19 @@ export async function saveTopicWeights(db: SupabaseClient, userId: string, weigh
     throw new Error(`save topic weights: ${error.message}`);
   }
 }
+
+/**
+ * System-only (secret client): one page of reader ids for the daily job, keyset-paginated
+ * by user_id so pages stay stable while editions are being written.
+ */
+export async function listProfileUserIds(db: SupabaseClient, afterUserId: string | null, limit: number): Promise<string[]> {
+  let query = db.from("profiles").select("user_id").order("user_id").limit(limit);
+  if (afterUserId) {
+    query = query.gt("user_id", afterUserId);
+  }
+  const { data, error } = await query;
+  if (error) {
+    throw new Error(`list profiles: ${error.message}`);
+  }
+  return data.map((row) => row.user_id as string);
+}

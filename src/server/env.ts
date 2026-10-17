@@ -26,6 +26,11 @@ const openRouterEnvSchema = z.object({
     .transform((value) => value?.trim() || DEFAULT_OPENROUTER_MODEL),
 });
 
+// Shared with Supabase Cron, which sends it as a bearer token to /api/internal/daily-editions.
+const cronEnvSchema = z.object({
+  CRON_SECRET: z.string().min(32),
+});
+
 const databaseEnvSchema = z.object({
   SUPABASE_DB_URL: z.string().startsWith("postgres"),
 });
@@ -55,6 +60,7 @@ export const getPublicSupabaseEnv = () =>
 export const getSupabaseSecretEnv = () => readGroup("Supabase (secret)", supabaseSecretSchema, process.env);
 export const getOpenRouterEnv = () => readGroup("OpenRouter", openRouterEnvSchema, process.env);
 export const getDatabaseEnv = () => readGroup("Database", databaseEnvSchema, process.env);
+export const getCronEnv = () => readGroup("Cron", cronEnvSchema, process.env);
 
 type GroupStatus = { valid: boolean; invalidFields: string[]; missingFields: string[] };
 
@@ -79,6 +85,7 @@ export function getConfigStatus(): Record<string, GroupStatus> {
     }),
     supabaseSecret: statusOf(getSupabaseSecretEnv, process.env),
     openRouter: statusOf(getOpenRouterEnv, process.env),
+    cron: statusOf(getCronEnv, process.env),
   };
 }
 

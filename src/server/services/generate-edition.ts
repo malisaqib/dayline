@@ -11,7 +11,7 @@ import { findEditionByDate, insertEditionIfAbsent } from "@/server/repositories/
 import { findProfile } from "@/server/repositories/profiles";
 import { findCachedSummaries, insertSummary, type SummaryKey } from "@/server/repositories/summaries";
 import { usageFor } from "@/server/sources/catalog";
-import { fetchArticlePool } from "@/server/sources/pool";
+import { fetchArticlePool, type ArticlePool } from "@/server/sources/pool";
 
 const SUMMARY_CONCURRENCY = 3;
 
@@ -74,12 +74,23 @@ async function resolveSummaries(admin: SupabaseClient, articles: ArticleSnapshot
   return summaries;
 }
 
+export type GenerationOptions = {
+  now?: Date;
+  /** Supplies the article pool; the daily job passes a shared, memoised loader so feeds are fetched once per run. */
+  loadPool?: () => Promise<ArticlePool>;
+};
+
 /**
  * Returns the reader's edition for today (Asia/Karachi), generating it once if absent.
- * Reads go through the reader's RLS-scoped client; shared writes use the secret client
- * only after the reader has been verified by the caller.
+ * Every read is filtered by `reader.id`. Reader requests pass the reader's RLS-scoped
+ * client; only the server-side daily job passes the secret client, with ids it loaded
+ * itself. Shared writes always use the secret client.
  */
-export async function getOrCreateDailyEdition(readerDb: SupabaseClient, reader: Reader, now = new Date()): Promise<GenerationResult> {
+export async function getOrCreateDailyEdition(
+  readerDb: SupabaseClient,
+  reader: Reader,
+  { now = new Date(), loadPool = fetchArticlePool }: GenerationOptions = {},
+): Promise<GenerationResult> {
   const started = Date.now();
   const localDate = localEditionDate(now);
   const stats: GenerationStats = { reused: true, durationMs: 0, poolSize: 0, failedSources: [], summaryCacheHits: 0, modelCalls: 0, modelFailures: 0 };
@@ -94,7 +105,7 @@ export async function getOrCreateDailyEdition(readerDb: SupabaseClient, reader: 
     throw new GenerationError("no_profile", "Choose your topics before generating a paper.");
   }
 
-  const pool = await fetchArticlePool();
+  const pool = await loadPool();
   stats.reused = false;
   stats.poolSize = pool.articles.length;
   stats.failedSources = pool.failedSources.map((f) => f.sourceId);
