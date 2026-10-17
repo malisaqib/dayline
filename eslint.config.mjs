@@ -18,6 +18,8 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // Git-ignored local scratch and generated evidence.
+      "tmp/**",
     ],
   },
 ];

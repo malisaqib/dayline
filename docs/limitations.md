@@ -1,0 +1,9 @@
+# Known limitations
+
+- **Dawn from Vercel:** Dawn's feed returns HTTP 403 to Vercel's servers (APP did too, and is disabled). Generation continues without it. In production, Pakistan stories come mainly from Geo News. `/api/health?sources=1` shows per-source status from the host.
+- **Gemini fallback:** AI summaries come from OpenRouter `google/gemini-3.8-flash`. It occasionally returns invalid JSON even in strict mode. There is one retry, and after that the story shows the labelled publisher excerpt. Only NASA is cleared for AI processing, so many papers contain no AI summaries.
+- **Reuse rights vary:** NASA and CISA are US government works. NPR, Ars Technica, BBC, Dawn, Geo News, ScienceDaily and GDACS terms are **unverified**; we show only the feed's own excerpt or official alert text, with attribution and the original link. Hacker News is headline and link only. Some publishers (e.g. Ars Technica) block automated link checks.
+- **Firecrawl rejected:** "Follow your curiosity" via Firecrawl Search was evaluated (6 requests, 8 credits). Results were relevant but weeks to months old, and **0 of 3** queries had any result within the 96-hour freshness window, so it was not integrated.
+- **Schedule and timezone:** the daily run is fixed at 06:00 Asia/Karachi (01:00 UTC), and edition dates use that timezone for every reader. A run must finish within Vercel's 300 s limit (about 5–8 s for ~30 readers today), and there is no automatic retry; on-demand generation fills any gap.
+- **Personalisation scope:** topics are assigned per source, not per article, and weights are per topic only (no entities or free text). Anonymous sessions are tied to one browser; there is no cross-device account recovery.
+- **PDF:** rendered on request from the saved snapshot, not stored. The content can't drift, but every download renders it again.
