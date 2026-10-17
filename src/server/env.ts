@@ -56,6 +56,27 @@ export const getSupabaseSecretEnv = () => readGroup("Supabase (secret)", supabas
 export const getOpenRouterEnv = () => readGroup("OpenRouter", openRouterEnvSchema, process.env);
 export const getDatabaseEnv = () => readGroup("Database", databaseEnvSchema, process.env);
 
+type GroupStatus = { valid: boolean; invalidFields: string[] };
+
+function statusOf(attempt: () => unknown): GroupStatus {
+  try {
+    attempt();
+    return { valid: true, invalidFields: [] };
+  } catch (error) {
+    const fields = error instanceof MissingConfigError ? (error.message.split(": ")[1]?.split(", ") ?? []) : ["unknown"];
+    return { valid: false, invalidFields: fields };
+  }
+}
+
+/** Runtime config health for /api/health: names of invalid fields only, never values. */
+export function getConfigStatus(): Record<string, GroupStatus> {
+  return {
+    supabasePublic: statusOf(getPublicSupabaseEnv),
+    supabaseSecret: statusOf(getSupabaseSecretEnv),
+    openRouter: statusOf(getOpenRouterEnv),
+  };
+}
+
 export function isAiConfigured(): boolean {
   return openRouterEnvSchema.safeParse(process.env).success;
 }
