@@ -13,7 +13,8 @@
     "check:db": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/check-supabase.ts",
     "check:ai": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/check-ai.ts",
     "test": "tsx --tsconfig tsconfig.json --test tests/*.test.ts",
-    "check:flow": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/check-flow.ts"
+    "check:flow": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/check-flow.ts",
+    "check:journey": "tsx --tsconfig tsconfig.json scripts/check-journey.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",
@@ -35,6 +36,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.28",
+    "playwright": "^1.64.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5"

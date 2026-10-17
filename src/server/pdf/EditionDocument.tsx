@@ -1,4 +1,7 @@
-import { Document, Link, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Document, Font, Link, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+
+// Never split words with hyphens: broken headlines read badly and the PDF text must match the web text.
+Font.registerHyphenationCallback((word) => [word]);
 
 export type PrintStory = {
   headline: string;
