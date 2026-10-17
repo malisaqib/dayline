@@ -86,7 +86,7 @@ describe("presentEdition", () => {
       timezone: "Asia/Karachi",
       generatedAt: NOW.toISOString(),
       sourcesFetchedAt: NOW.toISOString(),
-      profile: { topics: ["space"] },
+      profile: { topics: ["space"], interests: [] },
       stories: buildEditionStories(ranked, bodies),
       todayInThree: [],
     };

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import type { TopicWeights } from "@/domain/personalization/weights";
+import { interestsSchema } from "@/domain/interests";
 import { profileTopicsSchema } from "@/domain/topics";
 import { ensureReader, getVerifiedReader } from "@/server/auth/session";
 import { createReaderSupabase } from "@/server/db/supabase-server";
@@ -51,6 +52,10 @@ export async function completeOnboarding(_prev: ActionState, form: FormData): Pr
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Choose between one and three topics." };
   }
+  const interests = interestsSchema.safeParse(form.getAll("interests").map(String));
+  if (!interests.success) {
+    return { error: interests.error.issues[0]?.message ?? "One of your interests could not be saved." };
+  }
   const supported = supportedTopicIds();
   if (!parsed.data.every((t) => supported.has(t))) {
     return { error: "One of the chosen topics is not available." };
@@ -59,7 +64,7 @@ export async function completeOnboarding(_prev: ActionState, form: FormData): Pr
   const db = await createReaderSupabase();
   try {
     const reader = await ensureReader(db);
-    await saveProfile(db, reader.id, parsed.data, await weightsForTopics(db, reader, parsed.data));
+    await saveProfile(db, reader.id, parsed.data, await weightsForTopics(db, reader, parsed.data), interests.data);
   } catch (error) {
     console.error("[onboarding] failed", error);
     return { error: "We couldn't save your topics. Please try again." };

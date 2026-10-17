@@ -7,13 +7,14 @@ import { GenerationProgress } from "@/features/shared/GenerationProgress";
 import { fadeUp } from "@/features/shared/motion";
 import { PendingButton } from "@/features/shared/PendingButton";
 import { SpotlightCard } from "@/features/shared/SpotlightCard";
+import { InterestChips, InterestPicker } from "./InterestPicker";
 import { TopicIcon } from "./TopicIcon";
 import { ui } from "@/features/shared/ui";
 import { WHAT_YOU_GET } from "./topic-copy";
 
 export type TopicOption = { id: string; label: string; description: string };
 
-type TopicFormProps = { topics: TopicOption[]; selected: string[]; maxTopics: number; isReturning: boolean };
+type TopicFormProps = { topics: TopicOption[]; selected: string[]; interests: string[]; maxTopics: number; isReturning: boolean };
 
 const INITIAL: ActionState = { error: null };
 const TOTAL_STEPS = 2;
@@ -61,15 +62,11 @@ function renderError(state: ActionState) {
   );
 }
 
-function renderSelectionHint(count: number, max: number) {
+function renderSelectionHint(count: number) {
   if (count === 0) {
     return <p className={ui.meta}>Choose at least one topic to continue.</p>;
   }
-  return (
-    <p className={ui.meta}>
-      {count} of {max} chosen
-    </p>
-  );
+  return <p className={ui.meta}>{count} chosen</p>;
 }
 
 function renderChosen(topics: TopicOption[], chosen: string[]) {
@@ -88,13 +85,14 @@ function renderReturningNote(isReturning: boolean) {
   if (!isReturning) {
     return null;
   }
-  return <p className={ui.meta}>Today&apos;s paper stays as published. New topics shape your next paper.</p>;
+  return <p className={ui.meta}>Today&apos;s paper stays as published. New topics and interests shape your next paper; preview it from today&apos;s paper.</p>;
 }
 
-export function TopicForm({ topics, selected, maxTopics, isReturning }: TopicFormProps) {
+export function TopicForm({ topics, selected, interests: savedInterests, maxTopics, isReturning }: TopicFormProps) {
   const [state, action] = useActionState(completeOnboarding, INITIAL);
   const [step, setStep] = useState(1);
   const [chosen, setChosen] = useState<string[]>(selected);
+  const [interests, setInterests] = useState<string[]>(savedInterests);
   const submitLabel = isReturning ? "Save topics and open today's paper" : "Create my first paper";
 
   function toggle(id: string) {
@@ -123,16 +121,34 @@ export function TopicForm({ topics, selected, maxTopics, isReturning }: TopicFor
   function renderChooseStep() {
     return (
       <fieldset>
-        <legend className="font-serif text-2xl font-bold">Pick up to {maxTopics} topics</legend>
+        <legend className="font-serif text-2xl font-bold">What would you like to follow?</legend>
+        <p className={`${ui.meta} mt-1`}>Choose any of the {maxTopics} topics. A paper has about six stories, so not every topic appears every day.</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">{topics.map(renderTopicCard)}</div>
+        <div className="mt-5">
+          <InterestPicker interests={interests} onChange={setInterests} />
+        </div>
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <button type="button" className={ui.primaryButton} disabled={chosen.length === 0} onClick={() => setStep(2)}>
             Continue
           </button>
-          {renderSelectionHint(chosen.length, maxTopics)}
+          {renderSelectionHint(chosen.length)}
         </div>
         {renderChosen(topics, chosen)}
       </fieldset>
+    );
+  }
+
+  function renderInterestReview() {
+    if (interests.length === 0) {
+      return null;
+    }
+    return (
+      <div className="mt-4">
+        <InterestChips interests={interests} onRemove={(interest) => setInterests(interests.filter((i) => i !== interest))} />
+        <p className={`${ui.meta} mt-2`}>
+          Interests appear only when a fresh story actually mentions them. When none does, Dayline says so and fills the paper from your topics.
+        </p>
+      </div>
     );
   }
 
@@ -140,7 +156,7 @@ export function TopicForm({ topics, selected, maxTopics, isReturning }: TopicFor
     const labels = topics.filter((t) => chosen.includes(t.id));
     return (
       <div>
-        <h2 className="font-serif text-2xl font-bold">Here&apos;s your paper</h2>
+        <h2 className="font-serif text-2xl font-bold">Your morning paper</h2>
         <p className="mt-2 text-sm text-muted">Every morning at 06:00 Pakistan time you&apos;ll get:</p>
         <ul className="mt-4 space-y-2 text-[15px]">
           {WHAT_YOU_GET.map((item) => (
@@ -152,14 +168,21 @@ export function TopicForm({ topics, selected, maxTopics, isReturning }: TopicFor
             </li>
           ))}
         </ul>
-        <div className="mt-5 flex flex-wrap gap-2" aria-label="Chosen topics">
+        <ul className="mt-5 flex flex-wrap gap-2" aria-label="Chosen topics">
           {labels.map((t) => (
-            <span key={t.id} className={ui.chip}>
+            <li key={t.id} className={`${ui.chip} py-0 pr-0`}>
               <input type="hidden" name="topics" value={t.id} />
               {t.label}
-            </span>
+              <button type="button" onClick={() => toggle(t.id)} disabled={labels.length === 1} className="grid size-8 place-items-center rounded-full text-muted hover:text-ink disabled:opacity-30" aria-label={`Remove ${t.label}`}>
+                ×
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
+        {interests.map((interest) => (
+          <input key={interest} type="hidden" name="interests" value={interest} />
+        ))}
+        {renderInterestReview()}
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <PendingButton label={submitLabel} />
           <button type="button" className={ui.secondaryButton} onClick={() => setStep(1)}>

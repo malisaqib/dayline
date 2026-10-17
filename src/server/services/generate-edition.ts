@@ -163,7 +163,7 @@ export async function getOrCreateDailyEdition(
   }
 
   const [signals, events] = await Promise.all([listSignals(readerDb, reader.id), listReadingEvents(readerDb, reader.id)]);
-  const ranked = rankArticles(pool.articles, profile.weights, now, MAX_EDITION_STORIES, personalSignals(signals, events));
+  const ranked = rankArticles(pool.articles, profile.weights, now, MAX_EDITION_STORIES, personalSignals(signals, events), profile.interests);
   if (ranked.length === 0) {
     throw new GenerationError("no_matches", "No recent stories match your topics yet. Try adding another topic.");
   }
@@ -191,7 +191,7 @@ export async function getOrCreateDailyEdition(
     localDate,
     timezone: EDITION_TIMEZONE,
     sourcesFetchedAt: pool.fetchedAt,
-    profile: { topics: profile.topics, weights: profile.weights },
+    profile: { topics: profile.topics, weights: profile.weights, interests: profile.interests },
     stories,
     todayInThree: await resolveTodayInThree(stories, stats),
   });

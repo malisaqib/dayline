@@ -15,7 +15,7 @@ export type TopicId = (typeof TOPICS)[number]["id"];
 const topicIds = TOPICS.map((t) => t.id) as [TopicId, ...TopicId[]];
 export const topicIdSchema = z.enum(topicIds);
 
-export const MAX_PROFILE_TOPICS = 3;
+export const MAX_PROFILE_TOPICS = TOPICS.length;
 
 export const profileTopicsSchema = z
   .array(topicIdSchema)

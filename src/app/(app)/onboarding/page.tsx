@@ -47,7 +47,7 @@ export default async function OnboardingPage() {
         </ol>
       </section>
       <section aria-label="Choose topics">
-        <TopicForm topics={topics} selected={selected} maxTopics={MAX_PROFILE_TOPICS} isReturning={profile !== null} />
+        <TopicForm topics={topics} selected={selected} interests={profile ? profile.interests : []} maxTopics={MAX_PROFILE_TOPICS} isReturning={profile !== null} />
       </section>
     </div>
   );

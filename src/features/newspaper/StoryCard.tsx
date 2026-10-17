@@ -59,9 +59,42 @@ function extraReasonLabel(reason: string): string {
   return "Selection";
 }
 
+const INTEREST_PREFIX = "Matches your interest in ";
+
+function interestReasons(story: PresentedStory): string[] {
+  return story.reasons.filter((reason) => reason.startsWith(INTEREST_PREFIX));
+}
+
+function topicReason(reasons: string[]): string | undefined {
+  const first = reasons[0];
+  if (first && first.startsWith("Matches your ")) {
+    return first;
+  }
+  return undefined;
+}
+
+function renderInterestBadges(story: PresentedStory) {
+  const reasons = interestReasons(story);
+  if (reasons.length === 0) {
+    return null;
+  }
+  return (
+    <span className="mt-3 flex flex-wrap gap-1.5">
+      {reasons.map((reason) => (
+        <span key={reason} className="rounded-full border border-accent/40 bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent-strong">
+          {reason}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function whyRows(story: PresentedStory): { label: string; value: string }[] {
-  const [match, recency, ...extra] = story.reasons;
-  const rows: { label: string; value: string }[] = [];
+  const interests = interestReasons(story);
+  const rest = story.reasons.filter((reason) => !interests.includes(reason));
+  const match = topicReason(rest);
+  const [recency, ...extra] = rest.slice(match ? 1 : 0);
+  const rows: { label: string; value: string }[] = interests.map((reason) => ({ label: "Interest", value: reason }));
   if (match) {
     rows.push({ label: "Topic", value: match.replace(/ \((boosted|reduced) by your feedback\)/g, "") });
   }
@@ -132,6 +165,7 @@ export function StoryCard({ story, position, footer }: StoryCardProps) {
         </span>
       </div>
       {renderKicker(story)}
+      {renderInterestBadges(story)}
       <h2 className={`mt-3 font-serif font-bold leading-snug ${headlineSize}`}>
         <TrackedLink href={story.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-accent-strong hover:underline">
           {story.headline}

@@ -1,5 +1,6 @@
 import type { ArticleSnapshot } from "@/domain/articles/article";
 import { areSameStory, titleTokens } from "@/domain/articles/similarity";
+import { interestReason, matchInterests } from "@/domain/interests";
 import { topicLabel, type TopicId } from "@/domain/topics";
 import { BEHAVIOR_POLICY, EMPTY_PERSONAL_SIGNALS, type PersonalSignals } from "./behavior";
 import { describeWeight, WEIGHT_POLICY, type TopicWeights } from "./weights";
@@ -9,6 +10,7 @@ export const FRESHNESS_HALF_LIFE_HOURS = 24;
 export const MAX_AGE_HOURS = 96;
 export const MAX_STORIES_PER_SOURCE = 2;
 export const MAX_STORIES_PER_SOURCE_RELAXED = 3;
+export const INTEREST_BOOST = 0.15;
 const SOURCES_FOR_FULL_COVERAGE_SCORE = 3;
 
 export type RankableArticle = ArticleSnapshot & { topics: TopicId[] };
@@ -17,6 +19,7 @@ export type RankedArticle = {
   article: RankableArticle;
   score: number;
   matchedTopics: TopicId[];
+  matchedInterests: string[];
   reasons: string[];
   sourceCount: number;
   importance: number;
@@ -33,6 +36,7 @@ export type ScoreInput = {
   sourceName?: string;
   url?: string;
   articleHash?: string;
+  matchedInterests?: string[];
 };
 
 const AFFINITY_REASON_THRESHOLD = 0.04;
@@ -101,9 +105,32 @@ function personalAdjustment(item: ScoreInput, personal: PersonalSignals): { delt
   return { delta: affinity - penalty, reasons };
 }
 
+function topicStrength(matchedTopics: TopicId[], weights: TopicWeights, interestOnly: boolean): number {
+  if (matchedTopics.length === 0 && interestOnly) {
+    return WEIGHT_POLICY.baseline;
+  }
+  return Math.max(0, ...matchedTopics.map((t) => weights[t] ?? 0));
+}
+
+function interestBoost(interests: string[]): number {
+  if (interests.length === 0) {
+    return 0;
+  }
+  return INTEREST_BOOST;
+}
+
+function matchReasons(matchedTopics: TopicId[], weights: TopicWeights, interests: string[]): string[] {
+  const reasons = interests.map(interestReason);
+  if (matchedTopics.length > 0) {
+    reasons.push(describeMatch(matchedTopics, weights));
+  }
+  return reasons;
+}
+
 export function scoreItem(item: ScoreInput, weights: TopicWeights, now: Date, personal: PersonalSignals = EMPTY_PERSONAL_SIGNALS): ScoredItem {
   const matchedTopics = item.topics.filter((t) => weights[t] !== undefined);
-  const strongest = Math.max(0, ...matchedTopics.map((t) => weights[t] ?? 0));
+  const interests = item.matchedInterests ?? [];
+  const strongest = topicStrength(matchedTopics, weights, interests.length > 0);
   const hours = ageHours(item.publishedAt, now);
   const sourceCount = item.sourceCount ?? 1;
   const importance = Math.max(item.importance ?? 0, coverageImportance(sourceCount));
@@ -112,8 +139,9 @@ export function scoreItem(item: ScoreInput, weights: TopicWeights, now: Date, pe
     RANKING_WEIGHTS.topic * (strongest / WEIGHT_POLICY.max) +
     RANKING_WEIGHTS.freshness * freshnessScore(hours) +
     RANKING_WEIGHTS.importance * importance +
+    interestBoost(interests) +
     adjustment.delta;
-  const reasons = [describeMatch(matchedTopics, weights), describeAge(hours)];
+  const reasons = [...matchReasons(matchedTopics, weights, interests), describeAge(hours)];
   if (sourceCount > 1) {
     reasons.push(`Covered by ${sourceCount} sources`);
   }
@@ -147,15 +175,16 @@ function isFresh(article: RankableArticle, now: Date): boolean {
   return hours !== null && hours <= MAX_AGE_HOURS;
 }
 
-function bestOfCluster(cluster: Cluster, weights: TopicWeights, now: Date, personal: PersonalSignals): RankedArticle | null {
+function bestOfCluster(cluster: Cluster, weights: TopicWeights, now: Date, personal: PersonalSignals, interests: string[]): RankedArticle | null {
   const sourceCount = cluster.sources.size;
   const ranked = cluster.members
     .map((article) => {
-      const scored = scoreItem({ ...article, sourceCount, articleHash: article.contentHash }, weights, now, personal);
+      const matchedInterests = matchInterests(`${article.title} ${article.text}`, interests);
+      const scored = scoreItem({ ...article, sourceCount, articleHash: article.contentHash, matchedInterests }, weights, now, personal);
       const importance = Math.max(article.importance ?? 0, coverageImportance(sourceCount));
-      return { article, ...scored, sourceCount, importance };
+      return { article, ...scored, matchedInterests, sourceCount, importance };
     })
-    .filter((r) => r.matchedTopics.length > 0)
+    .filter((r) => r.matchedTopics.length > 0 || r.matchedInterests.length > 0)
     .sort((a, b) => b.score - a.score || a.article.contentHash.localeCompare(b.article.contentHash));
   return ranked[0] ?? null;
 }
@@ -195,20 +224,35 @@ function seedEachTopic(candidates: RankedArticle[], picked: RankedArticle[], wei
   }
 }
 
+function seedEachInterest(candidates: RankedArticle[], picked: RankedArticle[], interests: string[], limit: number): void {
+  for (const interest of interests) {
+    if (picked.length >= limit || picked.some((p) => p.matchedInterests.includes(interest))) {
+      continue;
+    }
+    const usedBySource = (sourceId: string) => picked.filter((p) => p.article.sourceId === sourceId).length;
+    const best = candidates.find((c) => c.matchedInterests.includes(interest) && !picked.includes(c) && usedBySource(c.article.sourceId) < MAX_STORIES_PER_SOURCE);
+    if (best) {
+      picked.push(best);
+    }
+  }
+}
+
 export function rankArticles(
   articles: RankableArticle[],
   weights: TopicWeights,
   now: Date,
   limit: number,
   personal: PersonalSignals = EMPTY_PERSONAL_SIGNALS,
+  interests: string[] = [],
 ): RankedArticle[] {
   const clusters = clusterArticles(articles.filter((a) => isFresh(a, now)));
   const candidates = clusters
-    .map((cluster) => bestOfCluster(cluster, weights, now, personal))
+    .map((cluster) => bestOfCluster(cluster, weights, now, personal, interests))
     .filter((r): r is RankedArticle => r !== null)
     .sort((a, b) => b.score - a.score || a.article.contentHash.localeCompare(b.article.contentHash));
 
   const picked: RankedArticle[] = [];
+  seedEachInterest(candidates, picked, interests, limit);
   seedEachTopic(candidates, picked, weights, limit);
   pickWithCap(candidates, picked, MAX_STORIES_PER_SOURCE, limit, false);
   if (picked.length < limit) {

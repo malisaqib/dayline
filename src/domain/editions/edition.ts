@@ -38,7 +38,11 @@ export type StorySnapshot = z.infer<typeof storySnapshotSchema>;
 export const editionStoriesSchema = z.array(storySnapshotSchema).min(1).max(MAX_EDITION_STORIES);
 
 // `weights` were added in Phase 2; older snapshots only have topics.
-export const profileSnapshotSchema = z.object({ topics: z.array(topicIdSchema), weights: z.partialRecord(topicIdSchema, z.number()).optional() });
+export const profileSnapshotSchema = z.object({
+  topics: z.array(topicIdSchema),
+  weights: z.partialRecord(topicIdSchema, z.number()).optional(),
+  interests: z.array(z.string()).default([]),
+});
 export type ProfileSnapshot = z.infer<typeof profileSnapshotSchema>;
 
 export type Edition = {

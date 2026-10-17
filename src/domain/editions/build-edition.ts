@@ -48,6 +48,13 @@ export function chooseStoryBody(article: ArticleSnapshot, usage: SourceUsage, su
   return { kind: "headline_only", text: "", takeaways: [], model: null, promptVersion: null };
 }
 
+function storyTopics(matchedTopics: RankedArticle["matchedTopics"], articleTopics: RankedArticle["matchedTopics"]): RankedArticle["matchedTopics"] {
+  if (matchedTopics.length > 0) {
+    return matchedTopics;
+  }
+  return articleTopics;
+}
+
 export function buildEditionStories(ranked: RankedArticle[], bodies: Map<string, StoryBody>): StorySnapshot[] {
   return ranked.map(({ article, matchedTopics, reasons, sourceCount, importance }) => {
     const body = bodies.get(article.contentHash);
@@ -62,7 +69,7 @@ export function buildEditionStories(ranked: RankedArticle[], bodies: Map<string,
       url: article.url,
       publishedAt: article.publishedAt,
       fetchedAt: article.fetchedAt,
-      topics: matchedTopics,
+      topics: storyTopics(matchedTopics, article.topics),
       reasons,
       body: body.text,
       bodyKind: body.kind,

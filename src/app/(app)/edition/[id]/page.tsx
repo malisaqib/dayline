@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { presentEdition, type PresentedEdition, type PresentedStory } from "@/domain/editions/presentation";
 import { buildSignalBrief } from "@/domain/editions/signal-brief";
+import { interestsWithoutCoverage } from "@/domain/interests";
+import type { Edition } from "@/domain/editions/edition";
 import { FeedbackControls } from "@/features/feedback/FeedbackControls";
 import { storyWrapper } from "@/features/feedback/story-wrapper";
 import { PreferencesPanel } from "@/features/feedback/PreferencesPanel";
@@ -14,8 +16,17 @@ export const dynamic = "force-dynamic";
 
 type SearchParams = { welcome?: string; sources?: string };
 
-function renderNotices(params: SearchParams) {
+function renderNotices(params: SearchParams, edition: Edition) {
   const notices = [];
+  const uncovered = interestsWithoutCoverage(edition.profile.interests, edition.stories.map((story) => story.reasons));
+  if (uncovered.length > 0) {
+    notices.push(
+      <div key="interests" role="status" className="rounded-xl border border-rule bg-card px-4 py-3 text-sm">
+        <p className="font-semibold">No fresh story mentioned {uncovered.map((i) => `“${i}”`).join(", ")} today.</p>
+        <p className="text-muted">This paper is filled from your other topics and interests. Dayline checks again with every new paper.</p>
+      </div>,
+    );
+  }
   if (params.welcome === "1") {
     notices.push(
       <div key="welcome" role="status" className="animate-toast rounded-xl border border-accent/30 bg-accent-soft px-4 py-3">
@@ -85,7 +96,7 @@ export default async function EditionPage({ params, searchParams }: { params: Pr
       edition={presented}
       eyebrow="Your morning paper"
       actions={renderActions(edition.id)}
-      notices={renderNotices(query)}
+      notices={renderNotices(query, edition)}
       brief={renderBrief(presented, context)}
       storyFooter={footer}
       storyWrapper={storyWrapper(context.edition.id, context.reading)}
