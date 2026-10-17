@@ -44,7 +44,7 @@ async function signInFreshReader(page: Page): Promise<void> {
   createdReaders.push(created.data.user.id);
   await page.goto(`${BASE_URL}/signin`);
   await page.getByLabel("Email address").fill(email);
-  await page.getByLabel("Password").fill(password);
+  await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL(/\/onboarding/);
 }
