@@ -2,6 +2,20 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
+## Content quality: final verification (deployment 7a5dec9)
+- **Local:**
+  - `npm test` 61 of 61; typecheck, lint and build pass.
+  - `check:feeds`: all enabled sources pass, including BBC/NPR world feeds.
+  - `check:ai`: full, excerpt and Today in three all valid; hedges and denials preserved.
+  - `check:flow` 19 of 19.
+  - `check:journey` PASSED (onboarding, More/Less, preview, Skip, Undo, Read original, archive, PDF, isolation). PDF parity 5 of 5.
+  - `check:scheduled` PASSED (76 readers: created 1, then 0 on rerun).
+  - 0px overflow at 390px.
+- **Production** (https://dayline-swart.vercel.app/):
+  - `/api/health` ok. BBC World (27) and NPR World (10) reachable from Vercel; Dawn still 403 (non-fatal).
+  - Journey PASSED; PDF parity 5 of 5.
+  - `check:scheduled` PASSED: 78 readers, run 1 created 1 / reused 77, run 2 created 0 / reused 78, failed 0, durations 19.5 s and 11.8 s.
+
 ## Content quality 3: skip and behavioural learning (feat: learn from skips and reading behavior)
 - **Migration 0008 (applied):**
   - `reading_events`: one row per reader + edition + story + kind (`open` or `skip`). It stores the URL, source and topics copied from the owned snapshot.
