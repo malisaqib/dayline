@@ -9,6 +9,7 @@ import {
   SUMMARY_MIN_WORDS,
   parseArticleSummary,
   parseExcerptSummary,
+  verifySummary,
   type ArticleSummary,
   type SummaryParseResult,
 } from "@/domain/articles/summary";
@@ -16,7 +17,7 @@ import { MAX_EXCERPT_FOR_AI_CHARS, trimExcerpt } from "@/domain/editions/build-e
 import { getOpenRouterEnv, isAiConfigured } from "@/server/env";
 import { completeJson, OpenRouterError, type JsonCompletion, type JsonCompletionRequest } from "./openrouter-client";
 
-export const SUMMARY_PROMPT_VERSION = "brief-v2-openrouter";
+export const SUMMARY_PROMPT_VERSION = "brief-v3-evidence";
 
 const TEMPERATURE = 0.1;
 const MAX_OUTPUT_TOKENS = 1500;
@@ -140,12 +141,12 @@ export function summarizeArticle(article: ArticleSnapshot, complete: JsonComplet
       maxTokens: MAX_OUTPUT_TOKENS,
       mode: "strict",
     },
-    parseArticleSummary,
+    (raw) => verifySummary(parseArticleSummary(raw), `${article.title} ${article.text}`),
     complete,
   );
 }
 
-export const EXCERPT_PROMPT_VERSION = "excerpt-v2";
+export const EXCERPT_PROMPT_VERSION = "excerpt-v3-evidence";
 
 const EXCERPT_JSON_SCHEMA = {
   type: "object",
@@ -193,7 +194,7 @@ export function summarizeExcerpt(article: ArticleSnapshot, complete: JsonComplet
       maxTokens: MAX_OUTPUT_TOKENS,
       mode: "strict",
     },
-    parseExcerptSummary,
+    (raw) => verifySummary(parseExcerptSummary(raw), `${article.title} ${trimExcerpt(article.text, MAX_EXCERPT_FOR_AI_CHARS)}`),
     complete,
   );
 }

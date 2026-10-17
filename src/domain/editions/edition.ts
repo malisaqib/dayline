@@ -54,7 +54,7 @@ export type Edition = {
   sourcesFetchedAt: string;
   profile: ProfileSnapshot;
   stories: StorySnapshot[];
-  todayInThree: { articleHash: string; sentence: string }[];
+  todayInThree: { articleHash: string; sentence: string; kind: "ai" | "quote" }[];
 };
 
 export type EditionSummary = Pick<Edition, "id" | "localDate" | "generatedAt"> & { leadTitle: string; storyCount: number; topics: string[] };

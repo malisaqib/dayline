@@ -19,6 +19,7 @@ function completer(responses: { content: string; finishReason?: string }[]) {
   return { complete, requests };
 }
 
+const FAITHFUL = "Officials confirmed the bridge reopened after repairs to its main span, so the bridge reopened after repairs.";
 const words = (n: number) => Array.from({ length: n }, (_, i) => `word${i}`).join(" ");
 const EXCERPT = `${"Officials confirmed the bridge reopened after repairs to its main span. ".repeat(30)}`;
 
@@ -44,7 +45,7 @@ describe("summary eligibility", () => {
 
 describe("excerpt summaries", () => {
   it("sends only the headline and a bounded excerpt, and accepts valid output", async () => {
-    const { complete, requests } = completer([{ content: JSON.stringify({ summary: words(20), takeaways: [] }) }]);
+    const { complete, requests } = completer([{ content: JSON.stringify({ summary: FAITHFUL, takeaways: [] }) }]);
     const result = await summarizeExcerpt(article("npr", EXCERPT), complete);
     assert.equal(result.attempts, 1);
     const excerpt = requests[0].user.match(/<excerpt>([\s\S]*)<\/excerpt>/)?.[1] ?? "";
@@ -52,11 +53,19 @@ describe("excerpt summaries", () => {
     assert.match(requests[0].user, /<title>Bridge reopens after repairs<\/title>/);
   });
 
+  it("rejects a summary that changes a number from the excerpt", async () => {
+    const changed = completer([
+      { content: JSON.stringify({ summary: "Officials confirmed the bridge reopened after 40 days of repairs to its main span.", takeaways: [] }) },
+      { content: JSON.stringify({ summary: "Officials confirmed the bridge reopened after 40 days of repairs to its main span.", takeaways: [] }) },
+    ]);
+    await assert.rejects(summarizeExcerpt(article("npr", EXCERPT), changed.complete), SummaryUnavailableError);
+  });
+
   it("retries once on invalid or truncated output, then gives up so the excerpt is used", async () => {
-    const retried = completer([{ content: "{not json" }, { content: JSON.stringify({ summary: words(20), takeaways: [] }) }]);
+    const retried = completer([{ content: "{not json" }, { content: JSON.stringify({ summary: FAITHFUL, takeaways: [] }) }]);
     assert.equal((await summarizeExcerpt(article("npr", EXCERPT), retried.complete)).attempts, 2);
 
-    const failing = completer([{ content: JSON.stringify({ summary: words(20), takeaways: [] }), finishReason: "length" }, { content: JSON.stringify({ summary: words(3), takeaways: [] }) }]);
+    const failing = completer([{ content: JSON.stringify({ summary: FAITHFUL, takeaways: [] }), finishReason: "length" }, { content: JSON.stringify({ summary: words(3), takeaways: [] }) }]);
     await assert.rejects(summarizeExcerpt(article("npr", EXCERPT), failing.complete), SummaryUnavailableError);
   });
 });
@@ -91,6 +100,8 @@ const STORIES = [
   story(4, "", "headline_only"),
 ];
 
+const SOURCES = new Map(STORIES.map((s) => [s.articleHash, { text: s.body, modelAllowed: s.bodyKind !== "headline_only" }]));
+
 describe("today in three", () => {
   it("keeps three distinct, grounded items that reference real stories", async () => {
     const { complete } = completer([
@@ -104,7 +115,7 @@ describe("today in three", () => {
         }),
       },
     ]);
-    const items = await buildTodayInThree(STORIES, complete);
+    const items = await buildTodayInThree(STORIES, SOURCES, complete);
     assert.deepEqual(items.map((i) => i.articleHash), [STORIES[0], STORIES[1], STORIES[2]].map((s) => s.articleHash));
   });
 
@@ -120,7 +131,7 @@ describe("today in three", () => {
         }),
       },
     ]);
-    const items = await buildTodayInThree(STORIES, complete);
+    const items = await buildTodayInThree(STORIES, SOURCES, complete);
     assert.equal(items.length, 1);
 
     const invented = completer([
@@ -133,15 +144,30 @@ describe("today in three", () => {
         }),
       },
     ]);
-    assert.deepEqual(await buildTodayInThree(STORIES, invented.complete), []);
+    const fallback = await buildTodayInThree(STORIES, SOURCES, invented.complete);
+    assert.deepEqual(
+      fallback.map((i) => [i.kind, i.sentence]),
+      [["quote", "The council approved a new library budget after a long debate."]],
+      "an unsupported claim is replaced by the publisher's own sentence, never padded",
+    );
+  });
+
+  it("never sends text from sources whose policy forbids AI processing", async () => {
+    const policy = new Map(STORIES.map((s, i) => [s.articleHash, { text: s.body, modelAllowed: i !== 1 }]));
+    const capture = completer([{ content: JSON.stringify({ items: [] }) }]);
+    await buildTodayInThree(STORIES, policy, capture.complete);
+    const payload = capture.requests[0].user;
+    assert.ok(payload.includes("bridge reopened"));
+    assert.ok(!payload.includes("library budget"), "the forbidden story's text is not in the model input");
+    assert.ok(!payload.includes('number="2"'));
   });
 
   it("makes no call without suitable stories and fails cleanly after one retry", async () => {
     const none = completer([]);
-    assert.deepEqual(await buildTodayInThree([STORIES[3]], none.complete), []);
+    assert.deepEqual(await buildTodayInThree([STORIES[3]], SOURCES, none.complete), []);
     assert.equal(none.requests.length, 0);
 
     const broken = completer([{ content: "nope" }, { content: "still nope" }]);
-    await assert.rejects(buildTodayInThree(STORIES, broken.complete), TodayInThreeUnavailableError);
+    await assert.rejects(buildTodayInThree(STORIES, SOURCES, broken.complete), TodayInThreeUnavailableError);
   });
 });

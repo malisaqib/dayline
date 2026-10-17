@@ -1,7 +1,7 @@
 import { countWords } from "@/domain/articles/summary";
 import { summaryMode } from "@/domain/editions/build-edition";
 import { EXCERPT_PROMPT_VERSION, summarizeArticle, summarizeExcerpt, summaryModelId, SUMMARY_PROMPT_VERSION } from "@/server/ai/summarize";
-import { buildTodayInThree, TODAY_IN_THREE_PROMPT_VERSION } from "@/server/ai/today-in-three";
+import { buildTodayInThree, highlightSources, TODAY_IN_THREE_PROMPT_VERSION } from "@/server/ai/today-in-three";
 import { sourceById } from "@/server/sources/catalog";
 import { fetchFeed } from "@/server/sources/rss";
 
@@ -82,7 +82,7 @@ async function checkExcerptAndHighlights() {
     summaryModel: null,
     summaryPromptVersion: null,
   }));
-  const highlights = await buildTodayInThree(stories);
+  const highlights = await buildTodayInThree(stories, highlightSources(eligible));
   console.log(`\n=== today in three (${TODAY_IN_THREE_PROMPT_VERSION}) from ${stories.length} live stories ===`);
   for (const h of highlights) {
     const n = stories.findIndex((s) => s.articleHash === h.articleHash) + 1;

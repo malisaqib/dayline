@@ -64,8 +64,8 @@ describe("signal brief", () => {
 
   it("links today-in-three items to their stories and skips unknown references", () => {
     const brief = buildSignalBrief(STORIES, [], {}, [
-      { articleHash: "c", sentence: "A grounded line about story c." },
-      { articleHash: "missing", sentence: "Refers to nothing in this paper." },
+      { articleHash: "c", sentence: "A grounded line about story c.", kind: "ai" },
+      { articleHash: "missing", sentence: "Refers to nothing in this paper.", kind: "ai" },
     ]);
     assert.deepEqual(brief?.todayInThree.map((i) => [i.position, i.story.id]), [[3, "c"]]);
   });

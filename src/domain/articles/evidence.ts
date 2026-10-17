@@ -1,5 +1,7 @@
 export type EvidenceCheck = { ok: true } | { ok: false; reason: string };
 
+const SENTENCE_SPLIT = /(?<=[.!?])\s+(?=[A-Z0-9“"])/;
+
 const NEGATIONS = ["not", "no", "never", "none", "without", "cannot", "can't", "won't", "didn't", "doesn't", "isn't", "wasn't", "aren't"];
 const DENIALS = ["deny", "denies", "denied", "denial", "rejects", "rejected", "refutes", "refuted", "disputes", "disputed"];
 const ALLEGATION_HEDGES = ["alleged", "allegedly", "allegation", "allegations", "accused", "suspected", "reportedly", "purportedly", "unconfirmed"];
@@ -21,6 +23,20 @@ function numbers(text: string): string[] {
   return found.map((n) => n.replace(/,/g, ""));
 }
 
+function closestSentence(claim: string, source: string): string {
+  const claimWords = new Set(words(claim));
+  let best = source;
+  let bestShared = -1;
+  for (const sentence of source.split(SENTENCE_SPLIT)) {
+    const shared = words(sentence).filter((word) => claimWords.has(word)).length;
+    if (shared > bestShared) {
+      best = sentence;
+      bestShared = shared;
+    }
+  }
+  return best;
+}
+
 function hasAny(tokens: Set<string>, list: string[]): boolean {
   return list.some((word) => tokens.has(word));
 }
@@ -32,7 +48,7 @@ export function checkClaim(claim: string, source: string): EvidenceCheck {
     return { ok: false, reason: `numbers not in the source: ${missing.join(", ")}` };
   }
   const claimWords = new Set(words(claim));
-  const sourceWords = new Set(words(source));
+  const sourceWords = new Set(words(closestSentence(claim, source)));
   if (hasAny(claimWords, NEGATIONS) && !hasAny(sourceWords, NEGATIONS) && !hasAny(sourceWords, DENIALS)) {
     return { ok: false, reason: "adds a negation the source does not contain" };
   }
@@ -47,8 +63,6 @@ export function checkClaim(claim: string, source: string): EvidenceCheck {
   }
   return { ok: true };
 }
-
-const SENTENCE_SPLIT = /(?<=[.!?])\s+(?=[A-Z0-9“"])/;
 
 export function extractiveSentence(source: string, minWords: number, maxWords: number): string | null {
   for (const sentence of source.split(SENTENCE_SPLIT)) {

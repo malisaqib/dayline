@@ -14,7 +14,7 @@ import {
   SummaryUnavailableError,
   type SummaryResult,
 } from "@/server/ai/summarize";
-import { buildTodayInThree, TodayInThreeUnavailableError } from "@/server/ai/today-in-three";
+import { buildTodayInThree, highlightSources, TodayInThreeUnavailableError } from "@/server/ai/today-in-three";
 import type { Reader } from "@/server/auth/session";
 import { getSupabaseAdmin } from "@/server/db/supabase-admin";
 import { insertArticleSnapshots } from "@/server/repositories/articles";
@@ -104,13 +104,13 @@ async function resolveSummaries(admin: SupabaseClient, jobs: SummaryJob[], stats
   return summaries;
 }
 
-async function resolveTodayInThree(stories: StorySnapshot[], stats: GenerationStats): Promise<Highlight[]> {
+async function resolveTodayInThree(stories: StorySnapshot[], articles: ArticleSnapshot[], stats: GenerationStats): Promise<Highlight[]> {
   if (!isSummarizerConfigured()) {
     return [];
   }
   stats.modelCalls += 1;
   try {
-    const items = await buildTodayInThree(stories);
+    const items = await buildTodayInThree(stories, highlightSources(articles));
     stats.todayInThree = items.length;
     return items;
   } catch (error) {
@@ -193,7 +193,7 @@ export async function getOrCreateDailyEdition(
     sourcesFetchedAt: pool.fetchedAt,
     profile: { topics: profile.topics, weights: profile.weights, interests: profile.interests },
     stories,
-    todayInThree: await resolveTodayInThree(stories, stats),
+    todayInThree: await resolveTodayInThree(stories, chosen, stats),
   });
 
   // Re-read through the reader's client: if a concurrent request won the insert, this returns its edition.

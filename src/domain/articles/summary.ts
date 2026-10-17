@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { checkClaim } from "./evidence";
 
 export const SUMMARY_MIN_WORDS = 60;
 export const SUMMARY_MAX_WORDS = 100;
@@ -61,4 +62,20 @@ function parseWith(raw: string, schema: z.ZodType<ArticleSummary>): SummaryParse
     return { ok: false, reason: parsed.error.issues.map((i) => `${i.path.join(".") || "root"}: ${i.message}`).join("; ") };
   }
   return { ok: true, value: parsed.data };
+}
+
+const CLAIM_SPLIT = /(?<=[.!?])\s+/;
+
+export function verifySummary(result: SummaryParseResult, source: string): SummaryParseResult {
+  if (!result.ok) {
+    return result;
+  }
+  for (const sentence of result.value.summary.split(CLAIM_SPLIT)) {
+    const check = checkClaim(sentence, source);
+    if (!check.ok) {
+      return { ok: false, reason: `summary not supported by the source: ${check.reason}` };
+    }
+  }
+  const takeaways = result.value.takeaways.filter((takeaway) => checkClaim(takeaway, source).ok);
+  return { ok: true, value: { ...result.value, takeaways } };
 }

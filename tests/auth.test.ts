@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { AuthError } from "@supabase/supabase-js";
 import { isPrivatePath, safeReturnPath } from "@/domain/auth/return-path";
-import { describeAuthError } from "@/server/auth/email-otp";
+import { describeAuthError } from "@/server/auth/password-auth";
 
 describe("safe return paths", () => {
   it("accepts Dayline reader routes with their query", () => {
