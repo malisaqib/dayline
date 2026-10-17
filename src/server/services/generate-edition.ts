@@ -1,9 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ArticleSnapshot } from "@/domain/articles/article";
-import { buildEditionStories, canSummarize, chooseStoryBody, type CachedSummary, type StoryBody } from "@/domain/editions/build-edition";
-import { EDITION_TIMEZONE, MAX_EDITION_STORIES, localEditionDate, type Edition } from "@/domain/editions/edition";
+import { buildEditionStories, chooseStoryBody, summaryMode, type CachedSummary, type StoryBody, type SummaryMode } from "@/domain/editions/build-edition";
+import { EDITION_TIMEZONE, MAX_EDITION_STORIES, localEditionDate, type Edition, type StorySnapshot } from "@/domain/editions/edition";
+import type { Highlight } from "@/domain/editions/today-in-three";
 import { rankArticles } from "@/domain/personalization/rank";
-import { isSummarizerConfigured, summarizeArticle, summaryModelId, SUMMARY_PROMPT_VERSION, SummaryUnavailableError } from "@/server/ai/summarize";
+import {
+  EXCERPT_PROMPT_VERSION,
+  isSummarizerConfigured,
+  summarizeArticle,
+  summarizeExcerpt,
+  summaryModelId,
+  SUMMARY_PROMPT_VERSION,
+  SummaryUnavailableError,
+  type SummaryResult,
+} from "@/server/ai/summarize";
+import { buildTodayInThree, TodayInThreeUnavailableError } from "@/server/ai/today-in-three";
 import type { Reader } from "@/server/auth/session";
 import { getSupabaseAdmin } from "@/server/db/supabase-admin";
 import { insertArticleSnapshots } from "@/server/repositories/articles";
@@ -33,6 +44,7 @@ export type GenerationStats = {
   summaryCacheHits: number;
   modelCalls: number;
   modelFailures: number;
+  todayInThree: number;
 };
 
 export type GenerationResult = { edition: Edition; stats: GenerationStats };
@@ -47,31 +59,65 @@ async function mapWithConcurrency<T>(items: T[], limit: number, worker: (item: T
   await Promise.all(runners);
 }
 
-async function resolveSummaries(admin: SupabaseClient, articles: ArticleSnapshot[], stats: GenerationStats): Promise<Map<string, CachedSummary>> {
-  if (articles.length === 0 || !isSummarizerConfigured()) {
-    return new Map();
-  }
-  const key: SummaryKey = { model: summaryModelId(), promptVersion: SUMMARY_PROMPT_VERSION };
-  const summaries = await findCachedSummaries(admin, articles.map((a) => a.contentHash), key);
-  stats.summaryCacheHits = summaries.size;
+type SummaryJob = { article: ArticleSnapshot; mode: SummaryMode };
 
-  const missing = articles.filter((a) => !summaries.has(a.contentHash));
-  await mapWithConcurrency(missing, SUMMARY_CONCURRENCY, async (article) => {
-    stats.modelCalls += 1;
-    try {
-      const result = await summarizeArticle(article);
-      await insertSummary(admin, article.contentHash, key, { brief: result.summary, takeaways: result.takeaways }, result);
-      summaries.set(article.contentHash, { brief: result.summary, takeaways: result.takeaways, ...key });
-    } catch (error) {
-      if (!(error instanceof SummaryUnavailableError)) {
-        throw error;
-      }
-      // Fall back to the publisher excerpt for this story; the edition still generates.
-      stats.modelFailures += 1;
-      console.warn(`[generate] ${error.message} (article ${article.contentHash.slice(0, 12)})`);
+const SUMMARIZERS: Record<SummaryMode, { promptVersion: string; run: (article: ArticleSnapshot) => Promise<SummaryResult> }> = {
+  full: { promptVersion: SUMMARY_PROMPT_VERSION, run: (article) => summarizeArticle(article) },
+  excerpt: { promptVersion: EXCERPT_PROMPT_VERSION, run: (article) => summarizeExcerpt(article) },
+};
+
+async function resolveSummaries(admin: SupabaseClient, jobs: SummaryJob[], stats: GenerationStats): Promise<Map<string, CachedSummary>> {
+  const summaries = new Map<string, CachedSummary>();
+  if (jobs.length === 0 || !isSummarizerConfigured()) {
+    return summaries;
+  }
+  for (const mode of Object.keys(SUMMARIZERS) as SummaryMode[]) {
+    const articles = jobs.filter((job) => job.mode === mode).map((job) => job.article);
+    if (articles.length === 0) {
+      continue;
     }
-  });
+    const { promptVersion, run } = SUMMARIZERS[mode];
+    const key: SummaryKey = { model: summaryModelId(), promptVersion };
+    const cached = await findCachedSummaries(admin, articles.map((a) => a.contentHash), key);
+    cached.forEach((value, hash) => summaries.set(hash, value));
+    stats.summaryCacheHits += cached.size;
+
+    const missing = articles.filter((a) => !cached.has(a.contentHash));
+    await mapWithConcurrency(missing, SUMMARY_CONCURRENCY, async (article) => {
+      stats.modelCalls += 1;
+      try {
+        const result = await run(article);
+        await insertSummary(admin, article.contentHash, key, { brief: result.summary, takeaways: result.takeaways }, result);
+        summaries.set(article.contentHash, { brief: result.summary, takeaways: result.takeaways, ...key });
+      } catch (error) {
+        if (!(error instanceof SummaryUnavailableError)) {
+          throw error;
+        }
+        stats.modelFailures += 1;
+        console.warn(`[generate] ${error.message} (article ${article.contentHash.slice(0, 12)})`);
+      }
+    });
+  }
   return summaries;
+}
+
+async function resolveTodayInThree(stories: StorySnapshot[], stats: GenerationStats): Promise<Highlight[]> {
+  if (!isSummarizerConfigured()) {
+    return [];
+  }
+  stats.modelCalls += 1;
+  try {
+    const items = await buildTodayInThree(stories);
+    stats.todayInThree = items.length;
+    return items;
+  } catch (error) {
+    if (!(error instanceof TodayInThreeUnavailableError)) {
+      throw error;
+    }
+    stats.modelFailures += 1;
+    console.warn(`[generate] ${error.message}`);
+    return [];
+  }
 }
 
 export type GenerationOptions = {
@@ -93,7 +139,7 @@ export async function getOrCreateDailyEdition(
 ): Promise<GenerationResult> {
   const started = Date.now();
   const localDate = localEditionDate(now);
-  const stats: GenerationStats = { reused: true, durationMs: 0, poolSize: 0, failedSources: [], summaryCacheHits: 0, modelCalls: 0, modelFailures: 0 };
+  const stats: GenerationStats = { reused: true, durationMs: 0, poolSize: 0, failedSources: [], summaryCacheHits: 0, modelCalls: 0, modelFailures: 0, todayInThree: 0 };
 
   const existing = await findEditionByDate(readerDb, reader.id, localDate);
   if (existing) {
@@ -122,20 +168,28 @@ export async function getOrCreateDailyEdition(
   const chosen = ranked.map((r) => r.article);
   await insertArticleSnapshots(admin, chosen);
 
-  const summarizable = chosen.filter((a) => canSummarize(a, usageFor(a.sourceId)));
-  const summaries = await resolveSummaries(admin, summarizable, stats);
+  const jobs = chosen.flatMap((article) => {
+    const mode = summaryMode(article, usageFor(article.sourceId));
+    if (!mode) {
+      return [];
+    }
+    return [{ article, mode }];
+  });
+  const summaries = await resolveSummaries(admin, jobs, stats);
 
   const bodies = new Map<string, StoryBody>(
     chosen.map((a) => [a.contentHash, chooseStoryBody(a, usageFor(a.sourceId), summaries.get(a.contentHash) ?? null)]),
   );
 
+  const stories = buildEditionStories(ranked, bodies);
   await insertEditionIfAbsent(admin, {
     userId: reader.id,
     localDate,
     timezone: EDITION_TIMEZONE,
     sourcesFetchedAt: pool.fetchedAt,
     profile: { topics: profile.topics, weights: profile.weights },
-    stories: buildEditionStories(ranked, bodies),
+    stories,
+    todayInThree: await resolveTodayInThree(stories, stats),
   });
 
   // Re-read through the reader's client: if a concurrent request won the insert, this returns its edition.

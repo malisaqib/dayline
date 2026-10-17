@@ -53,7 +53,7 @@ function renderActions(editionId: string) {
 function renderBrief(presented: PresentedEdition, context: EditionContext) {
   const topics = context.profile ? context.profile.topics : context.edition.profile.topics;
   const weights = context.profile ? context.profile.weights : {};
-  const brief = buildSignalBrief(presented.stories, topics, weights);
+  const brief = buildSignalBrief(presented.stories, topics, weights, context.edition.todayInThree);
   if (!brief) {
     return null;
   }

@@ -207,4 +207,24 @@ describe("story similarity", () => {
     ];
     assert.equal(rankArticles(pool, deriveTopicWeights(["disasters"], []), NOW, 6)[0].article.url, "https://g.example/2");
   });
+
+  it("gives every chosen topic at least one story even when other topics carry stronger importance signals", () => {
+    const at = (h: number) => new Date(NOW.getTime() - h * 3_600_000).toISOString();
+    const base = { fetchedAt: NOW.toISOString(), text: "", coverage: "none" as const, labels: [] };
+    const pulse = Array.from({ length: 8 }, (_, i): RankableArticle => ({
+      ...base,
+      sourceId: `pulse${i % 4}`,
+      sourceName: "Pulse",
+      title: `Pulseitem${i}`,
+      url: `https://p.example/${i}`,
+      publishedAt: at(1),
+      importance: 1,
+      topics: ["technology"],
+      contentHash: `${i}`.padStart(64, "a"),
+    }));
+    const local: RankableArticle = { ...base, sourceId: "dawn", sourceName: "Dawn", title: "Localitem", url: "https://d.example/1", publishedAt: at(5), topics: ["pakistan"], contentHash: "b".repeat(64) };
+    const ranked = rankArticles([...pulse, local], deriveTopicWeights(["technology", "pakistan"], []), NOW, 6);
+    assert.ok(ranked.some((r) => r.article.sourceId === "dawn"), "Pakistan is represented");
+    assert.equal(ranked.length, 6);
+  });
 });

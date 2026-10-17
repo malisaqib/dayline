@@ -16,10 +16,10 @@ export type FeedSource = {
   reuseNote: string;
 };
 
-const EXCERPT_UNVERIFIED: SourceUsage = { display: "excerpt", aiProcessing: false, basis: "unverified" };
+const EXCERPT_UNVERIFIED: SourceUsage = { display: "excerpt", aiProcessing: false, aiExcerptSummary: true, basis: "unverified" };
 // Internet Pulse sources are shown from their own structured fields and never sent to the model.
-const OFFICIAL_STRUCTURED: SourceUsage = { display: "excerpt", aiProcessing: false, basis: "public_domain" };
-const HEADLINE_LINK: SourceUsage = { display: "headline_only", aiProcessing: false, basis: "unverified" };
+const OFFICIAL_STRUCTURED: SourceUsage = { display: "excerpt", aiProcessing: false, aiExcerptSummary: false, basis: "public_domain" };
+const HEADLINE_LINK: SourceUsage = { display: "headline_only", aiProcessing: false, aiExcerptSummary: false, basis: "unverified" };
 
 /**
  * Fetchability was checked in Phase 0. Usage is deliberately conservative: only
@@ -34,7 +34,7 @@ export const SOURCES: FeedSource[] = [
     url: "https://www.nasa.gov/news-release/feed/",
     topics: ["space", "science"],
     enabled: true,
-    usage: { display: "excerpt", aiProcessing: true, basis: "public_domain" },
+    usage: { display: "excerpt", aiProcessing: true, aiExcerptSummary: false, basis: "public_domain" },
     reuseNote: "US government work, generally public domain; NASA media guidelines and third-party images still apply.",
   },
   {
@@ -136,7 +136,7 @@ export const SOURCES: FeedSource[] = [
     url: "https://www.gdacs.org/xml/rss.xml",
     topics: ["disasters", "world"],
     enabled: true,
-    usage: { display: "excerpt", aiProcessing: false, basis: "unverified" },
+    usage: { display: "excerpt", aiProcessing: false, aiExcerptSummary: false, basis: "unverified" },
     reuseNote: "Global Disaster Alert and Coordination System (UN/EC). Official alert description and fields with attribution; terms not reviewed; no AI processing.",
   },
 ];

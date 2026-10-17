@@ -21,6 +21,35 @@ function renderSentence(sentence: string | null) {
   return <p className="mt-1 line-clamp-3 text-sm">{sentence}</p>;
 }
 
+function renderTodayInThree(items: Brief["todayInThree"]) {
+  if (items.length === 0) {
+    return null;
+  }
+  return (
+    <section className={`${PANEL} sm:col-span-2`} aria-labelledby="brief-three">
+      <h3 id="brief-three" className={PANEL_TITLE}>
+        Today in three
+      </h3>
+      <ol className="mt-2 space-y-2">
+        {items.map((item, index) => (
+          <li key={item.story.id} className="flex gap-3 text-[15px]">
+            <span className="w-5 shrink-0 font-serif text-lg font-bold leading-6 text-accent" aria-hidden="true">
+              {index + 1}
+            </span>
+            <span>
+              {item.sentence}{" "}
+              <a href={`#story-${item.position}`} className="inline-flex min-h-11 items-center whitespace-nowrap text-sm font-semibold text-accent-strong underline-offset-4 hover:underline sm:min-h-0">
+                Story {item.position}
+              </a>
+            </span>
+          </li>
+        ))}
+      </ol>
+      <p className={`${ui.meta} mt-2`}>AI-written from each story&apos;s headline and text. Follow the story link for the source.</p>
+    </section>
+  );
+}
+
 function renderTopSignal(top: Brief["topSignal"]) {
   return (
     <section className={PANEL} aria-labelledby="brief-top">
@@ -100,6 +129,7 @@ export function SignalBrief({ brief, dateLabel }: { brief: Brief; dateLabel: str
         </div>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {renderTodayInThree(brief.todayInThree)}
         {renderTopSignal(brief.topSignal)}
         {renderFocus(brief.focus)}
         {renderPulse(brief.pulse)}

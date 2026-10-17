@@ -1,5 +1,7 @@
 import { countWords } from "@/domain/articles/summary";
-import { summarizeArticle, summaryModelId, SUMMARY_PROMPT_VERSION } from "@/server/ai/summarize";
+import { summaryMode } from "@/domain/editions/build-edition";
+import { EXCERPT_PROMPT_VERSION, summarizeArticle, summarizeExcerpt, summaryModelId, SUMMARY_PROMPT_VERSION } from "@/server/ai/summarize";
+import { buildTodayInThree, TODAY_IN_THREE_PROMPT_VERSION } from "@/server/ai/today-in-three";
 import { sourceById } from "@/server/sources/catalog";
 import { fetchFeed } from "@/server/sources/rss";
 
@@ -41,5 +43,54 @@ async function main() {
 
 main().catch((error: Error) => {
   console.error(`AI check failed: ${error.message}`);
+  process.exit(1);
+});
+
+async function checkExcerptAndHighlights() {
+  const npr = sourceById("npr");
+  if (!npr) {
+    throw new Error("npr missing from catalog");
+  }
+  const { articles } = await fetchFeed(npr);
+  const eligible = articles.filter((a) => summaryMode(a, npr.usage) === "excerpt").slice(0, 3);
+  if (eligible.length === 0) {
+    throw new Error("no NPR item long enough for an excerpt summary");
+  }
+  const first = eligible[0];
+  console.log(`\n=== excerpt summary (${EXCERPT_PROMPT_VERSION}) ===\ninput: "${first.title}" (${first.text.length} chars)\nexcerpt: ${first.text.slice(0, 400)}`);
+  const summary = await summarizeExcerpt(first);
+  console.log(`output (${countWords(summary.summary)} words, attempts ${summary.attempts}): ${summary.summary}`);
+  console.log(`takeaways: ${JSON.stringify(summary.takeaways)}`);
+
+  const stories = eligible.map((a, i) => ({
+    articleHash: a.contentHash,
+    sourceId: a.sourceId,
+    sourceName: a.sourceName,
+    title: a.title,
+    url: a.url,
+    publishedAt: a.publishedAt,
+    fetchedAt: a.fetchedAt,
+    topics: ["world" as const],
+    reasons: [],
+    body: i === 0 ? summary.summary : a.text.slice(0, 600),
+    bodyKind: "publisher_excerpt" as const,
+    takeaways: [],
+    coverage: a.coverage,
+    labels: [],
+    sourceCount: 1,
+    importance: 0,
+    summaryModel: null,
+    summaryPromptVersion: null,
+  }));
+  const highlights = await buildTodayInThree(stories);
+  console.log(`\n=== today in three (${TODAY_IN_THREE_PROMPT_VERSION}) from ${stories.length} live stories ===`);
+  for (const h of highlights) {
+    const n = stories.findIndex((s) => s.articleHash === h.articleHash) + 1;
+    console.log(`- [story ${n}: ${stories[n - 1].title.slice(0, 60)}] ${h.sentence}`);
+  }
+}
+
+checkExcerptAndHighlights().catch((error: Error) => {
+  console.error(`excerpt/today-in-three check failed: ${error.message}`);
   process.exit(1);
 });

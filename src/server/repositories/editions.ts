@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { highlightSchema, type Highlight } from "@/domain/editions/today-in-three";
 import {
   editionStoriesSchema,
   profileSnapshotSchema,
@@ -8,7 +9,7 @@ import {
   type StorySnapshot,
 } from "@/domain/editions/edition";
 
-const EDITION_COLUMNS = "id, user_id, local_date, timezone, generated_at, sources_fetched_at, profile_snapshot, stories";
+const EDITION_COLUMNS = "id, user_id, local_date, timezone, generated_at, sources_fetched_at, profile_snapshot, stories, today_in_three";
 export const ARCHIVE_PAGE_SIZE = 30;
 
 type EditionRow = {
@@ -20,6 +21,7 @@ type EditionRow = {
   sources_fetched_at: string;
   profile_snapshot: unknown;
   stories: unknown;
+  today_in_three: unknown;
 };
 
 // Stored JSON is validated on the way out so a malformed row fails loudly instead of rendering garbage.
@@ -33,6 +35,7 @@ function toEdition(row: EditionRow): Edition {
     sourcesFetchedAt: row.sources_fetched_at,
     profile: profileSnapshotSchema.parse(row.profile_snapshot),
     stories: editionStoriesSchema.parse(row.stories),
+    todayInThree: highlightSchema.array().catch([]).parse(row.today_in_three),
   };
 }
 
@@ -83,6 +86,7 @@ export type NewEdition = {
   sourcesFetchedAt: string;
   profile: ProfileSnapshot;
   stories: StorySnapshot[];
+  todayInThree: Highlight[];
 };
 
 /**
@@ -98,6 +102,7 @@ export async function insertEditionIfAbsent(db: SupabaseClient, edition: NewEdit
       sources_fetched_at: edition.sourcesFetchedAt,
       profile_snapshot: edition.profile,
       stories: editionStoriesSchema.parse(edition.stories),
+      today_in_three: highlightSchema.array().parse(edition.todayInThree),
     },
     { onConflict: "user_id,local_date", ignoreDuplicates: true },
   );

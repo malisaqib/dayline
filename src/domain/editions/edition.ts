@@ -50,6 +50,7 @@ export type Edition = {
   sourcesFetchedAt: string;
   profile: ProfileSnapshot;
   stories: StorySnapshot[];
+  todayInThree: { articleHash: string; sentence: string }[];
 };
 
 export type EditionSummary = Pick<Edition, "id" | "localDate" | "generatedAt"> & { leadTitle: string; storyCount: number; topics: string[] };

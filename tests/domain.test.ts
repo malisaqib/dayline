@@ -61,7 +61,7 @@ describe("rankArticles", () => {
 });
 
 describe("chooseStoryBody", () => {
-  const unverified: SourceUsage = { display: "excerpt", aiProcessing: false, basis: "unverified" };
+  const unverified: SourceUsage = { display: "excerpt", aiProcessing: false, aiExcerptSummary: false, basis: "unverified" };
   const summary = { brief: "A cached brief.", takeaways: ["A takeaway."], model: "m", promptVersion: "v" };
 
   it("never uses an AI summary for a source not cleared for AI processing", () => {
@@ -88,6 +88,7 @@ describe("presentEdition", () => {
       sourcesFetchedAt: NOW.toISOString(),
       profile: { topics: ["space"] },
       stories: buildEditionStories(ranked, bodies),
+      todayInThree: [],
     };
     const web = presentEdition(edition);
     const print = toPrintEdition(web);

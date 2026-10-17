@@ -2,6 +2,7 @@ import { isNearDuplicateTitle } from "@/domain/articles/similarity";
 import { WEIGHT_POLICY, type TopicWeights } from "@/domain/personalization/weights";
 import { topicLabel, type TopicId } from "@/domain/topics";
 import type { PresentedStory } from "./presentation";
+import type { Highlight } from "./today-in-three";
 
 const MAX_PULSE_ITEMS = 3;
 const MAX_SENTENCE_CHARS = 220;
@@ -14,6 +15,7 @@ export type SignalBrief = {
   topSignal: BriefStory & { sentence: string | null };
   focus: (BriefStory & { topic: TopicId; explanation: string }) | null;
   pulse: BriefStory[];
+  todayInThree: (BriefStory & { sentence: string })[];
 };
 
 export function firstSentence(text: string): string | null {
@@ -52,7 +54,17 @@ function findFocus(stories: PresentedStory[], topic: TopicId): BriefStory | null
   return matches.find((m) => m.position !== 1 && !isNearDuplicateTitle(m.story.headline, top.headline)) ?? matches[0];
 }
 
-export function buildSignalBrief(stories: PresentedStory[], readerTopics: TopicId[], weights: TopicWeights): SignalBrief | null {
+export function resolveHighlights(stories: PresentedStory[], highlights: Highlight[]): (BriefStory & { sentence: string })[] {
+  return highlights.flatMap((item) => {
+    const index = stories.findIndex((story) => story.id === item.articleHash);
+    if (index === -1) {
+      return [];
+    }
+    return [{ position: index + 1, story: stories[index], sentence: item.sentence }];
+  });
+}
+
+export function buildSignalBrief(stories: PresentedStory[], readerTopics: TopicId[], weights: TopicWeights, highlights: Highlight[] = []): SignalBrief | null {
   if (stories.length === 0) {
     return null;
   }
@@ -73,5 +85,6 @@ export function buildSignalBrief(stories: PresentedStory[], readerTopics: TopicI
     topSignal: { position: 1, story: top, sentence: firstSentence(top.body) },
     focus,
     pulse,
+    todayInThree: resolveHighlights(stories, highlights),
   };
 }

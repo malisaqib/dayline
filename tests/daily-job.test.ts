@@ -46,8 +46,8 @@ describe("daily job endpoint authorization", () => {
 
 function generationResult(reused: boolean): GenerationResult {
   return {
-    edition: { id: "e", userId: "private-user-id", localDate: "2026-10-17", timezone: "Asia/Karachi", generatedAt: "", sourcesFetchedAt: "", profile: { topics: ["space"] }, stories: [] },
-    stats: { reused, durationMs: 1, poolSize: 0, failedSources: [], summaryCacheHits: 0, modelCalls: 0, modelFailures: 0 },
+    edition: { id: "e", userId: "private-user-id", localDate: "2026-10-17", timezone: "Asia/Karachi", generatedAt: "", sourcesFetchedAt: "", profile: { topics: ["space"] }, stories: [], todayInThree: [] },
+    stats: { reused, durationMs: 1, poolSize: 0, failedSources: [], summaryCacheHits: 0, modelCalls: 0, modelFailures: 0, todayInThree: 0 },
   };
 }
 

@@ -151,6 +151,20 @@ function pickWithCap(candidates: RankedArticle[], picked: RankedArticle[], cap: 
   }
 }
 
+function seedEachTopic(candidates: RankedArticle[], picked: RankedArticle[], weights: TopicWeights, limit: number): void {
+  const topics = (Object.keys(weights) as TopicId[]).sort((a, b) => (weights[b] ?? 0) - (weights[a] ?? 0) || a.localeCompare(b));
+  for (const topic of topics) {
+    if (picked.length >= limit || picked.some((p) => p.matchedTopics.includes(topic))) {
+      continue;
+    }
+    const usedBySource = (sourceId: string) => picked.filter((p) => p.article.sourceId === sourceId).length;
+    const best = candidates.find((c) => c.matchedTopics.includes(topic) && !picked.includes(c) && usedBySource(c.article.sourceId) < MAX_STORIES_PER_SOURCE);
+    if (best) {
+      picked.push(best);
+    }
+  }
+}
+
 export function rankArticles(articles: RankableArticle[], weights: TopicWeights, now: Date, limit: number): RankedArticle[] {
   const clusters = clusterArticles(articles.filter((a) => isFresh(a, now)));
   const candidates = clusters
@@ -159,6 +173,7 @@ export function rankArticles(articles: RankableArticle[], weights: TopicWeights,
     .sort((a, b) => b.score - a.score || a.article.contentHash.localeCompare(b.article.contentHash));
 
   const picked: RankedArticle[] = [];
+  seedEachTopic(candidates, picked, weights, limit);
   pickWithCap(candidates, picked, MAX_STORIES_PER_SOURCE, limit, false);
   if (picked.length < limit) {
     pickWithCap(candidates, picked, MAX_STORIES_PER_SOURCE_RELAXED, limit, true);

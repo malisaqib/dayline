@@ -62,6 +62,14 @@ describe("signal brief", () => {
     assert.equal(buildSignalBrief(dupes, ["technology"], {})?.focus?.story.id, "z");
   });
 
+  it("links today-in-three items to their stories and skips unknown references", () => {
+    const brief = buildSignalBrief(STORIES, [], {}, [
+      { articleHash: "c", sentence: "A grounded line about story c." },
+      { articleHash: "missing", sentence: "Refers to nothing in this paper." },
+    ]);
+    assert.deepEqual(brief?.todayInThree.map((i) => [i.position, i.story.id]), [[3, "c"]]);
+  });
+
   it("sums reading time and counts headline-only stories as zero", () => {
     assert.equal(buildSignalBrief(STORIES, [], {})?.readingMinutes, 4);
   });

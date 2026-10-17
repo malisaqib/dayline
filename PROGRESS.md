@@ -2,6 +2,28 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
+## Content quality 2: grounded summaries and Today in three (feat: add grounded summaries and today in three)
+- **Policy:** each source has an explicit `aiExcerptSummary` flag. It's on for NPR, Ars, BBC, Dawn, Geo and ScienceDaily, and off for CISA, HN and GDACS (never AI-processed). NASA keeps full-text summaries (`brief-v2-openrouter`).
+- **Excerpt summaries** (`summarizeExcerpt`, `excerpt-v2`):
+  - Input: headline, the publisher's feed excerpt trimmed to 900 characters at a word boundary, source, publish time and URL. Never full text, never scraped.
+  - Output: strict schema, 12–60 words, 0–2 takeaways. Excerpts under 120 characters aren't sent.
+  - Only the edition's selected stories are summarised. The cache key is (hash, model, prompt version). One retry on invalid or truncated output, then the labelled publisher excerpt.
+- **Today in three** (`buildTodayInThree`, `today3-v2`):
+  - One call per new edition, using only stories with body text.
+  - Strict JSON `{items:[{story,sentence}]}` with at most 3 items. Validation drops unknown story numbers, repeats, sentences outside 5–35 words, and sentences under 50% word overlap with that story's headline and text. It never pads.
+  - Stored on the immutable edition (migration 0007 `editions.today_in_three`, applied) and shown first in the Signal Brief, linking to "Story n".
+  - Failure means an empty list; generation never blocks.
+- **Topic balance** (fix found during verification): source-native importance let Internet Pulse crowd out a reader's Pakistan topic. Ranking now reserves the best story for each chosen topic first (strongest weight first, within caps), then fills by score. Live: all 5 multi-topic mixes cover every chosen topic.
+- **Verified:**
+  - `npm test` 57 of 57, including mocked-response AI tests: eligibility, bounded input, retry, fallback, grounding, unknown/repeat/headline-only rejection, no call without candidates.
+  - `check:ai` live: full summary OK; excerpt summary and Today in three checked by hand against the source text. The prompts were then tightened to keep hedges and denials.
+  - Live generation: reader A 3 cache hits, 4 calls, 3 highlights; reader B 6 calls, 3 highlights; 0 failures.
+  - Journey PASSED; PDF parity 5 of 5; typecheck, lint and build pass.
+- **Limits:**
+  - A cold-cache paper now takes about 13–25 s (up to 6 summaries plus 1 call).
+  - Highlight grounding is a word-overlap check, not semantic verification.
+  - Internet Pulse sources still rank highly because only they have native importance signals; topic seeding keeps every chosen topic present.
+
 ## Content quality 1: coverage and ranking (feat: improve edition coverage and ranking)
 - **Near-duplicates** (`src/domain/articles/similarity.ts`): titles are normalized by removing punctuation, stop words, date words, years, 1–2 digit numbers and boilerplate (live, updates, Show HN…). Same story = word overlap ≥ 0.7, or ≥ 0.8 containment for titles of 4+ words. Fresh articles are clustered; the highest-scoring matching member represents the cluster, and `sourceCount` = distinct sources in the cluster.
 - **Importance:** max(coverage, source signal).

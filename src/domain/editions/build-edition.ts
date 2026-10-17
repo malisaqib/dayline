@@ -5,13 +5,27 @@ import type { BodyKind, StorySnapshot } from "./edition";
 
 export const MAX_EXCERPT_DISPLAY_CHARS = 600;
 const MIN_EXCERPT_CHARS = 40;
+export const MIN_EXCERPT_FOR_AI_CHARS = 120;
+export const MAX_EXCERPT_FOR_AI_CHARS = 900;
+
+export type SummaryMode = "full" | "excerpt";
 
 export type CachedSummary = { brief: string; takeaways: string[]; model: string; promptVersion: string };
 
 export type StoryBody = { kind: BodyKind; text: string; takeaways: string[]; model: string | null; promptVersion: string | null };
 
+export function summaryMode(article: ArticleSnapshot, usage: SourceUsage): SummaryMode | null {
+  if (usage.aiProcessing && article.coverage !== "none") {
+    return "full";
+  }
+  if (usage.aiExcerptSummary && article.text.length >= MIN_EXCERPT_FOR_AI_CHARS) {
+    return "excerpt";
+  }
+  return null;
+}
+
 export function canSummarize(article: ArticleSnapshot, usage: SourceUsage): boolean {
-  return usage.aiProcessing && article.coverage !== "none";
+  return summaryMode(article, usage) !== null;
 }
 
 /** Cut at a word boundary so an excerpt never ends mid-word. */
@@ -25,7 +39,7 @@ export function trimExcerpt(text: string, maxChars = MAX_EXCERPT_DISPLAY_CHARS):
 
 /** Pick the most informative body the source's usage policy allows. Never invents text. */
 export function chooseStoryBody(article: ArticleSnapshot, usage: SourceUsage, summary: CachedSummary | null): StoryBody {
-  if (summary && usage.aiProcessing) {
+  if (summary && canSummarize(article, usage)) {
     return { kind: "ai_summary", text: summary.brief, takeaways: summary.takeaways, model: summary.model, promptVersion: summary.promptVersion };
   }
   if (usage.display === "excerpt" && article.text.length >= MIN_EXCERPT_CHARS) {
