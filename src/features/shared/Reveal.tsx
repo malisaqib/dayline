@@ -1,10 +1,18 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion, useReducedMotion, type Variants } from "motion/react";
 import type { ReactNode } from "react";
-import { fadeUp, stagger } from "./motion";
+import { DURATION, EASE, fadeUp, stagger } from "./motion";
 
 type Props = { children: ReactNode; className?: string };
+
+const VIEWPORT = { once: true, margin: "-60px" } as const;
+
+const SLIDE: Record<"up" | "left" | "right", Variants> = {
+  up: fadeUp,
+  left: { initial: { opacity: 0, x: -48 }, animate: { opacity: 1, x: 0, transition: { duration: DURATION.glide * 1.4, ease: EASE } } },
+  right: { initial: { opacity: 0, x: 48 }, animate: { opacity: 1, x: 0, transition: { duration: DURATION.glide * 1.4, ease: EASE } } },
+};
 
 function useEntrance(): "initial" | false {
   return useReducedMotion() ? false : "initial";
@@ -12,7 +20,7 @@ function useEntrance(): "initial" | false {
 
 export function RevealList({ children, className, label }: Props & { label?: string }) {
   return (
-    <motion.ol variants={stagger} initial={useEntrance()} animate="animate" className={className} aria-label={label}>
+    <motion.ol variants={stagger} initial={useEntrance()} whileInView="animate" viewport={VIEWPORT} className={className} aria-label={label}>
       {children}
     </motion.ol>
   );
@@ -28,7 +36,7 @@ export function RevealItem({ children, className }: Props) {
 
 export function RevealGroup({ children, className }: Props) {
   return (
-    <motion.div variants={stagger} initial={useEntrance()} animate="animate" className={className}>
+    <motion.div variants={stagger} initial={useEntrance()} whileInView="animate" viewport={VIEWPORT} className={className}>
       {children}
     </motion.div>
   );
@@ -50,9 +58,9 @@ export function Reveal({ children, className }: Props) {
   );
 }
 
-export function InView({ children, className }: Props) {
+export function InView({ children, className, from = "up" }: Props & { from?: "up" | "left" | "right" }) {
   return (
-    <motion.div variants={fadeUp} initial={useEntrance()} whileInView="animate" viewport={{ once: true, margin: "-80px" }} className={className}>
+    <motion.div variants={SLIDE[from]} initial={useEntrance()} whileInView="animate" viewport={VIEWPORT} className={className}>
       {children}
     </motion.div>
   );

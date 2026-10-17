@@ -132,17 +132,24 @@ function textOrder(index: number): string | undefined {
   return undefined;
 }
 
+function slideFrom(index: number, visual: boolean): "left" | "right" {
+  if ((index % 2 === 1) !== visual) {
+    return "right";
+  }
+  return "left";
+}
+
 function renderSections() {
   return (
     <div className="space-y-24 px-4 py-20 sm:px-6">
       {SECTIONS.map((section, index) => (
         <section key={section.title} className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16">
-          <InView className={textOrder(index)}>
+          <InView className={textOrder(index)} from={slideFrom(index, false)}>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-glow">{section.eyebrow}</p>
             <h2 className="mt-3 font-serif text-3xl font-bold leading-tight text-white sm:text-4xl">{section.title}</h2>
             <p className="mt-4 text-lg leading-relaxed text-night-muted">{section.text}</p>
           </InView>
-          <InView>{section.visual}</InView>
+          <InView from={slideFrom(index, true)}>{section.visual}</InView>
         </section>
       ))}
     </div>
@@ -203,7 +210,7 @@ function renderClosing() {
 
 export default function OverviewPage() {
   return (
-    <main id="content" className="flex-1 bg-night">
+    <main id="content" className="flex-1 overflow-x-clip bg-night">
       {renderHero()}
       {renderSources()}
       {renderSections()}
