@@ -2,6 +2,20 @@
 
 Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: https://dayline-swart.vercel.app/
 
+## Phase 4: Firecrawl "Follow your curiosity". NOT BUILT (evaluation threshold failed, 2026-10-17)
+- Threshold: at least 2 of 3 queries must return 3 or more useful results within the 96 h freshness limit. Result: **0 of 3**.
+- Method: `POST /v2/search` with `sources:["news"]`, `limit:10`, `safe:true`, `highlights:false`. No Agent, Scrape or Crawl. Key never printed.
+- Run A (query + " latest developments", which deviated from the exact-query instruction): scholarships 0 results; climate 0 results; cybersecurity 10 results, none within 96 h. Credits: 0 + 0 + 2.
+- Run B (exact queries):
+  - Each query: HTTP 200, 2.6–3.0 s, 2 credits, 10 results, 0 duplicates, all URLs valid.
+  - Response shape: `{success, data:{news:[{title,url,snippet,date,imageUrl,position}]}, creditsUsed, id}`; dates are relative ("5 days ago") or absolute ("Jul 8, 2026").
+  - Scholarships: relevant Pakistani outlets (tribune.com.pk, dawn.com, app.com.pk, thenews.pk), plus an off-target UAE item and an aggregator (globalsouthopportunities.com). Newest "1 week ago"; most from 2025 to Aug 2026. **0 within 96 h.**
+  - Climate tech: relevant (arabnews.pk, dialogue.earth, digitalpakistan.pk), but newest "4 weeks ago", with items back to 2024. **0 within 96 h.**
+  - Open-source security: highly relevant (helpnetsecurity.com ×5, cybersecuritynews.com, anthropic.com, nvidia, microsoft). Newest "5 days ago" (120 h). **0 within 96 h.**
+- Total credits used: 8 (6 requests; empty searches cost 0).
+- Conclusion: Firecrawl news search returns relevant, reputable but mostly **weeks-to-months-old** results for niche interests. It would rarely add fresh stories to a daily paper. A 7-day window would pass only the security query (4 items).
+- Options if revisited: a weekly "curiosity digest" with a 7–14 day window, or dated query terms. Both need a product decision.
+
 ## Phase 3: automatic daily generation. VERIFIED on production (deployment 339f8be)
 - **Endpoint:** `POST /api/internal/daily-editions` checks `Bearer CRON_SECRET` in constant time. A missing or wrong token, or an unset server secret, gets 401. The response is counts only: `{localDate, examined, created, reused, failed, durationMs}`.
 - **Job** (`src/server/services/daily-job.ts`):
