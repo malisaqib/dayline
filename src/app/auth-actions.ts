@@ -7,7 +7,6 @@ import {
   createPasswordAccount,
   describeAuthError,
   emailSchema,
-  googleSignInUrl,
   otpSchema,
   passwordSchema,
   signInWithPassword,
@@ -131,20 +130,6 @@ export async function passwordAuth(_prev: PasswordState, form: FormData): Promis
     return { error: failure.message, notice: null, email: email.data };
   }
   redirect(await destinationAfterSignIn(db, next));
-}
-
-export async function startGoogle(form: FormData): Promise<void> {
-  const next = safeReturnPath(String(form.get("next") ?? ""));
-  const db = await createReaderSupabase();
-  const reader = await getVerifiedReader(db);
-  let url: string;
-  try {
-    url = await googleSignInUrl(db, await confirmUrl(next), reader?.isAnonymous === true);
-  } catch (error) {
-    console.error("[auth] google failed", describeAuthError(error).kind);
-    redirect("/signin?error=google_failed");
-  }
-  redirect(url);
 }
 
 export async function signOut(): Promise<void> {

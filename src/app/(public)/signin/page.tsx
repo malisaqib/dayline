@@ -3,15 +3,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { safeReturnPath } from "@/domain/auth/return-path";
-import { GoogleButton } from "@/features/auth/GoogleButton";
 import { PasswordForm } from "@/features/auth/PasswordForm";
 import { SignInForm } from "@/features/auth/SignInForm";
 import { SignOutButton } from "@/features/auth/SignOutButton";
-import { Disclosure } from "@/features/shared/Disclosure";
 import { InView, Reveal } from "@/features/shared/Reveal";
 import { ui } from "@/features/shared/ui";
 import { PageMain } from "@/features/shell/PageMain";
-import { enabledProviders } from "@/server/auth/providers";
 import type { Reader } from "@/server/auth/session";
 import { readReaderEntry } from "@/server/services/reader-entry";
 
@@ -23,7 +20,6 @@ const NOTICES: Record<string, string> = {
   expired: "Your session has ended. Sign in to get your topics, papers and archive back.",
   signin: "Sign in to open your paper.",
   link_expired: "That sign-in link has expired or was already used. Try again below.",
-  google_failed: "Google sign-in couldn't start. Try again, or use your email.",
   signed_out: "You've signed out. Sign in again any time; your topics and papers are kept.",
 };
 
@@ -35,7 +31,7 @@ const VISITOR_TEXT = {
 } as const;
 
 const JOURNEY = [
-  { title: "Sign in", text: "Email and password, Google, or a one-time code." },
+  { title: "Sign in", text: "Just your email and a password." },
   { title: "Choose what you follow", text: "Pick topics and add your own interests, like AI agents." },
   { title: "Read your paper", text: "Your first paper is made right away: summarised, source-linked, and ready as a PDF." },
 ];
@@ -63,22 +59,6 @@ function renderNotice(notice: string | null) {
     <p role="status" className="mt-4 rounded-xl border border-rule bg-paper px-3 py-2 text-sm">
       {notice}
     </p>
-  );
-}
-
-function renderGoogle(enabled: boolean, next: string, label?: string) {
-  if (!enabled) {
-    return null;
-  }
-  return (
-    <>
-      <GoogleButton next={next} label={label} />
-      <div className="mt-6 flex items-center gap-3 text-xs uppercase tracking-[0.14em] text-muted" aria-hidden="true">
-        <span className="h-px flex-1 bg-rule" />
-        or
-        <span className="h-px flex-1 bg-rule" />
-      </div>
-    </>
   );
 }
 
@@ -112,7 +92,7 @@ function renderShell(card: ReactNode) {
   );
 }
 
-function renderVisitor(next: string, notice: string | null, google: boolean, creating: boolean) {
+function renderVisitor(next: string, notice: string | null, creating: boolean) {
   const intent = creating ? "create" : "signin";
   return renderShell(
     <>
@@ -120,14 +100,8 @@ function renderVisitor(next: string, notice: string | null, google: boolean, cre
       <h1 className="mt-3 font-serif text-3xl font-bold sm:text-4xl">{VISITOR_TITLE[intent]}</h1>
       <p className="mt-3 text-muted">{VISITOR_TEXT[intent]}</p>
       {renderNotice(notice)}
-      {renderGoogle(google, next)}
       <PasswordForm next={next} initialIntent={intent} />
-      <div className="mt-6 border-t border-rule pt-2">
-        <Disclosure label="Prefer a one-time code by email?">
-          <SignInForm upgrade={false} next={next} />
-        </Disclosure>
-      </div>
-      <div className="mt-4 border-t border-rule pt-4">
+      <div className="mt-6 border-t border-rule pt-4">
         <p className={ui.meta}>Just looking? Try Dayline without an account; your paper is then saved to this browser only.</p>
         <Link href="/onboarding" className={`${ui.ghostButton} mt-2 -ml-4`}>
           Try without an account →
@@ -137,7 +111,7 @@ function renderVisitor(next: string, notice: string | null, google: boolean, cre
   );
 }
 
-function renderGuest(next: string, notice: string | null, google: boolean) {
+function renderGuest(next: string, notice: string | null) {
   return renderShell(
     <>
       <p className={ui.eyebrow}>Keep your paper</p>
@@ -147,7 +121,6 @@ function renderGuest(next: string, notice: string | null, google: boolean) {
         devices. Nothing you&apos;ve made so far is lost.
       </p>
       {renderNotice(notice)}
-      {renderGoogle(google, next, "Save with Google")}
       <SignInForm upgrade next={next} />
       <Link href="/today" className={`${ui.ghostButton} mt-4 -ml-4`}>
         Not now, back to my paper
@@ -179,12 +152,12 @@ async function renderSignIn({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const next = safeReturnPath(first(params.next));
   const notice = pickNotice(params);
-  const [entry, providers] = await Promise.all([readReaderEntry(), enabledProviders()]);
+  const entry = await readReaderEntry();
   if (entry.kind === "visitor") {
-    return renderVisitor(next ?? "", notice, providers.google, first(params.mode) === "create");
+    return renderVisitor(next ?? "", notice, first(params.mode) === "create");
   }
   if (entry.account.isAnonymous) {
-    return renderGuest(next ?? "", notice, providers.google);
+    return renderGuest(next ?? "", notice);
   }
   if (entry.kind === "reader" && next) {
     redirect(next);
