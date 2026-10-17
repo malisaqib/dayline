@@ -60,3 +60,15 @@ describe("specific interests", () => {
     assert.ok(!ranked[0].reasons.some((reason) => reason.includes("cricket")));
   });
 });
+
+describe("older profiles and editions", () => {
+  it("reads editions saved before interests existed", async () => {
+    const { profileSnapshotSchema } = await import("@/domain/editions/edition");
+    assert.deepEqual(profileSnapshotSchema.parse({ topics: ["space"] }).interests, []);
+  });
+
+  it("treats a missing interest column as no interests", () => {
+    assert.equal(interestsSchema.safeParse(null).success, false);
+    assert.deepEqual(interestsSchema.parse([]), []);
+  });
+});
