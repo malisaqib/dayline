@@ -99,7 +99,7 @@ function renderHero() {
 
 function renderSources() {
   return (
-    <section aria-labelledby="sources-heading" className="px-4 py-20 sm:px-6">
+    <section id="sources" aria-labelledby="sources-heading" className="scroll-mt-20 px-4 py-20 sm:px-6">
       <InView className="mx-auto max-w-3xl text-center">
         <h2 id="sources-heading" className="font-serif text-3xl font-bold text-white sm:text-5xl">
           All your morning reading in one place.
