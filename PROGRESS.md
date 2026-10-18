@@ -17,7 +17,9 @@ Read with CLAUDE.md. Repo: https://github.com/malisaqib/dayline. Production: htt
 - **Fixed during the check:**
   - Dawn (HTTP 403 from Vercel) switched off, so papers no longer report a failed source.
   - The overview now names only the 9 sources that are switched on.
-  - The PDF is restyled to the Dayline design: embedded Playfair and Geist fonts, "D" mark, coral accent, Today in three card, top-story badge, topic chips, a "Why" line per story, and two flowing columns.
+  - The PDF is restyled to the Dayline design: embedded Playfair and Geist fonts, "D" mark, coral accent, Today in three card, top-story badge, topic chips and a "Why" line per story.
+  - A flowing two-column version overlapped text when a column crossed a page (a react-pdf limitation that a one-page sample did not reveal). It was reverted to whole rows of two in `2f9eee0`.
+  - Two real production papers (4 topics each, 3 and 2 pages) were checked line by line: 0 overlapping text lines, and inspected visually.
   - `docs/architecture.md`, `docs/demo-script.md` (the Loom script) and the README are updated for the current product.
 - **For the Loom:** turn off Supabase "Confirm email" so the demo sign-up signs in straight away.
 
