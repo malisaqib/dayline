@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   takeaway: { fontSize: 9.5, lineHeight: 1.4, marginTop: 1.5 },
   columns: { flexDirection: "row", gap: 12, marginBottom: 12 },
   column: { flex: 1 },
-  story: { backgroundColor: CARD, borderRadius: 8, borderWidth: 0.5, borderColor: RULE, padding: 10, marginBottom: 12 },
+  story: { backgroundColor: CARD, borderRadius: 8, borderWidth: 0.5, borderColor: RULE, padding: 10 },
   headline: { fontFamily: "Playfair", fontWeight: 700, fontSize: 13.5, lineHeight: 1.2, marginBottom: 4 },
   body: { fontSize: 9.5, lineHeight: 1.45 },
   footerRow: { marginTop: 7, borderTopWidth: 0.5, borderTopColor: RULE, paddingTop: 5 },
@@ -221,7 +221,7 @@ function LeadStory({ story }: { story: PrintStory }) {
 
 function StoryBlock({ story, position }: { story: PrintStory; position: number }) {
   return (
-    <View style={styles.story} wrap={false}>
+    <View style={styles.story}>
       <Chips story={story} badge={String(position).padStart(2, "0")} />
       {renderKicker(story)}
       <Text style={styles.headline}>{story.headline}</Text>
@@ -232,8 +232,19 @@ function StoryBlock({ story, position }: { story: PrintStory; position: number }
   );
 }
 
-function splitColumns<T>(items: T[]): [T[], T[]] {
-  return [items.filter((_, index) => index % 2 === 0), items.filter((_, index) => index % 2 === 1)];
+function pairIntoRows<T>(items: T[]): T[][] {
+  const rows: T[][] = [];
+  for (let i = 0; i < items.length; i += 2) {
+    rows.push(items.slice(i, i + 2));
+  }
+  return rows;
+}
+
+function renderFiller(count: number) {
+  if (count > 1) {
+    return null;
+  }
+  return <View style={styles.column} />;
 }
 
 function renderFixture(notice: string | null) {
@@ -244,7 +255,7 @@ function renderFixture(notice: string | null) {
 }
 
 export function EditionDocument({ edition }: { edition: PrintEdition }) {
-  const [left, right] = splitColumns(edition.stories.map((story, index) => ({ story, position: index + 2 })));
+  const rows = pairIntoRows(edition.stories.map((story, index) => ({ story, position: index + 2 })));
 
   return (
     <Document title={`Dayline · ${edition.dateLabel}`} author="Dayline">
@@ -268,15 +279,16 @@ export function EditionDocument({ edition }: { edition: PrintEdition }) {
         <TodayInThree items={edition.highlights} />
         <LeadStory story={edition.lead} />
 
-        <View style={styles.columns}>
-          {[left, right].map((column, index) => (
-            <View key={`column-${index}`} style={styles.column}>
-              {column.map(({ story, position }) => (
-                <StoryBlock key={story.sourceUrl + story.headline} story={story} position={position} />
-              ))}
-            </View>
-          ))}
-        </View>
+        {rows.map((row) => (
+          <View key={row[0].story.sourceUrl} style={styles.columns} wrap={false}>
+            {row.map(({ story, position }) => (
+              <View key={story.sourceUrl + story.headline} style={styles.column}>
+                <StoryBlock story={story} position={position} />
+              </View>
+            ))}
+            {renderFiller(row.length)}
+          </View>
+        ))}
 
         <View style={styles.footer} fixed>
           <Text>Dayline · every story links to its original publisher</Text>
